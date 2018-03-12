@@ -48,8 +48,8 @@ public class Graph {
     public Stream<Edge> candidateEdges(Edge queryEdge){
         return edges.stream().filter(e ->
                 e.getSource().match(queryEdge.getSource())
-                        && e.getTarget().match(queryEdge.getTarget())
-                        && e.getLabel().equals(queryEdge.getLabel()));
+                && e.getTarget().match(queryEdge.getTarget())
+                && e.getLabel().equals(queryEdge.getLabel()));
     }
 
     public List<Map<String, String>> query(Graph query){
@@ -65,7 +65,7 @@ public class Graph {
         });
 
         List<Map<String, String>> deduplicated = new ArrayList<>();
-        for (int i = 0; i < result.size()-1; i++){
+        for (int i = 0; i < result.size(); i++){
             boolean existsDuplicate = false;
             for (int j = 0; j < deduplicated.size(); j++){
                 if (result.get(i).equals(deduplicated.get(j))) {
@@ -148,6 +148,19 @@ public class Graph {
     public void addEdge(int source, int target, String label){
         Edge e = new Edge(nodeMapping.get(source), nodeMapping.get(target), label);
         edges.add(e);
+    }
+
+
+    public Set<Node> getNodes() {
+        return nodes;
+    }
+
+    public HashMap<Integer, Node> getNodeMapping() {
+        return nodeMapping;
+    }
+
+    public Set<Edge> getEdges() {
+        return edges;
     }
 
 }

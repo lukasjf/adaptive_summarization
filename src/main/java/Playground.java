@@ -1,4 +1,5 @@
 import graph.Graph;
+import graph.summary.Summary;
 
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,10 @@ public class Playground {
         q.addEdge(0, 1 , "works_at");
 
         List<Map<String, String>> result = g.query(q);
+        System.out.println(result);
+
+        Summary s = Summary.createFromGraph(g);
+        result = s.query(q);
         System.out.println(result);
     }
 }
