@@ -38,7 +38,7 @@ class SummaryNode extends Node {
 
     @Override
     public String getLabel(){
-        return toString();
+        return labels.stream().collect(Collectors.joining("#"));
     }
 
     public int size(){

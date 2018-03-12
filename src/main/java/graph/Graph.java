@@ -41,46 +41,53 @@ public class Graph {
         return g;
     }
 
-    public long candidateCount(Edge queryEdge){
+    private long candidateCount(Edge queryEdge){
         return candidateEdges(queryEdge).count();
     }
 
-    public Stream<Edge> candidateEdges(Edge queryEdge){
+    private Stream<Edge> candidateEdges(Edge queryEdge){
         return edges.stream().filter(e ->
                 e.getSource().match(queryEdge.getSource())
                 && e.getTarget().match(queryEdge.getTarget())
                 && e.getLabel().equals(queryEdge.getLabel()));
     }
 
-    public List<Map<String, String>> query(Graph query){
-        List<Map<String, String>> result = new ArrayList<>();
-        List<Edge> queryEdges = new ArrayList<>(query.edges);
+    public List<List<String>> query(Query query){
+        List<List<String>> result = new ArrayList<>();
+        List<Map<String, String>> res = new ArrayList<>();
+        List<Edge> queryEdges = new ArrayList<>(query.getEdges());
         queryEdges.sort(Comparator.comparingLong(this::candidateCount));
         Edge e = queryEdges.remove(0);
         candidateEdges(e).forEach(edge -> {
             HashMap<Node, Node> match = new HashMap<>();
             match.put(e.getSource(), edge.getSource());
             match.put(e.getTarget(), edge.getTarget());
-            result.addAll(query(queryEdges, match));
+            res.addAll(query(queryEdges, match));
         });
 
         List<Map<String, String>> deduplicated = new ArrayList<>();
-        for (int i = 0; i < result.size(); i++){
+        for (int i = 0; i < res.size(); i++){
             boolean existsDuplicate = false;
             for (int j = 0; j < deduplicated.size(); j++){
-                if (result.get(i).equals(deduplicated.get(j))) {
+                if (res.get(i).equals(deduplicated.get(j))) {
                     existsDuplicate = true;
                     break;
                 }
             }
             if (!existsDuplicate){
-                deduplicated.add(result.get(i));
+                deduplicated.add(res.get(i));
             }
         }
-        return deduplicated;
+        List<String> variables = query.getVariables();
+        for (Map<String, String> m : deduplicated){
+            String[] r =  new String[variables.size()];
+            m.forEach((k,v) -> r[variables.indexOf(k)] = v);
+            result.add(Arrays.asList(r));
+        }
+        return result;
     }
 
-    public List<Map<String, String>> query(List<Edge> _queryEdges, Map<Node, Node> match){
+    private List<Map<String, String>> query(List<Edge> _queryEdges, Map<Node, Node> match){
         if (_queryEdges.isEmpty()){
             List<Map<String, String>> result = new ArrayList<>();
             Map<String, String> entry = new HashMap<>();
