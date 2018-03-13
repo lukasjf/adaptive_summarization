@@ -2,13 +2,14 @@ package graph.summary;
 
 import graph.Node;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * Created by lukas on 12.03.18.
  */
-class SummaryNode extends Node {
+public class SummaryNode extends Node {
 
     private Set<String> labels;
 
@@ -39,6 +40,10 @@ class SummaryNode extends Node {
     @Override
     public String getLabel(){
         return labels.stream().collect(Collectors.joining("#"));
+    }
+
+    public Set<String> getLabels(){
+        return labels;
     }
 
     public int size(){

@@ -5,7 +5,7 @@ import graph.Edge;
 /**
  * Created by lukas on 12.03.18.
  */
-class SummaryEdge extends Edge {
+public class SummaryEdge extends Edge {
 
     int actual;
 
@@ -26,11 +26,11 @@ class SummaryEdge extends Edge {
         return size;
     }
 
-    SummaryNode getSSource(){
+    public SummaryNode getSSource(){
         return (SummaryNode) getSource();
     }
 
-    SummaryNode getSTarget(){
+    public SummaryNode getSTarget(){
         return (SummaryNode) getTarget();
     }
 }

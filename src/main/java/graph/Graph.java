@@ -147,9 +147,13 @@ public class Graph {
 
 
     public void addNode(int id, String label){
-        Node n = new Node(id, label);
-        nodeMapping.put(id, n);
-        nodes.add(n);
+        Node node = new Node(id, label);
+        addNode(node);
+    }
+
+    public void addNode(Node node){
+        nodeMapping.put(node.getId(), node);
+        nodes.add(node);
     }
 
     public void addEdge(int source, int target, String label){

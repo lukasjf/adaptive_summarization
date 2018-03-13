@@ -1,6 +1,8 @@
 import graph.Graph;
 import graph.Query;
 import graph.summary.Summary;
+import splitstrategies.RandomSplitStrategy;
+import splitstrategies.SplitStrategy;
 
 import java.util.Arrays;
 import java.util.List;
@@ -27,7 +29,12 @@ public class Playground {
         }
 
         Summary s = Summary.createFromGraph(g);
+        SplitStrategy strategy = new RandomSplitStrategy(s);
         result = s.query(q);
-        System.out.println(result);
+        System.out.println(result.size());
+        s.split();
+        System.out.println(s.getNodes().size());
+        System.out.println(s.getNodeMapping());
+        System.out.println(s.getEdges().size());
     }
 }

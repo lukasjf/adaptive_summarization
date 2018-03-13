@@ -1,8 +1,8 @@
 package graph.summary;
 
 import graph.Graph;
-import graph.Node;
 import graph.Query;
+import splitstrategies.SplitStrategy;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 public class Summary extends Graph {
 
     private Graph graph;
+    private SplitStrategy strategy;
 
     public static Summary createFromGraph(Graph graph){
         Summary s = new Summary(graph);
@@ -27,7 +28,8 @@ public class Summary extends Graph {
         return s;
     }
 
-    public Summary(Graph graph){
+    public Summary(Graph graph) {
+        super();
         this.graph = graph;
     }
 
@@ -58,5 +60,17 @@ public class Summary extends Graph {
             }
         }
         return result;
+    }
+
+    public void split(){
+        strategy.split();
+    }
+
+    public Graph getGraph(){
+        return graph;
+    }
+
+    public void setStrategy(SplitStrategy strategy) {
+        this.strategy = strategy;
     }
 }
