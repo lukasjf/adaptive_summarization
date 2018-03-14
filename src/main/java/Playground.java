@@ -1,6 +1,7 @@
 import graph.Graph;
 import graph.Query;
 import graph.summary.Summary;
+import splitstrategies.ExistentialSplitStrategy;
 import splitstrategies.RandomSplitStrategy;
 import splitstrategies.SplitStrategy;
 
@@ -29,7 +30,7 @@ public class Playground {
         }
 
         Summary s = Summary.createFromGraph(g);
-        SplitStrategy strategy = new RandomSplitStrategy();
+        SplitStrategy strategy = new ExistentialSplitStrategy();
         result = s.query(q);
         System.out.println(result.size());
         s.split(strategy);

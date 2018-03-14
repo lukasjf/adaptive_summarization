@@ -41,4 +41,8 @@ public class SummaryEdge extends Edge {
         this.actual = actual;
     }
 
+    public double getSupport(){
+        return actual / 1.0 / size();
+    }
+
 }
