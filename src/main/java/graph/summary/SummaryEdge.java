@@ -7,11 +7,10 @@ import graph.Edge;
  */
 public class SummaryEdge extends Edge {
 
-    int actual;
+    private long actual;
 
-    public SummaryEdge(SummaryNode source, SummaryNode target, String label, int actual){
+    public SummaryEdge(SummaryNode source, SummaryNode target, String label){
         super(source, target, label);
-        this.actual = actual;
     }
 
     public double support(){
@@ -33,4 +32,13 @@ public class SummaryEdge extends Edge {
     public SummaryNode getSTarget(){
         return (SummaryNode) getTarget();
     }
+
+    public long getActual() {
+        return actual;
+    }
+
+    public void setActual(long actual) {
+        this.actual = actual;
+    }
+
 }

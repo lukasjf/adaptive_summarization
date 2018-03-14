@@ -13,16 +13,9 @@ import java.util.stream.Collectors;
  */
 public abstract class SplitStrategy {
 
-    protected Summary summary;
+    public abstract void split(Summary summary);
 
-    public SplitStrategy(Summary summary){
-        this.summary = summary;
-        summary.setStrategy(this);
-    }
-
-    public abstract void split();
-
-    protected void adjustLabels(SummaryNode splitNode, SummaryNode new1, SummaryNode new2){
+    protected void adjustLabels(Summary summary, SummaryNode splitNode, SummaryNode new1, SummaryNode new2){
         summary.getNodes().remove(splitNode);
         summary.getNodeMapping().remove(splitNode.getId());
         summary.addNode(new1);
@@ -32,27 +25,27 @@ public abstract class SplitStrategy {
         for (SummaryEdge e: toDoEdges){
             summary.getEdges().remove(e);
             if (e.getSource() == splitNode && e.getTarget() == splitNode){
-                checkNewEdge(new1, new1, e.getLabel());
-                checkNewEdge(new1, new2, e.getLabel());
-                checkNewEdge(new2, new1, e.getLabel());
-                checkNewEdge(new2, new2, e.getLabel());
+                checkNewEdge(summary, new1, new1, e.getLabel());
+                checkNewEdge(summary, new1, new2, e.getLabel());
+                checkNewEdge(summary, new2, new1, e.getLabel());
+                checkNewEdge(summary, new2, new2, e.getLabel());
             } else if (e.getSource() == splitNode){
-                checkNewEdge(new1, e.getSTarget(), e.getLabel());
-                checkNewEdge(new2, e.getSTarget(), e.getLabel());
+                checkNewEdge(summary, new1, e.getSTarget(), e.getLabel());
+                checkNewEdge(summary, new2, e.getSTarget(), e.getLabel());
             } else{
-                checkNewEdge(e.getSSource(), new1, e.getLabel());
-                checkNewEdge(e.getSSource(), new2, e.getLabel());
+                checkNewEdge(summary, e.getSSource(), new1, e.getLabel());
+                checkNewEdge(summary, e.getSSource(), new2, e.getLabel());
             }
         }
     }
 
-    public void checkNewEdge(SummaryNode source, SummaryNode target, String label){
-        if (supportCountFor(source, target, label) > 0){
-            summary.addEdge(source.getId(), target.getId(), label);
+    public void checkNewEdge(Summary summary, SummaryNode source, SummaryNode target, String label){
+        if (supportCountFor(summary, source, target, label) > 0){
+            summary.addSEdge(source, target, label);
         }
     }
 
-    public long supportCountFor(SummaryNode source, SummaryNode target, String label){
+    public long supportCountFor(Summary summary, SummaryNode source, SummaryNode target, String label){
         return summary.getGraph().getEdges().stream().filter(e -> label.equals(e.getLabel())
                 && source.getLabels().contains(e.getSource().getLabel())
                 && target.getLabels().contains(e.getTarget().getLabel())).count();

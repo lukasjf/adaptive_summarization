@@ -29,10 +29,10 @@ public class Playground {
         }
 
         Summary s = Summary.createFromGraph(g);
-        SplitStrategy strategy = new RandomSplitStrategy(s);
+        SplitStrategy strategy = new RandomSplitStrategy();
         result = s.query(q);
         System.out.println(result.size());
-        s.split();
+        s.split(strategy);
         System.out.println(s.getNodes().size());
         System.out.println(s.getNodeMapping());
         System.out.println(s.getEdges().size());

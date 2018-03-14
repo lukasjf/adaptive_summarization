@@ -13,12 +13,9 @@ import java.util.Set;
  */
 public class RandomSplitStrategy extends SplitStrategy {
 
-    public RandomSplitStrategy(Summary summary){
-        super(summary);
-    }
 
     @Override
-    public void split() {
+    public void split(Summary summary) {
         Random random = new Random();
         SummaryNode splitNode = (SummaryNode) summary.getNodeMapping()
                 .get(random.nextInt(summary.getNodeMapping().size()));
@@ -36,6 +33,6 @@ public class RandomSplitStrategy extends SplitStrategy {
             }
         }
 
-        adjustLabels(splitNode, new1, new2);
+        adjustLabels(summary, splitNode, new1, new2);
     }
 }

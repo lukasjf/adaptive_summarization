@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 public class Summary extends Graph {
 
     private Graph graph;
-    private SplitStrategy strategy;
 
     public static Summary createFromGraph(Graph graph){
         Summary s = new Summary(graph);
@@ -23,7 +22,7 @@ public class Summary extends Graph {
         s.getNodes().add(node);
         s.getNodeMapping().put(0, node);
         for (String edgeLabel: edgeLabels){
-            s.getEdges().add(new SummaryEdge(node, node , edgeLabel, graph.getEdges().size()));
+            s.addSEdge(node, node, edgeLabel);
         }
         return s;
     }
@@ -62,15 +61,24 @@ public class Summary extends Graph {
         return result;
     }
 
-    public void split(){
-        strategy.split();
+    public void split(SplitStrategy strategy){
+        strategy.split(this);
+    }
+
+    public void addSEdge(SummaryNode source, SummaryNode target, String label) {
+        SummaryEdge edge = new SummaryEdge(source, target, label);
+        edge.setActual(supportOf(edge));
+        getEdges().add(edge);
+    }
+
+    public long supportOf(SummaryEdge edge){
+        return this.graph.getEdges().stream().filter(e -> e.getLabel().equals(edge.getLabel())
+                && edge.getSSource().getLabels().contains(e.getSource().getLabel())
+                && edge.getSTarget().getLabels().contains(e.getTarget().getLabel())).count();
     }
 
     public Graph getGraph(){
         return graph;
     }
 
-    public void setStrategy(SplitStrategy strategy) {
-        this.strategy = strategy;
-    }
 }
