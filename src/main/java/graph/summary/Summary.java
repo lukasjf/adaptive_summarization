@@ -11,6 +11,8 @@ import org.apache.xmlgraphics.util.dijkstra.Edge;
 import splitstrategies.ExistentialSplitStrategy;
 import splitstrategies.SplitStrategy;
 
+import javax.swing.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -22,6 +24,8 @@ import static guru.nidi.graphviz.model.Factory.*;
  * Created by lukas on 12.03.18.
  */
 public class Summary extends BaseGraph {
+
+    private int LARGE_MEMORY_NUMBER = 160000000;
 
     private BaseGraph baseGraph;
     private SplitStrategy splitStrategy;
@@ -103,16 +107,17 @@ public class Summary extends BaseGraph {
             Node source = mapping.get(edge.getSource());
             Node target = mapping.get(edge.getTarget());
             edgeMapping.get(source).add(to(target).with(Label.of(edge.getLabel())));
-//            g.with(source.link(to(target).with(Label.of(edge.getLabel()))));
         }
-        //Graph g = graph("example1").directed().with(node("a"), node("b"), node("1").link(node("1")));
         Graph g = graph("ex").directed().with(mapping.values().stream().map(node ->
                 node.link(edgeMapping.get(node).toArray(new LinkTarget[edgeMapping.get(node).size()]))).toArray(Node[]::new));
-        try {
-            Graphviz.fromGraph(g).totalMemory(160000000).render(Format.PNG).toFile(new File("ex/ex1.png"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Graphviz viz = Graphviz.fromGraph(g).totalMemory(LARGE_MEMORY_NUMBER);
+        BufferedImage image = viz.render(Format.PNG).toImage();
+        JDialog dialog = new JDialog();
+        dialog.getContentPane().add(new JLabel(new ImageIcon(image)));
+        dialog.setModal(true);
+        dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        dialog.pack();
+        dialog.setVisible(true);
     }
 
     public BaseGraph getBaseGraph(){

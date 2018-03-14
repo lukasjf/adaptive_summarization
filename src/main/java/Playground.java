@@ -29,15 +29,11 @@ public class Playground {
         Summary s = Summary.createFromGraph(g, new ExistentialSplitStrategy());
         result = s.query(q);
         System.out.println(result.size());
-        s.split();
-        System.out.println("Split1");
-        s.split();
-        System.out.println("Split2");
-        s.split();
-        System.out.println("Split3");
-        System.out.println(s.getNodes().size());
-        System.out.println(s.getNodeMapping());
-        System.out.println(s.getEdges().size());
+        for (int i = 0; i < 10; i++){
+            s.draw();
+            System.out.println("split");
+            s.split();
+        }
         s.draw();
     }
 }
