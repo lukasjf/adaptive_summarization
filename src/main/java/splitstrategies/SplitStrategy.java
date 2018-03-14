@@ -14,7 +14,7 @@ public abstract class SplitStrategy {
 
     public abstract void split(Summary summary);
 
-    protected void adjustLabels(Summary summary, SummaryNode splitNode, SummaryNode new1, SummaryNode new2){
+    protected void adjustSummary(Summary summary, SummaryNode splitNode, SummaryNode new1, SummaryNode new2){
         summary.getNodes().remove(splitNode);
         summary.getNodeMapping().remove(splitNode.getId());
         summary.addNode(new1);

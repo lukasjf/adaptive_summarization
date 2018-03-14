@@ -32,6 +32,6 @@ public class RandomSplitStrategy extends SplitStrategy {
             }
         }
 
-        adjustLabels(summary, splitNode, new1, new2);
+        adjustSummary(summary, splitNode, new1, new2);
     }
 }

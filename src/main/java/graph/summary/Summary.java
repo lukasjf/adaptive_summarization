@@ -98,7 +98,6 @@ public class Summary extends BaseGraph {
         Map<BaseNode, Node> mapping = new HashMap<>();
         Map<Node, List<Link>> edgeMapping = new HashMap<>();
         for (BaseNode node: getNodes()){
-            System.out.println(node.toString());
             Node drawingNode = node(node.toString());
             mapping.put(node, drawingNode);
             edgeMapping.put(drawingNode, new ArrayList<>());
