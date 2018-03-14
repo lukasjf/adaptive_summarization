@@ -20,7 +20,7 @@ public class Node {
 
     @Override
     public String toString(){
-        if (label.length() < 25){
+        if (label.length() <= 25){
             return label;
         } else{
             return label.substring(0, 25) + "...";

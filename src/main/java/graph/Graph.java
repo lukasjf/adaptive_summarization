@@ -152,6 +152,9 @@ public class Graph {
     }
 
     public void addNode(Node node){
+        if (nodeMapping.containsKey(node.getId())){
+            nodes.remove(nodeMapping.get(node.getId()));
+        }
         nodeMapping.put(node.getId(), node);
         nodes.add(node);
     }

@@ -15,14 +15,6 @@ public class Edge {
         this.label = label;
     }
 
-    public boolean match(Edge queryEdge){
-        if (queryEdge.label.startsWith("?")){
-            return !label.isEmpty();
-        } else{
-            return label.equals(queryEdge.label);
-        }
-    }
-
     @Override
     public String toString(){
         return label;

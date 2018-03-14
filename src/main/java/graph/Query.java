@@ -9,6 +9,9 @@ import java.util.stream.Collectors;
  */
 public class Query extends Graph {
 
+    public static Query parseFromString(String query){
+        return null;
+    }
 
     public List<String> getVariables(){
         return getNodes().stream().filter(n -> n.getLabel().startsWith("?"))
