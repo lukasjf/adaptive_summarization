@@ -1,15 +1,14 @@
 package graph.summary;
 
-import graph.Node;
+import graph.BaseNode;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * Created by lukas on 12.03.18.
  */
-public class SummaryNode extends Node {
+public class SummaryNode extends BaseNode {
 
     private Set<String> labels;
 
@@ -29,7 +28,7 @@ public class SummaryNode extends Node {
     }
 
     @Override
-    public boolean match(Node queryNode){
+    public boolean match(BaseNode queryNode){
         if (queryNode.getLabel().startsWith("?")){
             return !labels.isEmpty();
         } else{

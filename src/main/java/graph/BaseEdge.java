@@ -3,13 +3,13 @@ package graph;
 /**
  * Created by lukas on 12.03.18.
  */
-public class Edge {
+public class BaseEdge {
 
-    private Node source;
-    private Node target;
+    private BaseNode source;
+    private BaseNode target;
     private String label;
 
-    public Edge(Node source, Node target, String label){
+    public BaseEdge(BaseNode source, BaseNode target, String label){
         this.source = source;
         this.target = target;
         this.label = label;
@@ -25,18 +25,18 @@ public class Edge {
         if (other == null || getClass() != other.getClass()){
             return false;
         } else{
-            Edge otherEdge = (Edge) other;
+            BaseEdge otherEdge = (BaseEdge) other;
             return source.getId() == otherEdge.source.getId()
                     && target.getId() == otherEdge.target.getId()
                     && label.equals(otherEdge.label);
         }
     }
 
-    public Node getSource() {
+    public BaseNode getSource() {
         return source;
     }
 
-    public Node getTarget() {
+    public BaseNode getTarget() {
         return target;
     }
 

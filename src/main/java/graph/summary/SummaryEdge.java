@@ -1,11 +1,11 @@
 package graph.summary;
 
-import graph.Edge;
+import graph.BaseEdge;
 
 /**
  * Created by lukas on 12.03.18.
  */
-public class SummaryEdge extends Edge {
+public class SummaryEdge extends BaseEdge {
 
     private long actual;
 

@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 /**
  * Created by lukas on 12.03.18.
  */
-public class Query extends Graph {
+public class Query extends BaseGraph {
 
     public static Query parseFromString(String query){
         return null;
@@ -15,6 +15,6 @@ public class Query extends Graph {
 
     public List<String> getVariables(){
         return getNodes().stream().filter(n -> n.getLabel().startsWith("?"))
-                .sorted(Comparator.comparingInt(Node::getId)).map(Node::getLabel).collect(Collectors.toList());
+                .sorted(Comparator.comparingInt(BaseNode::getId)).map(BaseNode::getLabel).collect(Collectors.toList());
     }
 }

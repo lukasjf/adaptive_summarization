@@ -1,6 +1,5 @@
 package splitstrategies;
 
-import graph.Node;
 import graph.summary.Summary;
 import graph.summary.SummaryNode;
 

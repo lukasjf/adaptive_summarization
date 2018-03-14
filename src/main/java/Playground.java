@@ -1,13 +1,10 @@
-import graph.Graph;
+import graph.BaseGraph;
 import graph.Query;
 import graph.summary.Summary;
 import splitstrategies.ExistentialSplitStrategy;
-import splitstrategies.RandomSplitStrategy;
 import splitstrategies.SplitStrategy;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by lukas on 12.03.18.
@@ -15,7 +12,7 @@ import java.util.Map;
 public class Playground {
 
     public static void main(String[] args){
-        Graph g = Graph.parseGraph("/home/lukas/studium/thesis/code/data/graph_3");
+        BaseGraph g = BaseGraph.parseGraph("/home/lukas/studium/thesis/code/data/graph_3");
 
         Query q = new Query();
         q.addNode(0, "aut:davide_mottin");
@@ -37,5 +34,6 @@ public class Playground {
         System.out.println(s.getNodes().size());
         System.out.println(s.getNodeMapping());
         System.out.println(s.getEdges().size());
+        s.draw();
     }
 }

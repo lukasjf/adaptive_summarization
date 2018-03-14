@@ -1,6 +1,5 @@
 package splitstrategies;
 
-import graph.Edge;
 import graph.summary.Summary;
 import graph.summary.SummaryEdge;
 import graph.summary.SummaryNode;
@@ -46,7 +45,7 @@ public abstract class SplitStrategy {
     }
 
     public long supportCountFor(Summary summary, SummaryNode source, SummaryNode target, String label){
-        return summary.getGraph().getEdges().stream().filter(e -> label.equals(e.getLabel())
+        return summary.getBaseGraph().getEdges().stream().filter(e -> label.equals(e.getLabel())
                 && source.getLabels().contains(e.getSource().getLabel())
                 && target.getLabels().contains(e.getTarget().getLabel())).count();
     }

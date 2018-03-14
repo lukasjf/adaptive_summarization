@@ -1,6 +1,6 @@
 package graph.summary;
 
-import graph.Graph;
+import graph.BaseGraph;
 import graph.Query;
 import splitstrategies.SplitStrategy;
 
@@ -10,14 +10,14 @@ import java.util.stream.Collectors;
 /**
  * Created by lukas on 12.03.18.
  */
-public class Summary extends Graph {
+public class Summary extends BaseGraph {
 
-    private Graph graph;
+    private BaseGraph baseGraph;
 
-    public static Summary createFromGraph(Graph graph){
-        Summary s = new Summary(graph);
-        List<String> nodeLabels = graph.getNodes().stream().map(n -> n.getLabel()).collect(Collectors.toList());
-        Set<String> edgeLabels = graph.getEdges().stream().map(e -> e.getLabel()).collect(Collectors.toSet());
+    public static Summary createFromGraph(BaseGraph baseGraph){
+        Summary s = new Summary(baseGraph);
+        List<String> nodeLabels = baseGraph.getNodes().stream().map(n -> n.getLabel()).collect(Collectors.toList());
+        Set<String> edgeLabels = baseGraph.getEdges().stream().map(e -> e.getLabel()).collect(Collectors.toSet());
         SummaryNode node = new SummaryNode(0, new HashSet<>(nodeLabels));
         s.getNodes().add(node);
         s.getNodeMapping().put(0, node);
@@ -27,9 +27,9 @@ public class Summary extends Graph {
         return s;
     }
 
-    public Summary(Graph graph) {
+    public Summary(BaseGraph baseGraph) {
         super();
-        this.graph = graph;
+        this.baseGraph = baseGraph;
     }
 
     @Override
@@ -72,13 +72,17 @@ public class Summary extends Graph {
     }
 
     public long supportOf(SummaryEdge edge){
-        return this.graph.getEdges().stream().filter(e -> e.getLabel().equals(edge.getLabel())
+        return this.baseGraph.getEdges().stream().filter(e -> e.getLabel().equals(edge.getLabel())
                 && edge.getSSource().getLabels().contains(e.getSource().getLabel())
                 && edge.getSTarget().getLabels().contains(e.getTarget().getLabel())).count();
     }
 
-    public Graph getGraph(){
-        return graph;
+    public void draw(){
+
+    }
+
+    public BaseGraph getBaseGraph(){
+        return baseGraph;
     }
 
 }

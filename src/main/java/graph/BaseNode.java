@@ -6,14 +6,14 @@ import java.util.Set;
 /**
  * Created by lukas on 12.03.18.
  */
-public class Node {
+public class BaseNode {
 
     private int id;
     private String label;
-    private Set<Edge> outEdges = new HashSet<>();
-    private Set<Edge> inEdges = new HashSet<>();
+    private Set<BaseEdge> outEdges = new HashSet<>();
+    private Set<BaseEdge> inEdges = new HashSet<>();
 
-    public Node(int id, String label){
+    public BaseNode(int id, String label){
         this.id = id;
         this.label = label;
     }
@@ -32,7 +32,7 @@ public class Node {
         if (other == null || other.getClass() != getClass()){
             return false;
         } else{
-            Node otherNode = (Node) other;
+            BaseNode otherNode = (BaseNode) other;
             return id == otherNode.id;
         }
     }
@@ -41,7 +41,7 @@ public class Node {
         return label.startsWith("?");
     }
 
-    public boolean match(Node queryNode){
+    public boolean match(BaseNode queryNode){
         if (queryNode.label.startsWith("?")){
             return !label.isEmpty();
         } else{
@@ -57,11 +57,11 @@ public class Node {
         return label;
     }
 
-    public Set<Edge> getOutEdges() {
+    public Set<BaseEdge> getOutEdges() {
         return outEdges;
     }
 
-    public Set<Edge> getInEdges() {
+    public Set<BaseEdge> getInEdges() {
         return inEdges;
     }
 }

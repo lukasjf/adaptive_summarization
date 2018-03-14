@@ -23,12 +23,12 @@ public class ExistentialSplitStrategy extends SplitStrategy{
         SummaryEdge criticalEdge = summary.getEdges().stream().map(e -> (SummaryEdge) e)
                 .min(Comparator.comparingDouble(SummaryEdge::getSupport)).get();
 
-        List<String> trueSourceLabels = summary.getGraph().getEdges().stream().filter(e ->
+        List<String> trueSourceLabels = summary.getBaseGraph().getEdges().stream().filter(e ->
                 e.getLabel().equals(criticalEdge.getLabel())
                 && criticalEdge.getSTarget().getLabels().contains(e.getTarget().getLabel()))
             .map(e -> e.getSource().getLabel()).collect(Collectors.toList());
 
-        List<String> trueTargetLabels = summary.getGraph().getEdges().stream().filter(e ->
+        List<String> trueTargetLabels = summary.getBaseGraph().getEdges().stream().filter(e ->
                 e.getLabel().equals(criticalEdge.getLabel())
                 && criticalEdge.getSSource().getLabels().contains(e.getSource().getLabel()))
             .map(e -> e.getTarget().getLabel()).collect(Collectors.toList());
