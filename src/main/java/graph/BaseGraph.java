@@ -13,6 +13,10 @@ public class BaseGraph {
     private HashMap<Integer, BaseNode> nodeMapping = new HashMap<>(30000);
     private Set<BaseEdge> edges= new HashSet<>(50000);
 
+    private HashMap<String, List<BaseEdge>> inIndex = new HashMap<>(30000);
+    private HashMap<String, List<BaseEdge>> outIndex = new HashMap<>(30000);
+
+
     static public BaseGraph parseGraph(String filename){
         BaseGraph g = new BaseGraph();
         try (BufferedReader br = new BufferedReader(new FileReader(new File(filename)))){
@@ -157,11 +161,15 @@ public class BaseGraph {
         }
         nodeMapping.put(node.getId(), node);
         nodes.add(node);
+        inIndex.put(node.getLabel(), new ArrayList<>());
+        outIndex.put(node.getLabel(), new ArrayList<>());
     }
 
     public void addEdge(int source, int target, String label){
         BaseEdge e = new BaseEdge(nodeMapping.get(source), nodeMapping.get(target), label);
         edges.add(e);
+        inIndex.get(nodeMapping.get(source).getLabel()).add(e);
+        outIndex.get(nodeMapping.get(target).getLabel()).add(e);
     }
 
 
@@ -177,4 +185,11 @@ public class BaseGraph {
         return edges;
     }
 
+    public HashMap<String, List<BaseEdge>> getInIndex() {
+        return inIndex;
+    }
+
+    public HashMap<String, List<BaseEdge>> getOutIndex() {
+        return outIndex;
+    }
 }

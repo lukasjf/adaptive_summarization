@@ -39,20 +39,20 @@ public class ExistentialSplitStrategy extends SplitStrategy{
                 .count() / 1.0 / criticalEdge.getSTarget().size();
 
         SummaryNode splitNode;
-        boolean splitSource;
+        boolean isSource;
 
         if (sourceSupport <= targetSupport){
             splitNode = criticalEdge.getSSource();
-            splitSource = true;
+            isSource = true;
         } else{
             splitNode = criticalEdge.getSTarget();
-            splitSource = false;
+            isSource = false;
         }
 
         Set<String> nodesWithEdge= new HashSet<>();
         Set<String> nodesWithoutEdge = new HashSet<>();
 
-        if (splitSource){
+        if (isSource){
             for (String label: splitNode.getLabels()){
                 if (trueSourceLabels.contains(label)){
                     nodesWithEdge.add(label);

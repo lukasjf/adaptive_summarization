@@ -3,6 +3,7 @@ import graph.Query;
 import graph.summary.Summary;
 import splitstrategies.ExistentialSplitStrategy;
 import splitstrategies.SplitStrategy;
+import splitstrategies.VarianceSplitStrategy;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class Playground {
             System.out.println(l);
         }
 
-        Summary s = Summary.createFromGraph(g, new ExistentialSplitStrategy());
+        Summary s = Summary.createFromGraph(g, new VarianceSplitStrategy());
         result = s.query(q);
         System.out.println(result.size());
         for (int i = 0; i < 10; i++){
