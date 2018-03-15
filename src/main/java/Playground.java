@@ -31,10 +31,10 @@ public class Playground {
         result = s.query(q);
         System.out.println(result.size());
         for (int i = 0; i < 10; i++){
-            s.draw();
             System.out.println("split");
             s.split();
+            System.out.println(s.measure(q));
+            s.draw();
         }
-        s.draw();
     }
 }

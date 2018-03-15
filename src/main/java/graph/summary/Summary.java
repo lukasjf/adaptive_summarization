@@ -78,6 +78,27 @@ public class Summary extends BaseGraph {
         return result;
     }
 
+    public double measure(Query query){
+        int truePositives = 0, falsePositives = 0, falseNegatives = 0;
+        List<List<String>> summaryResults = query(query);
+        List<List<String>> graphResults = getBaseGraph().query(query);
+        for (List<String> result: summaryResults){
+            if (graphResults.contains(result)){
+                truePositives++;
+            } else{
+                falsePositives++;
+            }
+        }
+        for (List<String> result: graphResults){
+            if (!summaryResults.contains(result)){
+                falseNegatives++;
+            }
+        }
+        double precision = truePositives * 1.0 / (truePositives + falsePositives);
+        double recall = truePositives * 1.0 / (truePositives + falseNegatives);
+        return 2 * precision * recall / (precision + recall);
+    }
+
     public void split(){
         this.splitStrategy.split(this);
     }
