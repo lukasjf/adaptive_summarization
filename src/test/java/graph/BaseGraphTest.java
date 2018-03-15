@@ -42,12 +42,21 @@ public class BaseGraphTest {
 
     @Test
     public void testQuery(){
-        Query query = new Query();
+        BaseGraph query = new BaseGraph();
         query.addNode(new BaseNode(0, "?"));
         query.addNode(new BaseNode(1, "label2"));
         query.addEdge(0, 1, "edge1");
         List<List<String>> result = baseGraph.query(query);
         assertTrue(result.contains(Collections.singletonList("label1")));
         assertTrue(result.contains(Collections.singletonList("label5")));
+    }
+
+    @Test
+    public void testGetVariables(){
+        BaseGraph query = new BaseGraph();
+        query.addNode(0, "?");
+        query.addNode(1, "label");
+        assertEquals(1 , query.getVariables().size());
+        assertEquals("?", query.getVariables().get(0));
     }
 }

@@ -1,8 +1,5 @@
 import graph.BaseGraph;
-import graph.Query;
 import graph.summary.Summary;
-import splitstrategies.ExistentialSplitStrategy;
-import splitstrategies.SplitStrategy;
 import splitstrategies.VarianceSplitStrategy;
 
 import java.util.List;
@@ -13,9 +10,9 @@ import java.util.List;
 public class Playground {
 
     public static void main(String[] args){
-        BaseGraph g = BaseGraph.parseGraph("/home/lukas/studium/thesis/code/data/graph_3");
+        BaseGraph g = BaseGraph.parseGraph("/home/lukas/studium/thesis/code/data/citation/graph_3");
 
-        Query q = new Query();
+        BaseGraph q = new BaseGraph();
         q.addNode(0, "aut:davide_mottin");
         q.addNode(1, "?");
         //q.addNode(2, "?2");
@@ -27,9 +24,12 @@ public class Playground {
             System.out.println(l);
         }
 
+        result = g.query(BaseGraph.parseGraph("/home/lukas/studium/thesis/code/data/citation/query1"));
+        for (List<String> l: result){
+            System.out.println(l);
+        }
+
         Summary s = Summary.createFromGraph(g, new VarianceSplitStrategy());
-        result = s.query(q);
-        System.out.println(result.size());
         for (int i = 0; i < 10; i++){
             System.out.println("split");
             s.split();

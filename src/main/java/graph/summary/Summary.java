@@ -3,18 +3,13 @@ package graph.summary;
 import graph.BaseEdge;
 import graph.BaseGraph;
 import graph.BaseNode;
-import graph.Query;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.model.*;
-import org.apache.xmlgraphics.util.dijkstra.Edge;
-import splitstrategies.ExistentialSplitStrategy;
 import splitstrategies.SplitStrategy;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,7 +45,7 @@ public class Summary extends BaseGraph {
     }
 
     @Override
-    public List<List<String>> query(Query query){
+    public List<List<String>> query(BaseGraph query){
         List<List<String>> raw = super.query(query);
         List<List<String>> result = new ArrayList<>();
         List<String> variables = query.getVariables();
@@ -78,7 +73,7 @@ public class Summary extends BaseGraph {
         return result;
     }
 
-    public double measure(Query query){
+    public double measure(BaseGraph query){
         int truePositives = 0, falsePositives = 0, falseNegatives = 0;
         List<List<String>> summaryResults = query(query);
         List<List<String>> graphResults = getBaseGraph().query(query);

@@ -2,6 +2,7 @@ package graph;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -45,6 +46,11 @@ public class BaseGraph {
         return g;
     }
 
+    public List<String> getVariables(){
+        return getNodes().stream().filter(n -> n.getLabel().startsWith("?"))
+                .sorted(Comparator.comparingInt(BaseNode::getId)).map(BaseNode::getLabel).collect(Collectors.toList());
+    }
+
     private long candidateCount(BaseEdge queryEdge){
         return candidateEdges(queryEdge).count();
     }
@@ -56,7 +62,7 @@ public class BaseGraph {
                 && e.getLabel().equals(queryEdge.getLabel()));
     }
 
-    public List<List<String>> query(Query query){
+    public List<List<String>> query(BaseGraph query){
         List<List<String>> result = new ArrayList<>();
         List<Map<String, String>> res = new ArrayList<>();
         List<BaseEdge> queryEdges = new ArrayList<>(query.getEdges());
