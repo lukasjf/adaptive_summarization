@@ -26,6 +26,9 @@ public class BaseGraph {
                 if (line.trim().isEmpty()){
                     continue;
                 }
+                if (line.startsWith("#")){
+                    continue;
+                }
                 String[] token = line.split(" ");
                 if (token[0].equals("v")){
                     int id = Integer.parseInt(token[1]);
@@ -130,9 +133,8 @@ public class BaseGraph {
 
     private List<Map<String,String>> querySource(List<BaseEdge> queryEdges, BaseEdge queryEdge, Map<BaseNode, BaseNode> match) {
         List<Map<String, String>> results = new ArrayList<>();
-        Stream<BaseEdge> candidates = edges.stream().filter(e ->
-                e.getLabel().equals(queryEdge.getLabel())
-                && e.getSource() == match.get(queryEdge.getSource()));
+        Stream<BaseEdge> candidates = outIndex.get(match.get(queryEdge.getSource()).getLabel()).stream().filter(e ->
+                e.getLabel().equals(queryEdge.getLabel()));
         candidates.forEach(e -> {
             HashMap<BaseNode, BaseNode> newMatch = new HashMap<>(match);
             newMatch.put(queryEdge.getTarget(), e.getTarget());
@@ -143,9 +145,8 @@ public class BaseGraph {
 
     private List<Map<String,String>> queryTarget(List<BaseEdge> queryEdges, BaseEdge queryEdge, Map<BaseNode, BaseNode> match) {
         List<Map<String, String>> results = new ArrayList<>();
-        Stream<BaseEdge> candidates = edges.stream().filter(e ->
-                e.getLabel().equals(queryEdge.getLabel())
-                && e.getTarget() == match.get(queryEdge.getTarget()));
+        Stream<BaseEdge> candidates = inIndex.get(match.get(queryEdge.getTarget()).getLabel()).stream().filter(e ->
+                e.getLabel().equals(queryEdge.getLabel()));
         candidates.forEach(e -> {
             HashMap<BaseNode, BaseNode> newMatch = new HashMap<>(match);
             newMatch.put(queryEdge.getSource(), e.getSource());
@@ -174,8 +175,8 @@ public class BaseGraph {
     public void addEdge(int source, int target, String label){
         BaseEdge e = new BaseEdge(nodeMapping.get(source), nodeMapping.get(target), label);
         edges.add(e);
-        inIndex.get(nodeMapping.get(source).getLabel()).add(e);
-        outIndex.get(nodeMapping.get(target).getLabel()).add(e);
+        inIndex.get(nodeMapping.get(target).getLabel()).add(e);
+        outIndex.get(nodeMapping.get(source).getLabel()).add(e);
     }
 
 

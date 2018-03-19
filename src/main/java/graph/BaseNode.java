@@ -10,8 +10,6 @@ public class BaseNode {
 
     private int id;
     private String label;
-    private Set<BaseEdge> outEdges = new HashSet<>();
-    private Set<BaseEdge> inEdges = new HashSet<>();
 
     public BaseNode(int id, String label){
         this.id = id;
@@ -57,11 +55,7 @@ public class BaseNode {
         return label;
     }
 
-    public Set<BaseEdge> getOutEdges() {
-        return outEdges;
-    }
-
-    public Set<BaseEdge> getInEdges() {
-        return inEdges;
+    public void setLabel(String label) {
+        this.label = label;
     }
 }

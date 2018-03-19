@@ -1,3 +1,5 @@
+package main;
+
 import graph.BaseGraph;
 import graph.summary.Summary;
 import splitstrategies.VarianceSplitStrategy;
@@ -24,12 +26,15 @@ public class Playground {
             System.out.println(l);
         }
 
-        result = g.query(BaseGraph.parseGraph("/home/lukas/studium/thesis/code/data/citation/query1"));
+        result = g.query(BaseGraph.parseGraph("/home/lukas/studium/thesis/code/data/citation/queries/query5"));
         for (List<String> l: result){
             System.out.println(l);
         }
 
         Summary s = Summary.createFromGraph(g, new VarianceSplitStrategy());
+        for (int i = 0; i < 5; i++){
+            s.split();
+        }
         for (int i = 0; i < 10; i++){
             System.out.println("split");
             s.split();
