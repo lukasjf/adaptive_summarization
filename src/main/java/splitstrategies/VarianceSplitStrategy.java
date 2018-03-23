@@ -27,29 +27,24 @@ public class VarianceSplitStrategy extends SplitStrategy {
         Map<String, Long> targetConns = new HashMap<>();
 
         for (String label: criticalEdge.getSSource().getLabels()){
-            long connectivity = summary.getBaseGraph().getInIndex().get(label).stream()
+            long connectivity = summary.getBaseGraph().getOutIndex().get(summary.getBaseGraph().getLabelMapping().get(label)).stream()
                     .filter(e -> e.getLabel().equals(criticalEdge.getLabel())
                     && criticalEdge.getSTarget().getLabels().contains(e.getTarget().getLabel())).count();
             sourceConns.put(label, connectivity);
         }
         for (String label: criticalEdge.getSTarget().getLabels()) {
-            long connectivity = summary.getBaseGraph().getOutIndex().get(label).stream()
+            long connectivity = summary.getBaseGraph().getInIndex().get(summary.getBaseGraph().getLabelMapping().get(label)).stream()
                     .filter(e -> e.getLabel().equals(criticalEdge.getLabel())
                     && criticalEdge.getSSource().getLabels().contains(e.getSource().getLabel())).count();
             targetConns.put(label, connectivity);
         }
 
 
-        if (sourceConns.values().contains(0L) || targetConns.values().contains(0L)){
-            System.out.println("do existential split");
-            new ExistentialSplitStrategy().split(summary);
-            return;
-        }
-
-        // TODO Difference by one
-        System.out.println("Count " + actual);
-        System.out.println("Source " + sourceConns.values().stream().mapToLong(Long::longValue).sum());
-        System.out.println("Target " + targetConns.values().stream().mapToLong(Long::longValue).sum());
+//        if (sourceConns.values().contains(0L) || targetConns.values().contains(0L)){
+//            System.out.println("do existential split");
+//            new ExistentialSplitStrategy().split(summary);
+//            return;
+//        }
 
         double sourceMean, sourceVariance;
         double targetMean, targetVariance;
@@ -63,7 +58,10 @@ public class VarianceSplitStrategy extends SplitStrategy {
         targetVariance = targetConns.values().stream().map(l -> (l - targetMean) * (l - targetMean))
                 .mapToDouble(Double::doubleValue).sum();
 
-        System.out.println(sourceVariance + "    " + targetVariance);
+//        System.out.println(criticalEdge.getSSource().size() + "    " + criticalEdge.getSTarget().size());
+//        System.out.println(String.format("%f.3(%d,%d)    + %f.3(%d,%d)",
+//                sourceVariance, Collections.max(sourceConns.values()), Collections.min(sourceConns.values()),
+//                targetVariance, Collections.max(targetConns.values()), Collections.min(targetConns.values())));
 
         SummaryNode splitNode;
         Set<String> new1 = new HashSet<>();
@@ -74,7 +72,7 @@ public class VarianceSplitStrategy extends SplitStrategy {
             long minConn = sourceConns.values().stream().min(Long::compare).get();
             long maxConn = sourceConns.values().stream().max(Long::compare).get();
             for (String label: sourceConns.keySet()){
-                if (maxConn - sourceConns.get(label) < sourceConns.get(label) - minConn){
+                if (maxConn - sourceConns.get(label) <= sourceConns.get(label) - minConn){
                     new1.add(label);
                 } else{
                     new2.add(label);

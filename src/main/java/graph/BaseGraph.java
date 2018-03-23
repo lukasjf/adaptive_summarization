@@ -10,12 +10,15 @@ import java.util.stream.Stream;
  */
 public class BaseGraph {
 
+    private static int DEDUPLICATE_COUNTER = 0;
+
     private Set<BaseNode> nodes = new HashSet<>(30000);
     private HashMap<Integer, BaseNode> nodeMapping = new HashMap<>(30000);
+    private HashMap<String, BaseNode> labelMapping = new HashMap<>(30000);
     private Set<BaseEdge> edges= new HashSet<>(50000);
 
-    private HashMap<String, List<BaseEdge>> inIndex = new HashMap<>(30000);
-    private HashMap<String, List<BaseEdge>> outIndex = new HashMap<>(30000);
+    private HashMap<BaseNode, List<BaseEdge>> inIndex = new HashMap<>(30000);
+    private HashMap<BaseNode, List<BaseEdge>> outIndex = new HashMap<>(30000);
 
 
     static public BaseGraph parseGraph(String filename){
@@ -133,7 +136,7 @@ public class BaseGraph {
 
     private List<Map<String,String>> querySource(List<BaseEdge> queryEdges, BaseEdge queryEdge, Map<BaseNode, BaseNode> match) {
         List<Map<String, String>> results = new ArrayList<>();
-        Stream<BaseEdge> candidates = outIndex.get(match.get(queryEdge.getSource()).getLabel()).stream().filter(e ->
+        Stream<BaseEdge> candidates = outIndex.get(match.get(queryEdge.getSource())).stream().filter(e ->
                 e.getLabel().equals(queryEdge.getLabel()));
         candidates.forEach(e -> {
             HashMap<BaseNode, BaseNode> newMatch = new HashMap<>(match);
@@ -145,7 +148,7 @@ public class BaseGraph {
 
     private List<Map<String,String>> queryTarget(List<BaseEdge> queryEdges, BaseEdge queryEdge, Map<BaseNode, BaseNode> match) {
         List<Map<String, String>> results = new ArrayList<>();
-        Stream<BaseEdge> candidates = inIndex.get(match.get(queryEdge.getTarget()).getLabel()).stream().filter(e ->
+        Stream<BaseEdge> candidates = inIndex.get(match.get(queryEdge.getTarget())).stream().filter(e ->
                 e.getLabel().equals(queryEdge.getLabel()));
         candidates.forEach(e -> {
             HashMap<BaseNode, BaseNode> newMatch = new HashMap<>(match);
@@ -166,17 +169,21 @@ public class BaseGraph {
         if (nodeMapping.containsKey(node.getId())){
             nodes.remove(nodeMapping.get(node.getId()));
         }
+        while (labelMapping.containsKey(node.getLabel())){
+            node.setLabel(node.getLabel() + DEDUPLICATE_COUNTER++);
+        }
         nodeMapping.put(node.getId(), node);
+        labelMapping.put(node.getLabel(), node);
         nodes.add(node);
-        inIndex.put(node.getLabel(), new ArrayList<>());
-        outIndex.put(node.getLabel(), new ArrayList<>());
+        inIndex.put(node, new ArrayList<>());
+        outIndex.put(node, new ArrayList<>());
     }
 
     public void addEdge(int source, int target, String label){
         BaseEdge e = new BaseEdge(nodeMapping.get(source), nodeMapping.get(target), label);
         edges.add(e);
-        inIndex.get(nodeMapping.get(target).getLabel()).add(e);
-        outIndex.get(nodeMapping.get(source).getLabel()).add(e);
+        inIndex.get(nodeMapping.get(target)).add(e);
+        outIndex.get(nodeMapping.get(source)).add(e);
     }
 
 
@@ -188,15 +195,19 @@ public class BaseGraph {
         return nodeMapping;
     }
 
+    public HashMap<String, BaseNode> getLabelMapping() {
+        return labelMapping;
+    }
+
     public Set<BaseEdge> getEdges() {
         return edges;
     }
 
-    public HashMap<String, List<BaseEdge>> getInIndex() {
+    public HashMap<BaseNode, List<BaseEdge>> getInIndex() {
         return inIndex;
     }
 
-    public HashMap<String, List<BaseEdge>> getOutIndex() {
+    public HashMap<BaseNode, List<BaseEdge>> getOutIndex() {
         return outIndex;
     }
 }

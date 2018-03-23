@@ -38,8 +38,8 @@ public class QueryGenerator {
 
                 int startIndex = random.nextInt(graph.getNodeMapping().size());
                 BaseNode startNode = graph.getNodeMapping().get(startIndex);
-                candidates.addAll(graph.getInIndex().get(startNode.getLabel()));
-                candidates.addAll(graph.getInIndex().get(startNode.getLabel()));
+                candidates.addAll(graph.getInIndex().get(startNode));
+                candidates.addAll(graph.getInIndex().get(startNode));
                 if (candidates.isEmpty()){
                     i--;
                     System.out.println("#");
@@ -98,12 +98,6 @@ public class QueryGenerator {
                 continue;
             }
             if (i == variableIndex || random.nextDouble() < 1.0 / query.getEdges().size()){
-                String oldLabel = nodes.get(i).getLabel();
-                String newLabel = "?" + variableCounter++;
-                List<BaseEdge> inEdges = query.getInIndex().remove(oldLabel);
-                query.getInIndex().put(newLabel, inEdges);
-                List<BaseEdge> outEdges = query.getOutIndex().remove(oldLabel);
-                query.getOutIndex().put(newLabel, outEdges);
                 nodes.get(i).setLabel("?" + variableCounter++);
             }
         }
@@ -112,6 +106,9 @@ public class QueryGenerator {
     private void serializeQuery(BaseGraph query) {
         int nodeCounter = 0;
         int resultSize = graph.query(query).size();
+        if (resultSize > 1000){
+            return;
+        }
         System.out.println(resultSize);
         Map<BaseNode, Integer> nodeIDs = new HashMap<>();
         try(PrintStream queryFile = new PrintStream(new File(dataDir + "queries/query" + queryCounter++))){

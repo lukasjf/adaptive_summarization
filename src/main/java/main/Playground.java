@@ -2,8 +2,10 @@ package main;
 
 import graph.BaseGraph;
 import graph.summary.Summary;
+import splitstrategies.ExistentialSplitStrategy;
 import splitstrategies.VarianceSplitStrategy;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -11,35 +13,30 @@ import java.util.List;
  */
 public class Playground {
 
+    public static double runBenchmark(Summary s, File[] queries){
+        double precision = 0.0;
+        for (File f: queries){
+            BaseGraph q = BaseGraph.parseGraph(f.getAbsolutePath());
+            System.out.println(f.getAbsolutePath());
+            precision += s.measure(q);
+        }
+        return precision / queries.length;
+    }
+
     public static void main(String[] args){
-        BaseGraph g = BaseGraph.parseGraph("/home/lukas/studium/thesis/code/data/citation/graph_3");
+        BaseGraph graph = BaseGraph.parseGraph("/home/lukas/studium/thesis/code/data/citation/graph_3");
 
-        BaseGraph q = new BaseGraph();
-        q.addNode(0, "aut:davide_mottin");
-        q.addNode(1, "?");
-        //q.addNode(2, "?2");
-        q.addEdge(0, 1 , "works_at");
-        //q.addEdge(0, 2, "collaborate");
-
-        List<List<String>> result = g.query(q);
-        for (List<String> l: result){
-            System.out.println(l);
-        }
-
-        result = g.query(BaseGraph.parseGraph("/home/lukas/studium/thesis/code/data/citation/queries/query5"));
-        for (List<String> l: result){
-            System.out.println(l);
-        }
-
-        Summary s = Summary.createFromGraph(g, new VarianceSplitStrategy());
-        for (int i = 0; i < 5; i++){
+        Summary s = Summary.createFromGraph(graph, new VarianceSplitStrategy());
+        for (int i = 0; i < 50; i++){
             s.split();
+            System.out.println("split" + i);
         }
-        for (int i = 0; i < 10; i++){
-            System.out.println("split");
+
+        File queryDir = new File("/home/lukas/studium/thesis/code/data/citation/queries");
+        for (int i = 0; i < 50; i++) {
+            System.out.println(Playground.runBenchmark(s, queryDir.listFiles()));
             s.split();
-            System.out.println(s.measure(q));
-            s.draw();
+
         }
     }
 }

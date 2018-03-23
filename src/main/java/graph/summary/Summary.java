@@ -27,11 +27,10 @@ public class Summary extends BaseGraph {
 
     public static Summary createFromGraph(BaseGraph baseGraph, SplitStrategy splitStrategy){
         Summary s = new Summary(baseGraph, splitStrategy);
-        List<String> nodeLabels = baseGraph.getNodes().stream().map(n -> n.getLabel()).collect(Collectors.toList());
-        Set<String> edgeLabels = baseGraph.getEdges().stream().map(e -> e.getLabel()).collect(Collectors.toSet());
+        List<String> nodeLabels = baseGraph.getNodes().stream().map(BaseNode::getLabel).collect(Collectors.toList());
+        Set<String> edgeLabels = baseGraph.getEdges().stream().map(BaseEdge::getLabel).collect(Collectors.toSet());
         SummaryNode node = new SummaryNode(0, new HashSet<>(nodeLabels));
-        s.getNodes().add(node);
-        s.getNodeMapping().put(0, node);
+        s.addNode(node);
         for (String edgeLabel: edgeLabels){
             s.addSEdge(node, node, edgeLabel);
         }
@@ -102,6 +101,8 @@ public class Summary extends BaseGraph {
         SummaryEdge edge = new SummaryEdge(source, target, label);
         edge.setActual(supportOf(edge));
         getEdges().add(edge);
+        getOutIndex().get(source).add(edge);
+        getInIndex().get(target).add(edge);
     }
 
     public long supportOf(SummaryEdge edge){

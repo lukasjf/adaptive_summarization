@@ -17,6 +17,9 @@ public abstract class SplitStrategy {
     protected void adjustSummary(Summary summary, SummaryNode splitNode, SummaryNode new1, SummaryNode new2){
         summary.getNodes().remove(splitNode);
         summary.getNodeMapping().remove(splitNode.getId());
+        summary.getLabelMapping().remove(splitNode.getLabel());
+        summary.getInIndex().remove(splitNode);
+        summary.getOutIndex().remove(splitNode);
         summary.addNode(new1);
         summary.addNode(new2);
         List<SummaryEdge> toDoEdges = summary.getEdges().stream().map(e -> (SummaryEdge) e)

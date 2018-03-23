@@ -4,10 +4,7 @@ import graph.summary.Summary;
 import graph.summary.SummaryEdge;
 import graph.summary.SummaryNode;
 
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -23,19 +20,25 @@ public class ExistentialSplitStrategy extends SplitStrategy{
         SummaryEdge criticalEdge = summary.getEdges().stream().map(e -> (SummaryEdge) e)
                 .min(Comparator.comparingDouble(SummaryEdge::getSupport)).get();
 
-        List<String> trueSourceLabels = summary.getBaseGraph().getEdges().stream().filter(e ->
-                e.getLabel().equals(criticalEdge.getLabel())
-                && criticalEdge.getSTarget().getLabels().contains(e.getTarget().getLabel()))
-            .map(e -> e.getSource().getLabel()).collect(Collectors.toList());
+        Map<String, Long> sourceConns = new HashMap<>();
+        Map<String, Long> targetConns = new HashMap<>();
 
-        List<String> trueTargetLabels = summary.getBaseGraph().getEdges().stream().filter(e ->
-                e.getLabel().equals(criticalEdge.getLabel())
-                && criticalEdge.getSSource().getLabels().contains(e.getSource().getLabel()))
-            .map(e -> e.getTarget().getLabel()).collect(Collectors.toList());
+        for (String label: criticalEdge.getSSource().getLabels()){
+            long connectivity = summary.getBaseGraph().getOutIndex().get(summary.getBaseGraph().getLabelMapping().get(label)).stream()
+                    .filter(e -> e.getLabel().equals(criticalEdge.getLabel())
+                            && criticalEdge.getSTarget().getLabels().contains(e.getTarget().getLabel())).count();
+            sourceConns.put(label, connectivity);
+        }
+        for (String label: criticalEdge.getSTarget().getLabels()) {
+            long connectivity = summary.getBaseGraph().getInIndex().get(summary.getBaseGraph().getLabelMapping().get(label)).stream()
+                    .filter(e -> e.getLabel().equals(criticalEdge.getLabel())
+                            && criticalEdge.getSSource().getLabels().contains(e.getSource().getLabel())).count();
+            targetConns.put(label, connectivity);
+        }
 
-        double sourceSupport = criticalEdge.getSSource().getLabels().stream().filter(trueSourceLabels::contains)
+        double sourceSupport = criticalEdge.getSSource().getLabels().stream().filter(l -> sourceConns.get(l) > 0)
                 .count() / 1.0 / criticalEdge.getSSource().size();
-        double targetSupport = criticalEdge.getSTarget().getLabels().stream().filter(trueTargetLabels::contains)
+        double targetSupport = criticalEdge.getSTarget().getLabels().stream().filter(l -> targetConns.get(l) > 0)
                 .count() / 1.0 / criticalEdge.getSTarget().size();
 
         SummaryNode splitNode;
@@ -54,7 +57,7 @@ public class ExistentialSplitStrategy extends SplitStrategy{
 
         if (isSource){
             for (String label: splitNode.getLabels()){
-                if (trueSourceLabels.contains(label)){
+                if (sourceConns.get(label) > 0L){
                     nodesWithEdge.add(label);
                 } else{
                     nodesWithoutEdge.add(label);
@@ -62,7 +65,7 @@ public class ExistentialSplitStrategy extends SplitStrategy{
             }
         } else{
             for (String label: splitNode.getLabels()){
-                if (trueTargetLabels.contains(label)){
+                if (targetConns.get(label) > 0L){
                     nodesWithEdge.add(label);
                 } else{
                     nodesWithoutEdge.add(label);
