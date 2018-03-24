@@ -1,5 +1,6 @@
 package splitstrategies;
 
+import graph.BaseEdge;
 import graph.summary.Summary;
 import graph.summary.SummaryEdge;
 import graph.summary.SummaryNode;
@@ -16,11 +17,21 @@ public abstract class SplitStrategy implements Serializable {
     public abstract void split(Summary summary);
 
     protected void adjustSummary(Summary summary, SummaryNode splitNode, SummaryNode new1, SummaryNode new2){
+
+        if (new1.size() == 0 || new2.size() == 0) {
+            System.err.println("Split did not work, empty Node created");
+            return;
+        }
+
         summary.getNodes().remove(splitNode);
         summary.getNodeMapping().remove(splitNode.getId());
         summary.getLabelMapping().remove(splitNode.getLabel());
-        summary.getInIndex().remove(splitNode);
-        summary.getOutIndex().remove(splitNode);
+        for (BaseEdge e : summary.getInIndex().remove(splitNode)){
+            summary.getOutIndex().get(e.getSource()).remove(e);
+        }
+        for (BaseEdge e : summary.getOutIndex().remove(splitNode)){
+            summary.getInIndex().get(e.getTarget()).remove(e);
+        }
         summary.addNode(new1);
         summary.addNode(new2);
         List<SummaryEdge> toDoEdges = summary.getEdges().stream().map(e -> (SummaryEdge) e)

@@ -75,10 +75,6 @@ public class ExistentialSplitStrategy extends SplitStrategy{
 
         SummaryNode new1 = new SummaryNode(splitNode.getId(), nodesWithEdge);
         SummaryNode new2 = new SummaryNode(newNodeId, nodesWithoutEdge);
-        if (new1.size() > 0 && new2.size() > 0){
-            adjustSummary(summary, splitNode, new1, new2);
-        } else{
-            System.err.println("Split did not work, empty Node created");
-        }
+        adjustSummary(summary, splitNode, new1, new2);
     }
 }
