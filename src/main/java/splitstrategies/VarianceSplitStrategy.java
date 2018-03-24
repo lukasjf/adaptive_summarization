@@ -19,10 +19,6 @@ public class VarianceSplitStrategy extends SplitStrategy {
         SummaryEdge criticalEdge = summary.getEdges().stream().map(e -> (SummaryEdge) e)
                 .min(Comparator.comparingDouble(SummaryEdge::getSupport)).get();
 
-        System.out.println(criticalEdge.getLabel());
-        System.out.println(criticalEdge.getSSource() + "  ,   " + criticalEdge.getSTarget());
-        long actual = criticalEdge.getActual();
-
         Map<String, Long> sourceConns = new HashMap<>();
         Map<String, Long> targetConns = new HashMap<>();
 
@@ -58,6 +54,8 @@ public class VarianceSplitStrategy extends SplitStrategy {
         targetVariance = targetConns.values().stream().map(l -> (l - targetMean) * (l - targetMean))
                 .mapToDouble(Double::doubleValue).sum();
 
+//        System.out.println(criticalEdge.getLabel());
+//        System.out.println(criticalEdge.getSSource() + "  ,   " + criticalEdge.getSTarget());
 //        System.out.println(criticalEdge.getSSource().size() + "    " + criticalEdge.getSTarget().size());
 //        System.out.println(String.format("%f.3(%d,%d)    + %f.3(%d,%d)",
 //                sourceVariance, Collections.max(sourceConns.values()), Collections.min(sourceConns.values()),

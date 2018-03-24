@@ -15,8 +15,8 @@ import java.util.*;
 public class QueryGenerator {
 
     private static int LOWER_SIZE = 2;
-    private static int UPPER_SIZE = 5;
-    private static int QUERIES_PER_SIZE = 10;
+    private static int UPPER_SIZE = 3;
+    private static int QUERIES_PER_SIZE = 25;
     private static int MAX_TRIES = 100;
 
     private String dataDir;

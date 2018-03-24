@@ -1,12 +1,13 @@
 package graph;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
  * Created by lukas on 12.03.18.
  */
-public class BaseNode {
+public class BaseNode implements Serializable {
 
     private int id;
     private String label;

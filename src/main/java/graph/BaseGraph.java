@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 /**
  * Created by lukas on 12.03.18.
  */
-public class BaseGraph {
+public class BaseGraph implements Serializable{
 
     private static int DEDUPLICATE_COUNTER = 0;
 

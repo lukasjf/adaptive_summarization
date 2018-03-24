@@ -10,6 +10,7 @@ import splitstrategies.SplitStrategy;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
+import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -70,6 +71,24 @@ public class Summary extends BaseGraph {
             }
         }
         return result;
+    }
+
+    private int getResultSize(BaseGraph query) {
+        List<List<String>> raw = super.query(query);
+        int result = 0;
+        for (List<String> entry : raw) {
+            List<List<String>> unfolded = entry.stream()
+                    .map(s -> Arrays.asList(s.split("#"))).collect(Collectors.toList());
+            result += unfolded.stream().map(List::size).reduce(1, (a, b) -> a * b);
+        }
+        return result;
+    }
+
+    public double measure2(BaseGraph query){
+        int actualResults = getBaseGraph().query(query).size();
+        int summaryResults = getResultSize(query);
+        System.out.println(actualResults + " " + summaryResults);
+        return actualResults / 1.0 / summaryResults;
     }
 
     public double measure(BaseGraph query){

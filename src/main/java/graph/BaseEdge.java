@@ -1,9 +1,11 @@
 package graph;
 
+import java.io.Serializable;
+
 /**
  * Created by lukas on 12.03.18.
  */
-public class BaseEdge {
+public class BaseEdge implements Serializable {
 
     private BaseNode source;
     private BaseNode target;

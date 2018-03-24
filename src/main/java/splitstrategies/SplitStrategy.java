@@ -4,13 +4,14 @@ import graph.summary.Summary;
 import graph.summary.SummaryEdge;
 import graph.summary.SummaryNode;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * Created by lukas on 13.03.18.
  */
-public abstract class SplitStrategy {
+public abstract class SplitStrategy implements Serializable {
 
     public abstract void split(Summary summary);
 
