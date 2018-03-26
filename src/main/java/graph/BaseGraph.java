@@ -186,6 +186,27 @@ public class BaseGraph implements Serializable{
         outIndex.get(nodeMapping.get(source)).add(e);
     }
 
+    public void removeNode(BaseNode node){
+        getNodes().remove(node);
+        getNodeMapping().remove(node.getId());
+        getLabelMapping().remove(node.getLabel());
+
+        for (BaseEdge e : getInIndex().remove(node)){
+            getEdges().remove(e);
+            getOutIndex().get(e.getSource()).remove(e);
+        }
+        for (BaseEdge e : getOutIndex().remove(node)){
+            getEdges().remove(e);
+            getInIndex().get(e.getTarget()).remove(e);
+        }
+    }
+
+    public void removeEdge(BaseEdge edge){
+        getEdges().remove(edge);
+        getOutIndex().get(edge.getSource()).remove(edge);
+        getInIndex().get(edge.getTarget()).remove(edge);
+    }
+
 
     public Set<BaseNode> getNodes() {
         return nodes;

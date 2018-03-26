@@ -10,7 +10,6 @@ import splitstrategies.SplitStrategy;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
-import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -73,7 +72,7 @@ public class Summary extends BaseGraph {
         return result;
     }
 
-    private long getResultSize(BaseGraph query) {
+    public long getResultSize(BaseGraph query) {
         List<List<String>> raw = super.query(query);
         long result = 0;
         for (List<String> entry : raw) {
@@ -117,10 +116,13 @@ public class Summary extends BaseGraph {
 
     public void addSEdge(SummaryNode source, SummaryNode target, String label) {
         SummaryEdge edge = new SummaryEdge(source, target, label);
-        edge.setActual(supportOf(edge));
-        getEdges().add(edge);
-        getOutIndex().get(source).add(edge);
-        getInIndex().get(target).add(edge);
+        long actual = supportOf(edge);
+        if (actual > 0){
+            edge.setActual(actual);
+            getEdges().add(edge);
+            getOutIndex().get(source).add(edge);
+            getInIndex().get(target).add(edge);
+        }
     }
 
     public long supportOf(SummaryEdge edge){
@@ -128,6 +130,7 @@ public class Summary extends BaseGraph {
                 && edge.getSSource().getLabels().contains(e.getSource().getLabel())
                 && edge.getSTarget().getLabels().contains(e.getTarget().getLabel())).count();
     }
+
 
     public void draw(){
         Map<BaseNode, Node> mapping = new HashMap<>();

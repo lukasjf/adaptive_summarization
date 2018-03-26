@@ -23,45 +23,26 @@ public abstract class SplitStrategy implements Serializable {
             return;
         }
 
-        summary.getNodes().remove(splitNode);
-        summary.getNodeMapping().remove(splitNode.getId());
-        summary.getLabelMapping().remove(splitNode.getLabel());
-        for (BaseEdge e : summary.getInIndex().remove(splitNode)){
-            summary.getOutIndex().get(e.getSource()).remove(e);
-        }
-        for (BaseEdge e : summary.getOutIndex().remove(splitNode)){
-            summary.getInIndex().get(e.getTarget()).remove(e);
-        }
-        summary.addNode(new1);
-        summary.addNode(new2);
         List<SummaryEdge> toDoEdges = summary.getEdges().stream().map(e -> (SummaryEdge) e)
                 .filter(e -> e.getSource() == splitNode || e.getTarget() == splitNode).collect(Collectors.toList());
+
+        summary.removeNode(splitNode);
+        summary.addNode(new1);
+        summary.addNode(new2);
+
         for (SummaryEdge e: toDoEdges){
-            summary.getEdges().remove(e);
             if (e.getSource() == splitNode && e.getTarget() == splitNode){
-                checkNewEdge(summary, new1, new1, e.getLabel());
-                checkNewEdge(summary, new1, new2, e.getLabel());
-                checkNewEdge(summary, new2, new1, e.getLabel());
-                checkNewEdge(summary, new2, new2, e.getLabel());
+                summary.addSEdge(new1, new1, e.getLabel());
+                summary.addSEdge(new1, new2, e.getLabel());
+                summary.addSEdge(new2, new1, e.getLabel());
+                summary.addSEdge(new2, new2, e.getLabel());
             } else if (e.getSource() == splitNode){
-                checkNewEdge(summary, new1, e.getSTarget(), e.getLabel());
-                checkNewEdge(summary, new2, e.getSTarget(), e.getLabel());
+                summary.addSEdge(new1, e.getSTarget(), e.getLabel());
+                summary.addSEdge(new2, e.getSTarget(), e.getLabel());
             } else{
-                checkNewEdge(summary, e.getSSource(), new1, e.getLabel());
-                checkNewEdge(summary, e.getSSource(), new2, e.getLabel());
+                summary.addSEdge(e.getSSource(), new1, e.getLabel());
+                summary.addSEdge(e.getSSource(), new2, e.getLabel());
             }
         }
-    }
-
-    public void checkNewEdge(Summary summary, SummaryNode source, SummaryNode target, String label){
-        if (supportCountFor(summary, source, target, label) > 0){
-            summary.addSEdge(source, target, label);
-        }
-    }
-
-    public long supportCountFor(Summary summary, SummaryNode source, SummaryNode target, String label){
-        return summary.getBaseGraph().getEdges().stream().filter(e -> label.equals(e.getLabel())
-                && source.getLabels().contains(e.getSource().getLabel())
-                && target.getLabels().contains(e.getTarget().getLabel())).count();
     }
 }
