@@ -45,4 +45,9 @@ public class SummaryEdge extends BaseEdge {
         return actual / 1.0 / size();
     }
 
+    @Override
+    public String toString(){
+        return String.format("%.4f%s", getSupport(), getLabel());
+    }
+
 }
