@@ -7,6 +7,7 @@ import splitstrategies.RandomSplitStrategy;
 import splitstrategies.VarianceSplitStrategy;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -19,6 +20,9 @@ public class Playground {
 
     public static double runBenchmark(Summary s, File[] queries){
         double precision = 0.0;
+        List<String> queriyfiles = new ArrayList<>();
+        List<Integer> actuals = new ArrayList<>();
+        List<Long> summary = new ArrayList<>();
         for (File f: queries){
             BaseGraph q = BaseGraph.parseGraph(f.getAbsolutePath());
             int actualResults;
@@ -29,7 +33,12 @@ public class Playground {
                 queryResults.put(f.getAbsolutePath(), actualResults);
             }
             long summaryResults = s.getResultSize(q);
-            precision += actualResults / 1.0 / summaryResults;
+            queriyfiles.add(f.getAbsolutePath());
+            actuals.add(actualResults);
+            summary.add(summaryResults);
+        }
+        for (int i = 0; i < actuals.size(); i++){
+            precision += actuals.get(i) / 1.0 / summary.get(i);
         }
         return precision / queries.length;
     }
@@ -55,6 +64,7 @@ public class Playground {
             double objective = Playground.runBenchmark(s, queryDir.listFiles());
             System.out.println(i + ": " + objective);
             variance.println(s.getNodes().size() / 1.0 / graph.getNodes().size()+ "," + objective);
+            //s.draw();
             s.split();
         }
     }

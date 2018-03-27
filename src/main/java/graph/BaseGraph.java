@@ -58,7 +58,7 @@ public class BaseGraph implements Serializable{
     }
 
     public List<List<String>> query(BaseGraph query){
-        return new SubgraphIsomorphism(this).query(this, query);
+        return new SubgraphIsomorphism(this).query(query);
     }
 
 
@@ -82,6 +82,11 @@ public class BaseGraph implements Serializable{
     }
 
     public void addEdge(int source, int target, String label){
+
+        if (getOutIndex().get(nodeMapping.get(source)).stream().anyMatch(e -> e.getTarget().getId() == target
+                && e.getLabel().equals(label))){
+            return;
+        }
         BaseEdge e = new BaseEdge(nodeMapping.get(source), nodeMapping.get(target), label);
         edges.add(e);
         inIndex.get(nodeMapping.get(target)).add(e);

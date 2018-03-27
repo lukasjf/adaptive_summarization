@@ -8,8 +8,11 @@ import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.model.*;
 import splitstrategies.SplitStrategy;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -21,6 +24,7 @@ import static guru.nidi.graphviz.model.Factory.*;
 public class Summary extends BaseGraph {
 
     private int LARGE_MEMORY_NUMBER = 160000000;
+    private int imagecount = 1;
 
     private BaseGraph baseGraph;
     private SplitStrategy splitStrategy;
@@ -45,7 +49,7 @@ public class Summary extends BaseGraph {
 
     @Override
     public List<List<String>> query(BaseGraph query){
-        List<List<String>> raw = super.query(query);
+        List<List<String>> raw = new SummaryIsomorphism(this).query(query);
         List<List<String>> result = new ArrayList<>();
         List<String> variables = query.getVariables();
         for (List<String> entry: raw){
@@ -73,7 +77,7 @@ public class Summary extends BaseGraph {
     }
 
     public long getResultSize(BaseGraph query) {
-        List<List<String>> raw = super.query(query);
+        List<List<String>> raw = new SummaryIsomorphism(this).query(query);
         long result = 0;
         for (List<String> entry : raw) {
             List<List<String>> unfolded = entry.stream()
@@ -81,33 +85,6 @@ public class Summary extends BaseGraph {
             result += unfolded.stream().map(List::size).map(i -> (long) i).reduce(1L, (a, b) -> a * b);
         }
         return result;
-    }
-
-    public double measure2(BaseGraph query){
-        int actualResults = getBaseGraph().query(query).size();
-        long summaryResults = getResultSize(query);
-        return actualResults / 1.0 / summaryResults;
-    }
-
-    public double measure(BaseGraph query){
-        int truePositives = 0, falsePositives = 0, falseNegatives = 0;
-        List<List<String>> summaryResults = query(query);
-        List<List<String>> graphResults = getBaseGraph().query(query);
-        for (List<String> result: summaryResults){
-            if (graphResults.contains(result)){
-                truePositives++;
-            } else{
-                falsePositives++;
-            }
-        }
-        for (List<String> result: graphResults){
-            if (!summaryResults.contains(result)){
-                falseNegatives++;
-            }
-        }
-        double precision = truePositives * 1.0 / (truePositives + falsePositives);
-        double recall = truePositives * 1.0 / (truePositives + falseNegatives);
-        return 2 * precision * recall / (precision + recall);
     }
 
     public void split(){
@@ -143,12 +120,18 @@ public class Summary extends BaseGraph {
         for (BaseEdge edge: getEdges()){
             Node source = mapping.get(edge.getSource());
             Node target = mapping.get(edge.getTarget());
-            edgeMapping.get(source).add(to(target).with(Label.of(edge.getLabel())));
+            edgeMapping.get(source).add(to(target).with(Label.of(edge.toString())));
         }
         Graph g = graph("ex").directed().with(mapping.values().stream().map(node ->
                 node.link(edgeMapping.get(node).toArray(new LinkTarget[edgeMapping.get(node).size()]))).toArray(Node[]::new));
         Graphviz viz = Graphviz.fromGraph(g).totalMemory(LARGE_MEMORY_NUMBER);
         BufferedImage image = viz.render(Format.PNG).toImage();
+        File img = new File("test" + imagecount++ + ".png");
+        try {
+            ImageIO.write(image, "png", img);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         JDialog dialog = new JDialog();
         dialog.getContentPane().add(new JLabel(new ImageIcon(image)));
         dialog.setModal(true);

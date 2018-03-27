@@ -8,7 +8,7 @@ import java.util.stream.Stream;
  */
 public class SubgraphIsomorphism {
 
-    private BaseGraph graph;
+    protected BaseGraph graph;
 
     public SubgraphIsomorphism(BaseGraph graph) {
         this.graph = graph;
@@ -25,9 +25,10 @@ public class SubgraphIsomorphism {
                         && e.getLabel().equals(queryEdge.getLabel()));
     }
 
-    public List<List<String>> query(BaseGraph graph, BaseGraph query){
+    public List<List<String>> query(BaseGraph query){
         List<List<String>> result = new ArrayList<>();
         List<Map<String, String>> res = new ArrayList<>();
+
         List<BaseEdge> queryEdges = new ArrayList<>(query.getEdges());
         queryEdges.sort(Comparator.comparingLong(this::candidateCount));
         BaseEdge e = queryEdges.remove(0);
@@ -37,22 +38,8 @@ public class SubgraphIsomorphism {
             match.put(e.getTarget(), edge.getTarget());
             res.addAll(query(queryEdges, match));
         });
-
-        List<Map<String, String>> deduplicated = new ArrayList<>();
-        for (int i = 0; i < res.size(); i++){
-            boolean existsDuplicate = false;
-            for (int j = 0; j < deduplicated.size(); j++){
-                if (res.get(i).equals(deduplicated.get(j))) {
-                    existsDuplicate = true;
-                    break;
-                }
-            }
-            if (!existsDuplicate){
-                deduplicated.add(res.get(i));
-            }
-        }
         List<String> variables = query.getVariables();
-        for (Map<String, String> m : deduplicated){
+        for (Map<String, String> m : res){
             String[] r =  new String[variables.size()];
             m.forEach((k,v) -> r[variables.indexOf(k)] = v);
             result.add(Arrays.asList(r));
@@ -73,9 +60,9 @@ public class SubgraphIsomorphism {
             if (match.containsKey(queryEdge.getSource()) && match.containsKey(queryEdge.getTarget())){
                 return querySourceTarget(queryEdges, queryEdge, match);
             } else if (match.containsKey(queryEdge.getSource())) {
-                return querySource(queryEdges, queryEdge, match);
+                return queryWithSource(queryEdges, queryEdge, match);
             } else{
-                return queryTarget(queryEdges, queryEdge, match);
+                return queryWithTarget(queryEdges, queryEdge, match);
             }
         }
     }
@@ -91,10 +78,12 @@ public class SubgraphIsomorphism {
         return new ArrayList<>();
     }
 
-    private List<Map<String,String>> querySource(List<BaseEdge> queryEdges, BaseEdge queryEdge, Map<BaseNode, BaseNode> match) {
+    private List<Map<String,String>> queryWithSource(List<BaseEdge> queryEdges, BaseEdge queryEdge, Map<BaseNode, BaseNode> match) {
         List<Map<String, String>> results = new ArrayList<>();
         Stream<BaseEdge> candidates = graph.getOutIndex().get(match.get(queryEdge.getSource())).stream().filter(e ->
-                e.getLabel().equals(queryEdge.getLabel()) && !match.values().contains(e.getTarget()));
+                e.getLabel().equals(queryEdge.getLabel())
+                && e.getTarget().match(queryEdge.getTarget())
+                && !match.values().contains(e.getTarget()));
         candidates.forEach(e -> {
             HashMap<BaseNode, BaseNode> newMatch = new HashMap<>(match);
             newMatch.put(queryEdge.getTarget(), e.getTarget());
@@ -103,10 +92,12 @@ public class SubgraphIsomorphism {
         return results;
     }
 
-    private List<Map<String,String>> queryTarget(List<BaseEdge> queryEdges, BaseEdge queryEdge, Map<BaseNode, BaseNode> match) {
+    private List<Map<String,String>> queryWithTarget(List<BaseEdge> queryEdges, BaseEdge queryEdge, Map<BaseNode, BaseNode> match) {
         List<Map<String, String>> results = new ArrayList<>();
         Stream<BaseEdge> candidates = graph.getInIndex().get(match.get(queryEdge.getTarget())).stream().filter(e ->
-                e.getLabel().equals(queryEdge.getLabel()) && !match.values().contains(e.getSource()));
+                e.getLabel().equals(queryEdge.getLabel())
+                && e.getSource().match(queryEdge.getSource())
+                && !match.values().contains(e.getSource()));
         candidates.forEach(e -> {
             HashMap<BaseNode, BaseNode> newMatch = new HashMap<>(match);
             newMatch.put(queryEdge.getSource(), e.getSource());
