@@ -48,43 +48,76 @@ public class Summary extends BaseGraph {
     }
 
     @Override
-    public List<List<String>> query(BaseGraph query){
-        List<List<String>> raw = new SummaryIsomorphism(this).query(query);
-        List<List<String>> result = new ArrayList<>();
-        List<String> variables = query.getVariables();
-        for (List<String> entry: raw){
-            List<List<String>> unfolded = entry.stream()
-                    .map(s -> Arrays.asList(s.split("#"))).collect(Collectors.toList());
-            int cartesianCount = unfolded.stream().map(List::size).reduce(1, (a, b) -> a * b);
-            String[][] unfoldedResults = new String[cartesianCount][variables.size()];
-            int numberIterations = 1;
-            for (int i = 0, c = 0; i < variables.size(); i++, c = 0){
-                int blockSize = cartesianCount / unfolded.get(i).size() / numberIterations;
-                for (int j = 0; j < numberIterations; j++){
-                    for (String answer: unfolded.get(i)){
-                        for (int k = 0; k < blockSize; k++){
-                            unfoldedResults[c++][i] = answer;
-                        }
+    public List<String[]> query(BaseGraph query){
+        List<Map<BaseEdge, SummaryEdge>> matchings = new SummaryIsomorphism(this).query(query);
+        List<String[]> results = new ArrayList<>();
+
+        for (Map<BaseEdge, SummaryEdge> match: matchings){
+            Map<BaseNode, SummaryNode> nodeMatch = new HashMap<>();
+            Set<BaseNode> doneVariables=  new HashSet<>();
+
+            for (BaseEdge queryEdge: match.keySet()){
+                if (queryEdge.getSource().isVariable() && ! doneVariables.contains(queryEdge.getSource())){
+                    doneVariables.add(queryEdge.getSource());
+                    nodeMatch.put(queryEdge.getSource(), match.get(queryEdge).getSSource());
+                }
+                if (queryEdge.getTarget().isVariable() && ! doneVariables.contains(queryEdge.getTarget())){
+                    doneVariables.add(queryEdge.getTarget());
+                    nodeMatch.put(queryEdge.getTarget(), match.get(queryEdge).getSTarget());
+                }
+            }
+
+            List<String> variables = query.getVariables();
+            int cartesianCount = (int) getSizeOfMatch(match);
+            results.addAll(getCrossProductForMatch(nodeMatch, variables, cartesianCount));
+        }
+        return results;
+    }
+
+    private List<String[]> getCrossProductForMatch(Map<BaseNode, SummaryNode> nodeMatch, List<String> variables, int matchSize){
+        List<String[]> matchResult = new ArrayList<>();
+        String[][] unfoldedResults = new String[matchSize][variables.size()];
+        int numberIterations = 1;
+        for (BaseNode queryNode: nodeMatch.keySet()){
+            int nodeIndex = variables.indexOf(queryNode.getLabel());
+            int rowCounter = 0;
+            int blockSize = matchSize / nodeMatch.get(queryNode).size() / numberIterations;
+            for (int j = 0; j < numberIterations; j++){
+                for (String answer: nodeMatch.get(queryNode).getLabels()){
+                    for (int k = 0; k < blockSize; k++){
+                        unfoldedResults[rowCounter++][nodeIndex] = answer;
                     }
                 }
-                numberIterations = numberIterations * unfolded.get(i).size();
-            }
-            for (String[] array : unfoldedResults) {
-                result.add(Arrays.asList(array));
             }
         }
-        return result;
+        matchResult.addAll(Arrays.asList(unfoldedResults));
+        return matchResult;
+    }
+
+    private long getSizeOfMatch(Map<BaseEdge, SummaryEdge> match){
+        long matchSize = 1L;
+        Set<BaseNode> doneVariables = new HashSet<>();
+        for (BaseEdge queryEdge: match.keySet()){
+            if (queryEdge.getSource().isVariable() && ! doneVariables.contains(queryEdge.getSource())){
+                doneVariables.add(queryEdge.getSource());
+                matchSize *= match.get(queryEdge).getSSource().size();
+            }
+            if (queryEdge.getTarget().isVariable() && ! doneVariables.contains(queryEdge.getTarget())){
+                doneVariables.add(queryEdge.getTarget());
+                matchSize *= match.get(queryEdge).getSTarget().size();
+            }
+        }
+        return matchSize;
     }
 
     public long getResultSize(BaseGraph query) {
-        List<List<String>> raw = new SummaryIsomorphism(this).query(query);
-        long result = 0;
-        for (List<String> entry : raw) {
-            List<List<String>> unfolded = entry.stream()
-                    .map(s -> Arrays.asList(s.split("#"))).collect(Collectors.toList());
-            result += unfolded.stream().map(List::size).map(i -> (long) i).reduce(1L, (a, b) -> a * b);
+        List<Map<BaseEdge, SummaryEdge>> matchings = new SummaryIsomorphism(this).query(query);
+        long results = 0L;
+        for (Map<BaseEdge, SummaryEdge> match: matchings){
+            long matchSize = getSizeOfMatch(match);
+            results += matchSize;
         }
-        return result;
+        return results;
     }
 
     public void split(){
