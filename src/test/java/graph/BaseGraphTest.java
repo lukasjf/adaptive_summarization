@@ -3,6 +3,7 @@ package graph;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,9 +47,10 @@ public class BaseGraphTest {
         query.addNode(new BaseNode(0, "?"));
         query.addNode(new BaseNode(1, "label2"));
         query.addEdge(0, 1, "edge1");
-        List<List<String>> result = baseGraph.query(query);
-        assertTrue(result.contains(Collections.singletonList("label1")));
-        assertTrue(result.contains(Collections.singletonList("label5")));
+        List<String[]> result = baseGraph.query(query);
+
+        assertTrue(result.stream().anyMatch(a -> Arrays.equals(a, new String[] {"label1"})));
+        assertTrue(result.stream().anyMatch(a -> Arrays.equals(a, new String[] {"label5"})));
     }
 
     @Test

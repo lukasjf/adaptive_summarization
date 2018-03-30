@@ -57,8 +57,27 @@ public class BaseGraph implements Serializable{
                 .sorted(Comparator.comparingInt(BaseNode::getId)).map(BaseNode::getLabel).collect(Collectors.toList());
     }
 
-    public List<List<String>> query(BaseGraph query){
-        return new SubgraphIsomorphism(this).query(query);
+    public List<String[]> query(BaseGraph query){
+        List<Map<BaseEdge, BaseEdge>> matchings = new SubgraphIsomorphism(this).query(query);
+        List<String[]> results = new ArrayList<>();
+
+        List<String> variables = query.getVariables();
+
+        for (Map<BaseEdge, BaseEdge> match: matchings){
+            String[] singleResult = new String[variables.size()];
+            for (BaseEdge queryEdge: match.keySet()){
+                if (queryEdge.getSource().isVariable()){
+                    int variableIndex = variables.indexOf(queryEdge.getSource().getLabel());
+                    singleResult[variableIndex] = match.get(queryEdge).getSource().getLabel();
+                }
+                if (queryEdge.getTarget().isVariable()){
+                    int variableIndex = variables.indexOf(queryEdge.getTarget().getLabel());
+                    singleResult[variableIndex] = match.get(queryEdge).getTarget().getLabel();
+                }
+            }
+            results.add(singleResult);
+        }
+        return results;
     }
 
 
