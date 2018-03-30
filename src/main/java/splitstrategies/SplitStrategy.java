@@ -16,11 +16,11 @@ public abstract class SplitStrategy implements Serializable {
 
     public abstract void split(Summary summary);
 
-    protected void adjustSummary(Summary summary, SummaryNode splitNode, SummaryNode new1, SummaryNode new2){
+    protected boolean adjustSummary(Summary summary, SummaryNode splitNode, SummaryNode new1, SummaryNode new2){
 
         if (new1.size() == 0 || new2.size() == 0) {
             System.err.println("Split did not work, empty Node created");
-            return;
+            return false;
         }
 
         List<SummaryEdge> toDoEdges = summary.getEdges().stream().map(e -> (SummaryEdge) e)
@@ -44,5 +44,6 @@ public abstract class SplitStrategy implements Serializable {
                 summary.addSEdge(e.getSSource(), new2, e.getLabel());
             }
         }
+        return true;
     }
 }

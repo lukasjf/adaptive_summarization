@@ -14,10 +14,21 @@ public class VarianceSplitStrategy extends SplitStrategy {
 
     @Override
     public void split(Summary summary) {
-        int newNodeId = summary.getNodeMapping().size();
+        List<SummaryEdge> criticalEdges = summary.getEdges().stream().map(e -> (SummaryEdge) e)
+                .sorted(Comparator.comparingDouble(sEdge ->
+                        -1 * (double) sEdge.bookKeeping.getOrDefault("queryLoss", 0.0)))
+                .collect(Collectors.toList());
+        SummaryEdge criticalEdge;
+        do {
+            criticalEdge = criticalEdges.remove(0);
+        } while(!splitOnEdge(criticalEdge, summary) || criticalEdges.isEmpty());
+        if (criticalEdges.isEmpty()){
+            System.err.println("Variance got stuck");
+        }
+    }
 
-        SummaryEdge criticalEdge = summary.getEdges().stream().map(e -> (SummaryEdge) e)
-                .min(Comparator.comparingDouble(SummaryEdge::getSupport)).get();
+    private boolean splitOnEdge(SummaryEdge criticalEdge, Summary summary) {
+        int newNodeId = summary.getNodeMapping().size();
 
         Map<String, Long> sourceConns = new HashMap<>();
         Map<String, Long> targetConns = new HashMap<>();
@@ -25,22 +36,22 @@ public class VarianceSplitStrategy extends SplitStrategy {
         for (String label: criticalEdge.getSSource().getLabels()){
             long connectivity = summary.getBaseGraph().getOutIndex().get(summary.getBaseGraph().getLabelMapping().get(label)).stream()
                     .filter(e -> e.getLabel().equals(criticalEdge.getLabel())
-                    && criticalEdge.getSTarget().getLabels().contains(e.getTarget().getLabel())).count();
+                            && criticalEdge.getSTarget().getLabels().contains(e.getTarget().getLabel())).count();
             sourceConns.put(label, connectivity);
         }
         for (String label: criticalEdge.getSTarget().getLabels()) {
             long connectivity = summary.getBaseGraph().getInIndex().get(summary.getBaseGraph().getLabelMapping().get(label)).stream()
                     .filter(e -> e.getLabel().equals(criticalEdge.getLabel())
-                    && criticalEdge.getSSource().getLabels().contains(e.getSource().getLabel())).count();
+                            && criticalEdge.getSSource().getLabels().contains(e.getSource().getLabel())).count();
             targetConns.put(label, connectivity);
         }
 
 
-//        if (sourceConns.values().contains(0L) || targetConns.values().contains(0L)){
-//            System.out.println("do existential split");
-//            new ExistentialSplitStrategy().split(summary);
-//            return;
-//        }
+        if (sourceConns.values().contains(0L) || targetConns.values().contains(0L)){
+            System.out.println("do existential split");
+            new ExistentialSplitStrategy().split(summary);
+            return true;
+        }
 
         double sourceMean, sourceVariance;
         double targetMean, targetVariance;
@@ -53,13 +64,6 @@ public class VarianceSplitStrategy extends SplitStrategy {
 
         targetVariance = targetConns.values().stream().map(l -> (l - targetMean) * (l - targetMean))
                 .mapToDouble(Double::doubleValue).sum();
-
-//        System.out.println(criticalEdge.getLabel());
-//        System.out.println(criticalEdge.getSSource() + "  ,   " + criticalEdge.getSTarget());
-//        System.out.println(criticalEdge.getSSource().size() + "    " + criticalEdge.getSTarget().size());
-//        System.out.println(String.format("%f.3(%d,%d)    + %f.3(%d,%d)",
-//                sourceVariance, Collections.max(sourceConns.values()), Collections.min(sourceConns.values()),
-//                targetVariance, Collections.max(targetConns.values()), Collections.min(targetConns.values())));
 
         SummaryNode splitNode;
         Set<String> new1 = new HashSet<>();
@@ -92,6 +96,6 @@ public class VarianceSplitStrategy extends SplitStrategy {
         SummaryNode newNode1 = new SummaryNode(splitNode.getId(), new1);
         SummaryNode newNode2 = new SummaryNode(newNodeId, new2);
 
-        adjustSummary(summary, splitNode, newNode1, newNode2);
+        return adjustSummary(summary, splitNode, newNode1, newNode2);
     }
 }

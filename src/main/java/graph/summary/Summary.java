@@ -110,6 +110,23 @@ public class Summary extends BaseGraph {
         return matchSize;
     }
 
+
+    private void updateBookKeeping(List<Map<BaseEdge, SummaryEdge>> matchings, BaseGraph query, long results) {
+        for (Map<BaseEdge, SummaryEdge> match: matchings){
+            for (BaseEdge queryEdge: match.keySet()){
+                if (queryEdge.getSource().isVariable() || queryEdge.getTarget().isVariable()){
+                    addQueryLoss(match.get(queryEdge), query, results);
+                }
+            }
+        }
+    }
+
+    private void addQueryLoss(SummaryEdge sEdge, BaseGraph query, long results){
+        double loss = (double) sEdge.bookKeeping.getOrDefault("queryLoss", 0.0);
+        loss += Math.log(1.0 / sEdge.getSupport());
+        sEdge.bookKeeping.put("queryLoss", loss);
+    }
+
     public long getResultSize(BaseGraph query) {
         List<Map<BaseEdge, SummaryEdge>> matchings = new SummaryIsomorphism(this).query(query);
         long results = 0L;
@@ -117,6 +134,7 @@ public class Summary extends BaseGraph {
             long matchSize = getSizeOfMatch(match);
             results += matchSize;
         }
+        updateBookKeeping(matchings, query, results);
         return results;
     }
 

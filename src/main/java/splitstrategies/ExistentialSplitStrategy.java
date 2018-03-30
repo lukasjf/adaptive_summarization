@@ -6,6 +6,7 @@ import graph.summary.SummaryNode;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by lukas on 14.03.18.
@@ -15,10 +16,21 @@ public class ExistentialSplitStrategy extends SplitStrategy{
 
     @Override
     public void split(Summary summary) {
-        int newNodeId = summary.getNodeMapping().size();
+        List<SummaryEdge> criticalEdges = summary.getEdges().stream().map(e -> (SummaryEdge) e)
+                .sorted(Comparator.comparingDouble(sEdge ->
+                        -1 * (double) sEdge.bookKeeping.getOrDefault("queryLoss", 0.0)))
+                .collect(Collectors.toList());
+        SummaryEdge criticalEdge;
+        do {
+            criticalEdge = criticalEdges.remove(0);
+        } while(!splitOnEdge(criticalEdge, summary) || criticalEdges.isEmpty());
+        if (criticalEdges.isEmpty()){
+            System.err.println("Existential got stuck");
+        }
+    }
 
-        SummaryEdge criticalEdge = summary.getEdges().stream().map(e -> (SummaryEdge) e)
-                .min(Comparator.comparingDouble(SummaryEdge::getSupport)).get();
+    private boolean splitOnEdge(SummaryEdge criticalEdge, Summary summary){
+        int newNodeId = summary.getNodeMapping().size();
 
         Map<String, Long> sourceConns = new HashMap<>();
         Map<String, Long> targetConns = new HashMap<>();
@@ -75,6 +87,6 @@ public class ExistentialSplitStrategy extends SplitStrategy{
 
         SummaryNode new1 = new SummaryNode(splitNode.getId(), nodesWithEdge);
         SummaryNode new2 = new SummaryNode(newNodeId, nodesWithoutEdge);
-        adjustSummary(summary, splitNode, new1, new2);
+        return adjustSummary(summary, splitNode, new1, new2);
     }
 }
