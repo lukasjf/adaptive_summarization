@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 /**
  * Created by lukas on 14.03.18.
  */
-public class VarianceSplitStrategy extends SplitStrategy {
+public class CombinedSplitStrategy extends SplitStrategy {
 
     @Override
     public void split(Summary summary) {
@@ -47,11 +47,11 @@ public class VarianceSplitStrategy extends SplitStrategy {
         }
 
 
-//        if (sourceConns.values().contains(0L) || targetConns.values().contains(0L)){
-//            System.out.println("do existential split");
-//            new ExistentialSplitStrategy().split(summary);
-//            return true;
-//        }
+        if (sourceConns.values().contains(0L) || targetConns.values().contains(0L)){
+            System.out.println("do existential split");
+            new ExistentialSplitStrategy().split(summary);
+            return true;
+        }
 
         double sourceMean, sourceVariance;
         double targetMean, targetVariance;
