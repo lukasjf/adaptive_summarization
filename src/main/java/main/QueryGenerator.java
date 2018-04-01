@@ -25,9 +25,17 @@ public class QueryGenerator {
 
     private int queryCounter = 1;
 
+    private List<BaseNode> kddNodes = new ArrayList<>();
+
     public QueryGenerator(String dataDir, String graphFile){
         this.dataDir = dataDir;
         this.graph = BaseGraph.parseGraph(dataDir + graphFile);
+
+        BaseNode kdd = graph.getLabelMapping().get("aut:danai_koutra");
+        for (BaseEdge edge: graph.getInIndex().get(kdd)){
+            kddNodes.add(edge.getSource());
+        }
+        System.out.println(kddNodes.size());
     }
 
     public void generate(){
@@ -36,8 +44,10 @@ public class QueryGenerator {
                 List<BaseEdge> candidates = new ArrayList<>();
                 List<BaseEdge> queryGraph = new ArrayList<>();
 
-                int startIndex = random.nextInt(graph.getNodeMapping().size());
-                BaseNode startNode = graph.getNodeMapping().get(startIndex);
+                //int startIndex = random.nextInt(graph.getNodeMapping().size());
+                //BaseNode startNode = graph.getNodeMapping().get(startIndex);
+                int startIndex = random.nextInt(kddNodes.size());
+                BaseNode startNode = kddNodes.get(startIndex);
                 candidates.addAll(graph.getInIndex().get(startNode));
                 candidates.addAll(graph.getInIndex().get(startNode));
                 if (candidates.isEmpty()){
@@ -47,16 +57,27 @@ public class QueryGenerator {
                 }
 
                 for (int k = 1; k < s; k++){
-                    BaseEdge taken;
+                    BaseEdge taken = null;
                     int tries = 0;
-                    do{
+                    boolean searching = true;
+                    while (!candidates.isEmpty() && tries < MAX_TRIES && searching){
                         taken = candidates.get(random.nextInt(candidates.size()));
                         tries++;
-                    } while (queryGraph.contains(taken) && tries < MAX_TRIES);
-                    if (tries == MAX_TRIES){
+                        if (queryGraph.contains(taken)){
+                            candidates.remove(taken);
+                        } else{
+                            searching = false;
+                        }
+                    }
+
+                    if (null == taken){
                         break;
                     }
                     queryGraph.add(taken);
+                    candidates.addAll(graph.getInIndex().get(taken.getSource()));
+                    candidates.addAll(graph.getOutIndex().get(taken.getSource()));
+                    candidates.addAll(graph.getInIndex().get(taken.getTarget()));
+                    candidates.addAll(graph.getOutIndex().get(taken.getTarget()));
                 }
                 System.out.println("Query created");
                 BaseGraph query = makeQuery(queryGraph);
