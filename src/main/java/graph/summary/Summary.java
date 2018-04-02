@@ -154,9 +154,16 @@ public class Summary extends BaseGraph {
     }
 
     public long supportOf(SummaryEdge edge){
-        return this.baseGraph.getEdges().stream().filter(e -> e.getLabel().equals(edge.getLabel())
-                && edge.getSSource().getLabels().contains(e.getSource().getLabel())
-                && edge.getSTarget().getLabels().contains(e.getTarget().getLabel())).count();
+        long result = 0;
+        for (String label: edge.getSSource().getLabels()){
+            List<BaseEdge> edges = getBaseGraph().getOutIndex().get(getBaseGraph().getLabelMapping().get(label));
+            for (BaseEdge e: edges){
+                if (e.getLabel().equals(edge.getLabel()) && edge.getSTarget().getLabels().contains(e.getTarget().getLabel())){
+                    result ++;
+                }
+            }
+        }
+        return result;
     }
 
 

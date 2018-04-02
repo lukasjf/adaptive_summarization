@@ -19,7 +19,6 @@ public class Playground {
 
     public static double runBenchmark(Summary s, File[] queries){
         double precision = 0.0;
-        List<String> queriyfiles = new ArrayList<>();
         List<Integer> actuals = new ArrayList<>();
         List<Long> summary = new ArrayList<>();
         for (File f: queries){
@@ -32,7 +31,6 @@ public class Playground {
                 queryResults.put(f.getAbsolutePath(), actualResults);
             }
             long summaryResults = s.getResultSize(q);
-            queriyfiles.add(f.getAbsolutePath());
             actuals.add(actualResults);
             summary.add(summaryResults);
         }
@@ -58,17 +56,17 @@ public class Playground {
 //        Summary s = (Summary) new ObjectInputStream(new FileInputStream("summary.ser")).readObject();
 //        System.out.println("summary loaded");
 
-        runExperiment(graph, new ExistentialSplitStrategy(), queryDir, "results_existential");
-        runExperiment(graph, new VarianceSplitStrategy(), queryDir, "results_variance");
-        runExperiment(graph, new CombinedSplitStrategy(), queryDir, "results_combined");
+        //runExperiment(graph, new ExistentialSplitStrategy(), queryDir, "results_random_existential");
+        //runExperiment(graph, new VarianceSplitStrategy(), queryDir, "results_random_variance");
+        //runExperiment(graph, new CombinedSplitStrategy(), queryDir, "results_random_combined");
 
-        runExperiment(graph, new ExistentialSplitStrategy(), kddDir, "results_kdd_existential");
-        runExperiment(graph, new VarianceSplitStrategy(), kddDir, "results_kdd_variance");
+        //runExperiment(graph, new ExistentialSplitStrategy(), kddDir, "results_kdd_existential");
+        //runExperiment(graph, new VarianceSplitStrategy(), kddDir, "results_kdd_variance");
         runExperiment(graph, new CombinedSplitStrategy(), kddDir, "results_kdd_combined");
 
-        runExperiment(graph, new ExistentialSplitStrategy(), danaiDir, "results_danai_existential");
-        runExperiment(graph, new VarianceSplitStrategy(), danaiDir, "results_danai_variance");
-        runExperiment(graph, new CombinedSplitStrategy(), danaiDir, "results_danai_combined");
+        //runExperiment(graph, new ExistentialSplitStrategy(), danaiDir, "results_danai_existential");
+        //runExperiment(graph, new VarianceSplitStrategy(), danaiDir, "results_danai_variance");
+        //runExperiment(graph, new CombinedSplitStrategy(), danaiDir, "results_danai_combined");
     }
 
     private static void runExperiment(BaseGraph graph, SplitStrategy strategy, String queryDir, String fileName) throws FileNotFoundException {
@@ -83,6 +81,9 @@ public class Playground {
                     nodeThreshold, edgeThreshold, objective);
             System.out.println(output);
             ps.println(output.replace(" ", ","));
+            if (objective == 0){
+                break;
+            }
             s.split();
             s.getEdges().stream().map(e -> (SummaryEdge) e).forEach(e -> e.bookKeeping.clear());
         } while (s.getNodes().size() <= nodeThreshold && s.getEdges().size() <= edgeThreshold);
