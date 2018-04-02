@@ -9,27 +9,28 @@ parsed = {method:defaultdict(list) for method in ["existential", "variance", "co
 nodelimit = None
 edgelimit = None
 
-base = "kdd"
+base = sys.argv[1]
 
-data = pd.read_csv("results_" + base + "_" + "existential", sep=",").fillna('')
+data = pd.read_csv("results_" + base + "_" + "existential.csv", sep=",").fillna('')
 for row in data.iterrows():
     nodelimit = row[1]["NodeThreshold"]
     edgelimit = row[1]["EdgeThreshold"]
+    break
 
 
-data = pd.read_csv("results_" + base + "_" + "existential", sep=",").fillna('')
+data = pd.read_csv("results_" + base + "_" + "existential.csv", sep=",").fillna('')
 for row in data.iterrows():
     parsed["existential"]["objective"] += [row[1]["Objective"]]
     parsed["existential"]["sedges"] += [row[1]["SummaryEdges"]]
     parsed["existential"]["snodes"] += [row[1]["SummaryNodes"]]
 
-data = pd.read_csv("results_" + base + "_" + "variance", sep=",").fillna('')
+data = pd.read_csv("results_" + base + "_" + "variance.csv", sep=",").fillna('')
 for row in data.iterrows():
     parsed["variance"]["objective"] += [row[1]["Objective"]]
     parsed["variance"]["sedges"] += [row[1]["SummaryEdges"]]
     parsed["variance"]["snodes"] += [row[1]["SummaryNodes"]]
 
-data = pd.read_csv("results_" + base + "_" + "combined", sep=",").fillna('')
+data = pd.read_csv("results_" + base + "_" + "combined.csv", sep=",").fillna('')
 for row in data.iterrows():
     parsed["combined"]["objective"] += [row[1]["Objective"]]
     parsed["combined"]["sedges"] += [row[1]["SummaryEdges"]]
@@ -42,6 +43,7 @@ plt.legend(loc="upper right",fancybox=True)
 plt.xlabel("number of nodes in the summary")
 plt.ylabel("Objective function value")
 plt.axvline(x=nodelimit)
+plt.gca().set_ylim(bottom=0)
 plt.savefig(base + "nodesobj.pdf", dpi=600)
 plt.show()
 
@@ -51,6 +53,7 @@ plt.legend(loc="upper right",fancybox=True)
 plt.xlabel("number of edges in the summary")
 plt.ylabel("Objective function value")
 plt.axvline(x=edgelimit)
+plt.gca().set_ylim(bottom=0)
 plt.savefig(base + "edgesobj.pdf", dpi=600)
 plt.show()
 

@@ -46,6 +46,7 @@ public class Playground {
         String queryDir = "/home/lukas/studium/thesis/code/data/citation/queries";
         String kddDir = "/home/lukas/studium/thesis/code/data/citation/querieskdd";
         String danaiDir = "/home/lukas/studium/thesis/code/data/citation/queriesdanai";
+        String faloutsosDir = "/home/lukas/studium/thesis/code/data/citation/queriesdanai";
 
 //        for (int i = 0; i < 100; i++){
 //            s.split();
@@ -56,20 +57,24 @@ public class Playground {
 //        Summary s = (Summary) new ObjectInputStream(new FileInputStream("summary.ser")).readObject();
 //        System.out.println("summary loaded");
 
-        //runExperiment(graph, new ExistentialSplitStrategy(), queryDir, "results_random_existential");
-        //runExperiment(graph, new VarianceSplitStrategy(), queryDir, "results_random_variance");
-        //runExperiment(graph, new CombinedSplitStrategy(), queryDir, "results_random_combined");
+        //runMethod(graph, new ExistentialSplitStrategy(), queryDir, "plots/results_random_existential.csv");
+        //runMethod(graph, new VarianceSplitStrategy(), queryDir, "plots/results_random_variance.csv");
+        //runMethod(graph, new CombinedSplitStrategy(), queryDir, "plots/results_random_combined.csv");
 
-        //runExperiment(graph, new ExistentialSplitStrategy(), kddDir, "results_kdd_existential");
-        //runExperiment(graph, new VarianceSplitStrategy(), kddDir, "results_kdd_variance");
-        runExperiment(graph, new CombinedSplitStrategy(), kddDir, "results_kdd_combined");
+        //runMethod(graph, new ExistentialSplitStrategy(), kddDir, "plots/results_kdd_existential.csv");
+        //runMethod(graph, new VarianceSplitStrategy(), kddDir, "plots/results_kdd_variance.csv");
+        //runMethod(graph, new CombinedSplitStrategy(), kddDir, "plots/results_kdd_combined.csv");
 
-        //runExperiment(graph, new ExistentialSplitStrategy(), danaiDir, "results_danai_existential");
-        //runExperiment(graph, new VarianceSplitStrategy(), danaiDir, "results_danai_variance");
-        //runExperiment(graph, new CombinedSplitStrategy(), danaiDir, "results_danai_combined");
+        //runMethod(graph, new ExistentialSplitStrategy(), danaiDir, "plots/results_danai_existential.csv");
+        //runMethod(graph, new VarianceSplitStrategy(), danaiDir, "plots/results_danai_variance.csv");
+        //runMethod(graph, new CombinedSplitStrategy(), danaiDir, "plots/results_danai_combined.csv");
+
+        //runMethod(graph, new ExistentialSplitStrategy(), faloutsosDir, "plots/results_faloutsos_existential.csv");
+        //runMethod(graph, new VarianceSplitStrategy(), faloutsosDir, "plots/results_faloutsos_variance.csv");
+        runMethod(graph, new CombinedSplitStrategy(), faloutsosDir, "plots/results_faloutsos_combined.csv");
     }
 
-    private static void runExperiment(BaseGraph graph, SplitStrategy strategy, String queryDir, String fileName) throws FileNotFoundException {
+    private static void runMethod(BaseGraph graph, SplitStrategy strategy, String queryDir, String fileName) throws FileNotFoundException {
         Summary s = Summary.createFromGraph(graph, strategy);
         PrintStream ps = new PrintStream(fileName);
         int nodeThreshold = graph.getNodes().size() / 10;

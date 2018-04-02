@@ -31,9 +31,15 @@ public class QueryGenerator {
         this.dataDir = dataDir;
         this.graph = BaseGraph.parseGraph(dataDir + graphFile);
 
-        BaseNode kdd = graph.getLabelMapping().get("aut:danai_koutra");
+        BaseNode kdd = graph.getLabelMapping().get("aut:christos_faloutsos");
+        kddNodes.add(kdd);
         for (BaseEdge edge: graph.getInIndex().get(kdd)){
-            kddNodes.add(edge.getSource());
+            if (!kddNodes.contains(edge.getSource()))
+                kddNodes.add(edge.getSource());
+        }
+        for (BaseEdge edge: graph.getOutIndex().get(kdd)){
+            if (!kddNodes.contains(edge.getTarget()))
+                kddNodes.add(edge.getTarget());
         }
         System.out.println(kddNodes.size());
     }
@@ -132,7 +138,7 @@ public class QueryGenerator {
         }
         System.out.println(resultSize);
         Map<BaseNode, Integer> nodeIDs = new HashMap<>();
-        try(PrintStream queryFile = new PrintStream(new File(dataDir + "queries/query" + queryCounter++))){
+        try(PrintStream queryFile = new PrintStream(new File(dataDir + "queriesfaloutsos/query" + queryCounter++))){
             queryFile.println("#" + resultSize);
             for (BaseNode node: query.getNodes()){
                 nodeIDs.put(node, nodeCounter);
