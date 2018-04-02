@@ -15,15 +15,21 @@ public class VarianceSplitStrategy extends SplitStrategy {
     @Override
     public void split(Summary summary) {
         List<SummaryEdge> criticalEdges = summary.getEdges().stream().map(e -> (SummaryEdge) e)
+                .filter(e -> (double) e.bookKeeping.getOrDefault("queryLoss", 0.0) > 0)
                 .sorted(Comparator.comparingDouble(sEdge ->
                         -1 * (double) sEdge.bookKeeping.getOrDefault("queryLoss", 0.0)))
                 .collect(Collectors.toList());
-        SummaryEdge criticalEdge;
+        SummaryEdge criticalEdge = null;
         do {
+            criticalEdge = null;
+            if (criticalEdges.isEmpty()){
+                break;
+            }
             criticalEdge = criticalEdges.remove(0);
-        } while(!splitOnEdge(criticalEdge, summary) || criticalEdges.isEmpty());
-        if (criticalEdges.isEmpty()){
+        } while(!splitOnEdge(criticalEdge, summary));
+        if (criticalEdge == null){
             System.err.println("Variance got stuck");
+            System.exit(0);
         }
     }
 
