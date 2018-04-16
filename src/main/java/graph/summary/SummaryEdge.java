@@ -22,8 +22,8 @@ public class SummaryEdge extends BaseEdge {
         return actual / 1.0 / size();
     }
 
-    public int size(){
-        int size = getSSource().size() * getSTarget().size();
+    public long size(){
+        long size = (long) getSSource().size() * getSTarget().size();
         if (getSTarget() == getSSource()){
             size = size - getSTarget().size();
         }

@@ -202,4 +202,11 @@ public class Summary extends BaseGraph {
         return baseGraph;
     }
 
+    public List<SummaryNode> getSNodes(){
+        return getNodes().stream().map(n -> (SummaryNode) n).collect(Collectors.toList());
+    }
+
+    public List<SummaryEdge> getSEdges(){
+        return getEdges().stream().map(e -> (SummaryEdge) e).collect(Collectors.toList());
+    }
 }
