@@ -10,20 +10,16 @@ import java.util.Set;
 public class BaseNode implements Serializable {
 
     private int id;
-    private String label;
+    Set<Integer> containedNodes;
 
-    public BaseNode(int id, String label){
+    public BaseNode(int id){
         this.id = id;
-        this.label = label;
+        containedNodes = new HashSet<>();
     }
 
     @Override
     public String toString(){
-        if (label.length() <= 25){
-            return label;
-        } else{
-            return label.substring(0, 25) + "...";
-        }
+        return "Node: " + id;
     }
 
     @Override
@@ -37,26 +33,18 @@ public class BaseNode implements Serializable {
     }
 
     public boolean isVariable(){
-        return label.startsWith("?");
+        return id < 0;
     }
 
     public boolean match(BaseNode queryNode){
-        if (queryNode.label.startsWith("?")){
-            return !label.isEmpty();
+        if (queryNode.isVariable()){
+            return true;
         } else{
-            return label.equals(queryNode.label);
+            return containedNodes.contains(queryNode.getId());
         }
     }
 
     public int getId() {
         return id;
-    }
-
-    public String getLabel() {
-        return label;
-    }
-
-    public void setLabel(String label) {
-        this.label = label;
     }
 }

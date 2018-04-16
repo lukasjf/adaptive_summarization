@@ -12,25 +12,22 @@ public class SubgraphIsomorphism {
 
     protected BaseGraph graph;
 
-    public SubgraphIsomorphism(BaseGraph graph) {
-        this.graph = graph;
-    }
-
     private long candidateCount(BaseEdge queryEdge){
         return candidateEdges(queryEdge).count();
     }
 
     private Stream<BaseEdge> candidateEdges(BaseEdge queryEdge){
-        return graph.getEdges().stream().filter(e ->
+        return graph.edges.stream().filter(e ->
                 e.getSource().match(queryEdge.getSource())
                         && e.getTarget().match(queryEdge.getTarget())
                         && e.getLabel().equals(queryEdge.getLabel()));
     }
 
-    public List<Map<BaseEdge, BaseEdge>> query(BaseGraph query){
+    public List<Map<String, String>> query(BaseGraph query, BaseGraph graph){
+        this.graph = graph;
         List<Map<BaseEdge, BaseEdge>> matchings = new ArrayList<>();
 
-        List<BaseEdge> queryEdges = new ArrayList<>(query.getEdges());
+        List<BaseEdge> queryEdges = new ArrayList<>(query.edges);
         queryEdges.sort(Comparator.comparingLong(this::candidateCount));
         BaseEdge e = queryEdges.remove(0);
         candidateEdges(e).forEach(edge -> {
@@ -41,7 +38,24 @@ public class SubgraphIsomorphism {
             matchedEdges.put(e, edge);
             matchings.addAll(query(queryEdges, match, matchedEdges));
         });
-        return matchings;
+        return transformMatchings(matchings);
+    }
+
+    private List<Map<String,String>> transformMatchings(List<Map<BaseEdge, BaseEdge>> matchings) {
+        List<Map<String, String>> results = new ArrayList<>();
+        for (Map<BaseEdge, BaseEdge> matching: matchings){
+            Map<String, String> result = new HashMap<>();
+            for (BaseEdge m: matching.keySet()){
+                if (!result.containsKey(graph.invertedIndex.get(m.getSource().getId()))){
+                    result.put(graph.invertedIndex.get(m.getSource().getId()), graph.invertedIndex.get(matching.get(m).getSource().getId()));
+                }
+                if (!result.containsKey(graph.invertedIndex.get(m.getTarget().getId()))){
+                    result.put(graph.invertedIndex.get(m.getTarget().getId()), graph.invertedIndex.get(matching.get(m).getTarget().getId()));
+                }
+            }
+            results.add(result);
+        }
+        return results;
     }
 
     private List<Map<BaseEdge, BaseEdge>> query(List<BaseEdge> _queryEdges, Map<BaseNode, BaseNode> match, Map<BaseEdge, BaseEdge> matchedEdges){
@@ -63,7 +77,7 @@ public class SubgraphIsomorphism {
     }
 
     private List<Map<BaseEdge, BaseEdge>> querySourceTarget(List<BaseEdge> queryEdges, BaseEdge queryEdge, Map<BaseNode, BaseNode> match, Map<BaseEdge, BaseEdge> matchedEdges) {
-        boolean existsEdge = graph.getEdges().stream().anyMatch(e ->
+        boolean existsEdge = graph.edges.stream().anyMatch(e ->
                 e.getLabel().equals(queryEdge.getLabel())
                         && e.getSource() == match.get(queryEdge.getSource())
                         && e.getTarget() == match.get(queryEdge.getTarget()));
@@ -75,7 +89,7 @@ public class SubgraphIsomorphism {
 
     private List<Map<BaseEdge, BaseEdge>> queryWithSource(List<BaseEdge> queryEdges, BaseEdge queryEdge, Map<BaseNode, BaseNode> match, Map<BaseEdge, BaseEdge> matchedEdges) {
         List<Map<BaseEdge, BaseEdge>> results = new ArrayList<>();
-        Stream<BaseEdge> candidates = graph.getOutIndex().get(match.get(queryEdge.getSource())).stream().filter(e ->
+        Stream<BaseEdge> candidates = graph.outIndex.get(match.get(queryEdge.getSource()).getId()).stream().filter(e ->
                 e.getLabel().equals(queryEdge.getLabel())
                 && e.getTarget().match(queryEdge.getTarget())
                 && !match.values().contains(e.getTarget()));
@@ -91,7 +105,7 @@ public class SubgraphIsomorphism {
 
     private List<Map<BaseEdge, BaseEdge>> queryWithTarget(List<BaseEdge> queryEdges, BaseEdge queryEdge, Map<BaseNode, BaseNode> match, Map<BaseEdge, BaseEdge> matchedEdges) {
         List<Map<BaseEdge, BaseEdge>> results = new ArrayList<>();
-        Stream<BaseEdge> candidates = graph.getInIndex().get(match.get(queryEdge.getTarget())).stream().filter(e ->
+        Stream<BaseEdge> candidates = graph.inIndex.get(match.get(queryEdge.getTarget()).getId()).stream().filter(e ->
                 e.getLabel().equals(queryEdge.getLabel())
                 && e.getSource().match(queryEdge.getSource())
                 && !match.values().contains(e.getSource()));

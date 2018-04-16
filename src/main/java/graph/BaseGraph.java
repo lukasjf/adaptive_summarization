@@ -8,56 +8,97 @@ import java.util.stream.Stream;
 /**
  * Created by lukas on 12.03.18.
  */
-public class BaseGraph implements Serializable{
+public class BaseGraph implements GraphQueryAble{
 
     private static int DEDUPLICATE_COUNTER = 0;
 
-    private Set<BaseNode> nodes = new HashSet<>(30000);
-    private HashMap<Integer, BaseNode> nodeMapping = new HashMap<>(30000);
-    private HashMap<String, BaseNode> labelMapping = new HashMap<>(30000);
-    private Set<BaseEdge> edges= new HashSet<>(50000);
+    Map<String, Integer> index = new HashMap<>();
+    Map<Integer, String> invertedIndex = new HashMap<>();
 
-    private HashMap<BaseNode, List<BaseEdge>> inIndex = new HashMap<>(30000);
-    private HashMap<BaseNode, List<BaseEdge>> outIndex = new HashMap<>(30000);
+    Set<BaseNode> nodes = new HashSet<>(30000);
+    HashMap<Integer, BaseNode> idMapping = new HashMap<>(30000);
+    HashMap<String, BaseNode> labelMapping = new HashMap<>(30000);
+
+    Set<BaseEdge> edges= new HashSet<>(50000);
+    HashMap<Integer, List<BaseEdge>> inIndex = new HashMap<>(30000);
+    HashMap<Integer, List<BaseEdge>> outIndex = new HashMap<>(30000);
 
 
-    static public BaseGraph parseGraph(String filename){
-        BaseGraph g = new BaseGraph();
-        try (BufferedReader br = new BufferedReader(new FileReader(new File(filename)))){
-            String line;
-            while ((line = br.readLine()) != null){
-                if (line.trim().isEmpty()){
-                    continue;
-                }
-                if (line.startsWith("#")){
-                    continue;
-                }
-                String[] token = line.split(" ");
-                if (token[0].equals("v")){
-                    int id = Integer.parseInt(token[1]);
-                    String label = token[2];
-                    g.addNode(id, label);
-                }
-                if (token[0].equals("e")){
-                    int source = Integer.parseInt(token[1]);
-                    int target = Integer.parseInt(token[2]);
-                    String label = token[3];
-                    g.addEdge(source, target, label);
-                }
-            }
+    public void addNode(int id, String label){
+        if (idMapping.keySet().contains(id)){
+            System.err.println("ID already in use: " + id);
+            return;
         }
-        catch (IOException e) {
-            e.printStackTrace();
+        String newlabel = label;
+        while (labelMapping.keySet().contains(newlabel)){
+            newlabel += DEDUPLICATE_COUNTER++;
         }
-        return g;
+        BaseNode node = new BaseNode(id);
+        nodes.add(node);
+
+        idMapping.put(id, node);
+        labelMapping.put(newlabel, node);
+
+        index.put(newlabel, id);
+        invertedIndex.put(id, newlabel);
+
+        for (BaseEdge e: inIndex.get(id)){
+            edges.remove(e);
+            outIndex.get(e.getSource().getId()).remove(e);
+        }
+        for (BaseEdge e: outIndex.get(id)){
+            edges.remove(e);
+            inIndex.get(e.getTarget().getId()).remove(e);
+        }
+        inIndex.put(id, new ArrayList<>());
+        outIndex.put(id, new ArrayList<>());
     }
 
-    public List<String> getVariables(){
+    public void removeNode(int id){
+        String label = invertedIndex.get(id);
+        BaseNode node = idMapping.get(id);
+
+        nodes.remove(node);
+
+        idMapping.remove(id);
+        labelMapping.remove(label);
+
+        index.remove(label);
+        invertedIndex.remove(id);
+
+        inIndex.remove(id);
+        outIndex.remove(id);
+    }
+
+    public void addEdge(int source, int target, String label){
+        if (outIndex.get(source).stream().anyMatch(e -> e.getTarget().getId() == target & e.getLabel().equals(label))){
+            System.err.println("Trying to insert duplicate edge: " + source + " " + target + " " + label);
+        }
+        BaseEdge e = new BaseEdge(idMapping.get(source), idMapping.get(target), label);
+        edges.add(e);
+        inIndex.get(target).add(e);
+        outIndex.get(source).add(e);
+    }
+
+    public void removeEdge(BaseEdge edge){
+        edges.remove(edge);
+        outIndex.get(edge.getSource().getId()).remove(edge);
+        inIndex.get(edge.getTarget().getId()).remove(edge);
+    }
+
+
+    @Override
+    public List<Map<String, String>> query(BaseGraph query) {
+        return new SubgraphIsomorphism().query(query, this);
+    }
+
+
+    /*public List<String> getVariables(){
         return getNodes().stream().filter(n -> n.getLabel().startsWith("?"))
                 .sorted(Comparator.comparingInt(BaseNode::getId)).map(BaseNode::getLabel).collect(Collectors.toList());
-    }
+    }*/
 
-    public List<String[]> query(BaseGraph query){
+    /*public List<String[]> query(BaseGraph query){
         List<Map<BaseEdge, BaseEdge>> matchings = new SubgraphIsomorphism(this).query(query);
         List<String[]> results = new ArrayList<>();
 
@@ -78,94 +119,7 @@ public class BaseGraph implements Serializable{
             results.add(singleResult);
         }
         return results;
-    }
+    }*/
 
 
-    public void addNode(int id, String label){
-        BaseNode node = new BaseNode(id, label);
-        addNode(node);
-    }
-
-    public void addNode(BaseNode node){
-        if (nodeMapping.containsKey(node.getId())){
-            nodes.remove(nodeMapping.get(node.getId()));
-        }
-        while (labelMapping.containsKey(node.getLabel())){
-            node.setLabel(node.getLabel() + DEDUPLICATE_COUNTER++);
-        }
-        nodeMapping.put(node.getId(), node);
-        labelMapping.put(node.getLabel(), node);
-        nodes.add(node);
-        inIndex.put(node, new ArrayList<>());
-        outIndex.put(node, new ArrayList<>());
-    }
-
-    public void addEdge(int source, int target, String label){
-
-        if (getOutIndex().get(nodeMapping.get(source)).stream().anyMatch(e -> e.getTarget().getId() == target
-                && e.getLabel().equals(label))){
-            return;
-        }
-        BaseEdge e = new BaseEdge(nodeMapping.get(source), nodeMapping.get(target), label);
-        edges.add(e);
-        inIndex.get(nodeMapping.get(target)).add(e);
-        outIndex.get(nodeMapping.get(source)).add(e);
-    }
-
-    public void removeNode(BaseNode node){
-        getNodes().remove(node);
-        getNodeMapping().remove(node.getId());
-        getLabelMapping().remove(node.getLabel());
-
-        for (BaseEdge e : getInIndex().remove(node)){
-            getEdges().remove(e);
-            getOutIndex().get(e.getSource()).remove(e);
-        }
-        for (BaseEdge e : getOutIndex().remove(node)){
-            getEdges().remove(e);
-            getInIndex().get(e.getTarget()).remove(e);
-        }
-    }
-
-    public void removeEdge(BaseEdge edge){
-        getEdges().remove(edge);
-        getOutIndex().get(edge.getSource()).remove(edge);
-        getInIndex().get(edge.getTarget()).remove(edge);
-    }
-
-    public BaseNode getNodeWithLabel(String label){
-        return labelMapping.get(label);
-    }
-
-    public List<BaseEdge> getInEdgesFor(String label){
-        return inIndex.get(label);
-    }
-
-    public List<BaseEdge> getOutEdgesFor(String label){
-        return outIndex.get(label);
-    }
-
-    public Set<BaseNode> getNodes() {
-        return nodes;
-    }
-
-    public HashMap<Integer, BaseNode> getNodeMapping() {
-        return nodeMapping;
-    }
-
-    public HashMap<String, BaseNode> getLabelMapping() {
-        return labelMapping;
-    }
-
-    public Set<BaseEdge> getEdges() {
-        return edges;
-    }
-
-    public HashMap<BaseNode, List<BaseEdge>> getInIndex() {
-        return inIndex;
-    }
-
-    public HashMap<BaseNode, List<BaseEdge>> getOutIndex() {
-        return outIndex;
-    }
 }
