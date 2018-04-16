@@ -20,4 +20,13 @@ public class GraphEncoder {
         }
         return size;
     }
+
+    public long encodeNodeLabels(BaseGraph graph) {
+        long size = 0L;
+        for (BaseNode n: graph.getNodes()){
+            size += n.getLabel().length() + 1;
+        }
+        size --;
+        return size;
+    }
 }
