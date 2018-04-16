@@ -19,7 +19,7 @@ public class SummaryNode extends BaseNode {
 
     @Override
     public String toString(){
-        String labelString = labels.stream().collect(Collectors.joining("|"));
+        String labelString = labels.stream().collect(Collectors.joining("#"));
         if (labelString.length() < 25){
             return labelString;
         } else{
