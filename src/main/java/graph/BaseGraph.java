@@ -133,6 +133,17 @@ public class BaseGraph implements Serializable{
         getInIndex().get(edge.getTarget()).remove(edge);
     }
 
+    public BaseNode getNodeWithLabel(String label){
+        return labelMapping.get(label);
+    }
+
+    public List<BaseEdge> getInEdgesFor(String label){
+        return inIndex.get(label);
+    }
+
+    public List<BaseEdge> getOutEdgesFor(String label){
+        return outIndex.get(label);
+    }
 
     public Set<BaseNode> getNodes() {
         return nodes;
