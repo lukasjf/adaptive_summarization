@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 public class SubgraphIsomorphism {
 
     private BaseGraph graph;
+    private BaseGraph query;
     private boolean isInjective;
 
     private long candidateCount(BaseEdge queryEdge){
@@ -24,6 +25,7 @@ public class SubgraphIsomorphism {
 
     public List<Map<String, String>> query(BaseGraph query, BaseGraph graph, boolean isInjective){
         this.graph = graph;
+        this.query = query;
         this.isInjective = isInjective;
 
         List<Map<BaseEdge, BaseEdge>> matchings = new ArrayList<>();
@@ -68,7 +70,7 @@ public class SubgraphIsomorphism {
                 Map<Integer, Integer> intResult = graphResults.next();
                 Map<String, String> labelResult = new HashMap<>();
                 for (int key: intResult.keySet()){
-                    labelResult.put(graph.invertedIndex.get(key), graph.invertedIndex.get(intResult.get(key)));
+                    labelResult.put(query.invertedIndex.get(key), graph.invertedIndex.get(intResult.get(key)));
                 }
                 results.add(labelResult);
             }

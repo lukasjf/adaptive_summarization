@@ -73,6 +73,7 @@ public class BaseGraph implements GraphQueryAble{
     public void addEdge(int source, int target, String label){
         if (outIndex.get(source).stream().anyMatch(e -> e.getTarget().getId() == target & e.getLabel().equals(label))){
             System.err.println("Trying to insert duplicate edge: " + source + " " + target + " " + label);
+            return;
         }
         BaseEdge e = new BaseEdge(idMapping.get(source), idMapping.get(target), label);
         edges.add(e);

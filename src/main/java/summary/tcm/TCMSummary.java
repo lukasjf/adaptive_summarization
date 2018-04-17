@@ -57,13 +57,17 @@ public class TCMSummary implements GraphQueryAble {
 
             for (BaseNode n: graph.getNodes()){
                 int nodeHash = hash.getHash(n.getId());
-                nodes[nodeHash].getContainedNodes().add(n.getId());
+                g.getIdMapping().get(nodeHash).getContainedNodes().add(n.getId());
             }
 
-            for (BaseNode n: graph.getNodes()){
+            List<BaseNode> emptyNodes = new ArrayList<>();
+            for (BaseNode n: g.getNodes()){
                 if (n.getContainedNodes().isEmpty()){
-                    graph.removeNode(n.getId());
+                    emptyNodes.add(n);
                 }
+            }
+            for (BaseNode n: emptyNodes){
+                g.removeNode(n.getId());
             }
 
             for (BaseEdge e: graph.getEdges()){
@@ -71,13 +75,14 @@ public class TCMSummary implements GraphQueryAble {
                 int targetHash = hash.getHash(e.getTarget().getId());
                 g.addEdge(sourceHash, targetHash, e.getLabel());
             }
+            g.index = graph.index;
+            g.invertedIndex = graph.invertedIndex;
             graphs.add(g);
         }
     }
 
     @Override
     public List<Map<String, String>> query(BaseGraph query) {
-        System.out.println("query");
         List<Map<String, String>> results = new ArrayList<>();
 
         Map<Integer, List<Map<String, String>>> intermediate = new HashMap<>();
