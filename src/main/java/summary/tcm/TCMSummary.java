@@ -1,14 +1,11 @@
-package graph.tcm;
+package summary.tcm;
 
 import graph.BaseEdge;
 import graph.BaseGraph;
 import graph.BaseNode;
 import graph.GraphQueryAble;
-import graph.summary.Summary;
-import graph.summary.SummaryNode;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Created by lukas on 16.04.18.
@@ -35,7 +32,7 @@ public class TCMSummary implements GraphQueryAble {
     }
 
     private static int chooseK(BaseGraph graph, int numberHashes, long maxSize){
-        int numberEdgeTypes = graph.getEdges().stream().map(e -> e.getLabel()).collect(Collectors.toSet()).size();
+        int numberEdgeTypes = graph.getNumberEdgeTypes();
         int k = 1;
         while (maxSize >
                 graph.getNodes().size() * 4 * numberHashes +
@@ -51,60 +48,51 @@ public class TCMSummary implements GraphQueryAble {
     }
 
     public TCMSummary(BaseGraph graph, List<HashFunction> hashes) {
-        super(graph, null);
         graphs = new ArrayList<>();
         for (HashFunction hash: hashes){
 
-            Summary g = new Summary(graph, null);
-            TCMNode[] nodes = new TCMNode[hash.range()];
+            BaseGraph g = new BaseGraph();
+            BaseNode[] nodes = new BaseNode[hash.range()];
 
-            for (BaseNode n: graph.nodes){
+            for (int i = 0; i < hash.range(); i++){
+                g.addNode(i, "");
+            }
+
+            for (BaseNode n: graph.getNodes()){
                 int nodeHash = hash.getHash(n.getId());
-                if (nodes[nodeHash] == null){
-                    nodes[nodeHash] = new TCMNode(nodeHash);
-                }
-                nodes[nodeHash].labels.add(n.getLabel());
+                nodes[nodeHash].getContainedNodes().add(n.getId());
             }
 
-            for (TCMNode n: nodes){
-                if (n != null){
-                    SummaryNode sn = new SummaryNode(n.getId(), n.labels);
-                    g.addNode(sn);
+            for (BaseNode n: graph.getNodes()){
+                if (n.getContainedNodes().isEmpty()){
+                    graph.removeNode(n.getId());
                 }
             }
+
             for (BaseEdge e: graph.getEdges()){
                 int sourceHash = hash.getHash(e.getSource().getId());
                 int targetHash = hash.getHash(e.getTarget().getId());
-                g.addSEdge((SummaryNode)g.getNodeMapping().get(sourceHash), (SummaryNode)g.getNodeMapping().get(targetHash), e.getLabel());
+                g.addEdge(sourceHash, targetHash, e.getLabel());
             }
             graphs.add(g);
         }
     }
 
-    public TCMNode nodeFor(int i, String label){
-        for (BaseNode n: graphs.get(i).getNodes()){
-            if (((TCMNode)n ).labels.contains(label)){
-                return (TCMNode)n;
-            }
-        }
-        return null;
-    }
-
     @Override
-    public List<String[]> query(BaseGraph query) {
+    public List<Map<String, String>> query(BaseGraph query) {
         System.out.println("query");
-        List<String[]> results = new ArrayList<>();
+        List<Map<String, String>> results = new ArrayList<>();
 
-        Map<Integer, List<String[]>> intermediate = new HashMap<>();
+        Map<Integer, List<Map<String, String>>> intermediate = new HashMap<>();
 
         for (int i = 0; i < graphs.size(); i++) {
             intermediate.put(i, graphs.get(i).query(query));
         }
 
-        for (String[] result : intermediate.getOrDefault(0, new ArrayList<>())) {
+        for (Map<String,String> result: intermediate.getOrDefault(0, new ArrayList<>())) {
             boolean missing = false;
             for (int i = 1; i < graphs.size(); i++){
-                if (intermediate.get(i).stream().noneMatch(otherResult -> Arrays.equals(otherResult, result))){
+                if (intermediate.get(i).stream().noneMatch(result::equals)){
                     missing = true;
                     break;
                 }

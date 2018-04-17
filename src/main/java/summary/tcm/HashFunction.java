@@ -1,4 +1,4 @@
-package graph.tcm;
+package summary.tcm;
 
 /**
  * Created by lukas on 16.04.18.
