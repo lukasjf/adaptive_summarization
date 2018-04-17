@@ -12,8 +12,8 @@ public class BaseGraph implements GraphQueryAble{
 
     private static int DEDUPLICATE_COUNTER = 0;
 
-    Map<String, Integer> index = new HashMap<>();
-    Map<Integer, String> invertedIndex = new HashMap<>();
+    public Map<String, Integer> index = new HashMap<>();
+    public Map<Integer, String> invertedIndex = new HashMap<>();
 
     Set<BaseNode> nodes = new HashSet<>(30000);
     HashMap<Integer, BaseNode> idMapping = new HashMap<>(30000);
@@ -90,6 +90,34 @@ public class BaseGraph implements GraphQueryAble{
     @Override
     public List<Map<String, String>> query(BaseGraph query) {
         return new SubgraphIsomorphism().query(query, this);
+    }
+
+    public int getNumberEdgeTypes(){
+        return edges.stream().map(BaseEdge::getLabel).collect(Collectors.toSet()).size();
+    }
+
+    public Set<BaseNode> getNodes() {
+        return nodes;
+    }
+
+    public HashMap<Integer, BaseNode> getIdMapping() {
+        return idMapping;
+    }
+
+    public HashMap<String, BaseNode> getLabelMapping() {
+        return labelMapping;
+    }
+
+    public Set<BaseEdge> getEdges() {
+        return edges;
+    }
+
+    public HashMap<Integer, List<BaseEdge>> getInIndex() {
+        return inIndex;
+    }
+
+    public HashMap<Integer, List<BaseEdge>> getOutIndex() {
+        return outIndex;
     }
 
 

@@ -1,7 +1,5 @@
 package graph;
 
-import graph.summary.SummaryEdge;
-
 import java.util.*;
 import java.util.stream.Stream;
 

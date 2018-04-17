@@ -44,6 +44,10 @@ public class BaseNode implements Serializable {
         }
     }
 
+    public Set<Integer> getContainedNodes(){
+        return containedNodes;
+    }
+
     public int getId() {
         return id;
     }

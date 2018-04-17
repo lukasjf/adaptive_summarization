@@ -1,10 +1,10 @@
-package tcm;
+package graph.tcm;
 
 import graph.BaseEdge;
 import graph.BaseGraph;
 import graph.BaseNode;
+import graph.GraphQueryAble;
 import graph.summary.Summary;
-import graph.summary.SummaryEdge;
 import graph.summary.SummaryNode;
 
 import java.util.*;
@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 /**
  * Created by lukas on 16.04.18.
  */
-public class TCMSummary extends Summary {
+public class TCMSummary implements GraphQueryAble {
 
     private static int LARGE_PRIME = 15485863;
 
@@ -58,7 +58,7 @@ public class TCMSummary extends Summary {
             Summary g = new Summary(graph, null);
             TCMNode[] nodes = new TCMNode[hash.range()];
 
-            for (BaseNode n: graph.getNodes()){
+            for (BaseNode n: graph.nodes){
                 int nodeHash = hash.getHash(n.getId());
                 if (nodes[nodeHash] == null){
                     nodes[nodeHash] = new TCMNode(nodeHash);
