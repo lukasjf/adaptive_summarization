@@ -1,9 +1,6 @@
 package summary.tcm;
 
-import graph.BaseEdge;
-import graph.BaseGraph;
-import graph.BaseNode;
-import graph.GraphQueryAble;
+import graph.*;
 
 import java.util.*;
 
@@ -86,7 +83,7 @@ public class TCMSummary implements GraphQueryAble {
         Map<Integer, List<Map<String, String>>> intermediate = new HashMap<>();
 
         for (int i = 0; i < graphs.size(); i++) {
-            intermediate.put(i, graphs.get(i).query(query));
+            intermediate.put(i, new SubgraphIsomorphism().query(query, graphs.get(i), false));
         }
 
         for (Map<String,String> result: intermediate.getOrDefault(0, new ArrayList<>())) {

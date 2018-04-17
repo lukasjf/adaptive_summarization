@@ -8,7 +8,8 @@ import java.util.stream.Stream;
  */
 public class SubgraphIsomorphism {
 
-    protected BaseGraph graph;
+    private BaseGraph graph;
+    private boolean isInjective;
 
     private long candidateCount(BaseEdge queryEdge){
         return candidateEdges(queryEdge).count();
@@ -21,8 +22,10 @@ public class SubgraphIsomorphism {
                         && e.getLabel().equals(queryEdge.getLabel()));
     }
 
-    public List<Map<String, String>> query(BaseGraph query, BaseGraph graph){
+    public List<Map<String, String>> query(BaseGraph query, BaseGraph graph, boolean isInjective){
         this.graph = graph;
+        this.isInjective = isInjective;
+
         List<Map<BaseEdge, BaseEdge>> matchings = new ArrayList<>();
 
         List<BaseEdge> queryEdges = new ArrayList<>(query.edges);
@@ -36,22 +39,39 @@ public class SubgraphIsomorphism {
             matchedEdges.put(e, edge);
             matchings.addAll(query(queryEdges, match, matchedEdges));
         });
-        return transformMatchings(matchings);
+        List<Map<BaseNode, BaseNode>> nodeMatchings =  createNodeMatchings(matchings);
+        return expandCrossProduct(nodeMatchings);
     }
 
-    private List<Map<String,String>> transformMatchings(List<Map<BaseEdge, BaseEdge>> matchings) {
-        List<Map<String, String>> results = new ArrayList<>();
+    private List<Map<BaseNode,BaseNode>> createNodeMatchings(List<Map<BaseEdge, BaseEdge>> matchings) {
+        List<Map<BaseNode, BaseNode>> nodeMatchings = new ArrayList<>();
         for (Map<BaseEdge, BaseEdge> matching: matchings){
-            Map<String, String> result = new HashMap<>();
+            Map<BaseNode, BaseNode> result = new HashMap<>();
             for (BaseEdge m: matching.keySet()){
-                if (!result.containsKey(graph.invertedIndex.get(m.getSource().getId()))){
-                    result.put(graph.invertedIndex.get(m.getSource().getId()), graph.invertedIndex.get(matching.get(m).getSource().getId()));
+                if (!result.containsKey(m.getSource())){
+                    result.put(m.getSource(), matching.get(m).getSource());
                 }
-                if (!result.containsKey(graph.invertedIndex.get(m.getTarget().getId()))){
-                    result.put(graph.invertedIndex.get(m.getTarget().getId()), graph.invertedIndex.get(matching.get(m).getTarget().getId()));
+                if (!result.containsKey(m.getTarget())){
+                    result.put(m.getTarget(), matching.get(m).getTarget());
                 }
             }
-            results.add(result);
+            nodeMatchings.add(result);
+        }
+        return nodeMatchings;
+    }
+
+    private List<Map<String, String>> expandCrossProduct(List<Map<BaseNode, BaseNode>> nodeMatchings) {
+        List<Map<String, String>> results = new ArrayList<>();
+        for (Map<BaseNode, BaseNode> matching: nodeMatchings){
+            CrossProductUnfolder graphResults = new CrossProductUnfolder(matching);
+            while (graphResults.hasNext()){
+                Map<Integer, Integer> intResult = graphResults.next();
+                Map<String, String> labelResult = new HashMap<>();
+                for (int key: intResult.keySet()){
+                    labelResult.put(graph.invertedIndex.get(key), graph.invertedIndex.get(intResult.get(key)));
+                }
+                results.add(labelResult);
+            }
         }
         return results;
     }
@@ -89,8 +109,10 @@ public class SubgraphIsomorphism {
         List<Map<BaseEdge, BaseEdge>> results = new ArrayList<>();
         Stream<BaseEdge> candidates = graph.outIndex.get(match.get(queryEdge.getSource()).getId()).stream().filter(e ->
                 e.getLabel().equals(queryEdge.getLabel())
-                && e.getTarget().match(queryEdge.getTarget())
-                && !match.values().contains(e.getTarget()));
+                && e.getTarget().match(queryEdge.getTarget()));
+        if (isInjective){
+            candidates = candidates.filter(e -> !match.values().contains(e.getTarget()));
+        }
         candidates.forEach(e -> {
             HashMap<BaseNode, BaseNode> newMatch = new HashMap<>(match);
             newMatch.put(queryEdge.getTarget(), e.getTarget());
@@ -105,8 +127,10 @@ public class SubgraphIsomorphism {
         List<Map<BaseEdge, BaseEdge>> results = new ArrayList<>();
         Stream<BaseEdge> candidates = graph.inIndex.get(match.get(queryEdge.getTarget()).getId()).stream().filter(e ->
                 e.getLabel().equals(queryEdge.getLabel())
-                && e.getSource().match(queryEdge.getSource())
-                && !match.values().contains(e.getSource()));
+                && e.getSource().match(queryEdge.getSource()));
+        if (isInjective){
+            candidates = candidates.filter(e -> !match.values().contains(e.getSource()));
+        }
         candidates.forEach(e -> {
             HashMap<BaseNode, BaseNode> newMatch = new HashMap<>(match);
             newMatch.put(queryEdge.getSource(), e.getSource());

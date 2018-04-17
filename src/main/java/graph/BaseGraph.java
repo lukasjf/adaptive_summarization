@@ -89,7 +89,7 @@ public class BaseGraph implements GraphQueryAble{
 
     @Override
     public List<Map<String, String>> query(BaseGraph query) {
-        return new SubgraphIsomorphism().query(query, this);
+        return new SubgraphIsomorphism().query(query, this, true);
     }
 
     public int getNumberEdgeTypes(){
