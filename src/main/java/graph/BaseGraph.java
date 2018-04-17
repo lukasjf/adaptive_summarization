@@ -1,15 +1,31 @@
 package graph;
 
+import guru.nidi.graphviz.engine.Format;
+import guru.nidi.graphviz.engine.Graphviz;
+import guru.nidi.graphviz.model.*;
+
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static guru.nidi.graphviz.model.Factory.graph;
+import static guru.nidi.graphviz.model.Factory.node;
+import static guru.nidi.graphviz.model.Factory.to;
 
 /**
  * Created by lukas on 12.03.18.
  */
 public class BaseGraph implements GraphQueryAble{
 
+    //for drawing
+    private int LARGE_MEMORY_NUMBER = 160000000;
+    private int imagecount = 1;
+
+    //text to append to a label to make it unique -- realised by an increasing number
     private static int DEDUPLICATE_COUNTER = 0;
 
     public Map<String, Integer> index = new HashMap<>();
@@ -121,34 +137,35 @@ public class BaseGraph implements GraphQueryAble{
         return outIndex;
     }
 
-
-    /*public List<String> getVariables(){
-        return getNodes().stream().filter(n -> n.getLabel().startsWith("?"))
-                .sorted(Comparator.comparingInt(BaseNode::getId)).map(BaseNode::getLabel).collect(Collectors.toList());
-    }*/
-
-    /*public List<String[]> query(BaseGraph query){
-        List<Map<BaseEdge, BaseEdge>> matchings = new SubgraphIsomorphism(this).query(query);
-        List<String[]> results = new ArrayList<>();
-
-        List<String> variables = query.getVariables();
-
-        for (Map<BaseEdge, BaseEdge> match: matchings){
-            String[] singleResult = new String[variables.size()];
-            for (BaseEdge queryEdge: match.keySet()){
-                if (queryEdge.getSource().isVariable()){
-                    int variableIndex = variables.indexOf(queryEdge.getSource().getLabel());
-                    singleResult[variableIndex] = match.get(queryEdge).getSource().getLabel();
-                }
-                if (queryEdge.getTarget().isVariable()){
-                    int variableIndex = variables.indexOf(queryEdge.getTarget().getLabel());
-                    singleResult[variableIndex] = match.get(queryEdge).getTarget().getLabel();
-                }
-            }
-            results.add(singleResult);
+    public void draw(){
+        Map<BaseNode, Node> mapping = new HashMap<>();
+        Map<Node, List<Link>> edgeMapping = new HashMap<>();
+        for (BaseNode node: getNodes()){
+            Node drawingNode = node(node.toString());
+            mapping.put(node, drawingNode);
+            edgeMapping.put(drawingNode, new ArrayList<>());
         }
-        return results;
-    }*/
-
+        for (BaseEdge edge: getEdges()){
+            Node source = mapping.get(edge.getSource());
+            Node target = mapping.get(edge.getTarget());
+            edgeMapping.get(source).add(to(target).with(Label.of(edge.toString())));
+        }
+        Graph g = graph("ex").directed().with(mapping.values().stream().map(node ->
+                node.link(edgeMapping.get(node).toArray(new LinkTarget[edgeMapping.get(node).size()]))).toArray(Node[]::new));
+        Graphviz viz = Graphviz.fromGraph(g).totalMemory(LARGE_MEMORY_NUMBER);
+        BufferedImage image = viz.render(Format.PNG).toImage();
+        File img = new File("test" + imagecount++ + ".png");
+        try {
+            ImageIO.write(image, "png", img);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        JDialog dialog = new JDialog();
+        dialog.getContentPane().add(new JLabel(new ImageIcon(image)));
+        dialog.setModal(true);
+        dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        dialog.pack();
+        dialog.setVisible(true);
+    }
 
 }
