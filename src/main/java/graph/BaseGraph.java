@@ -42,14 +42,6 @@ public class BaseGraph implements GraphQueryAble{
         index.put(newlabel, id);
         invertedIndex.put(id, newlabel);
 
-        for (BaseEdge e: inIndex.get(id)){
-            edges.remove(e);
-            outIndex.get(e.getSource().getId()).remove(e);
-        }
-        for (BaseEdge e: outIndex.get(id)){
-            edges.remove(e);
-            inIndex.get(e.getTarget().getId()).remove(e);
-        }
         inIndex.put(id, new ArrayList<>());
         outIndex.put(id, new ArrayList<>());
     }
@@ -66,6 +58,14 @@ public class BaseGraph implements GraphQueryAble{
         index.remove(label);
         invertedIndex.remove(id);
 
+        for (BaseEdge e: inIndex.get(id)){
+            edges.remove(e);
+            outIndex.get(e.getSource().getId()).remove(e);
+        }
+        for (BaseEdge e: outIndex.get(id)){
+            edges.remove(e);
+            inIndex.get(e.getTarget().getId()).remove(e);
+        }
         inIndex.remove(id);
         outIndex.remove(id);
     }
