@@ -11,6 +11,7 @@ public class SubgraphIsomorphism {
     private BaseGraph graph;
     private BaseGraph query;
     private boolean isInjective;
+    public List<Map<BaseEdge, BaseEdge>> matchings;
 
     private long candidateCount(BaseEdge queryEdge){
         return candidateEdges(queryEdge).count();
@@ -41,6 +42,7 @@ public class SubgraphIsomorphism {
             matchedEdges.put(e, edge);
             matchings.addAll(query(queryEdges, match, matchedEdges));
         });
+        this.matchings = matchings;
         List<Map<BaseNode, BaseNode>> nodeMatchings =  createNodeMatchings(matchings);
         return expandCrossProduct(nodeMatchings);
     }

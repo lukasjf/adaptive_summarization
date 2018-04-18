@@ -113,6 +113,18 @@ public class BaseGraph implements GraphQueryAble{
         return edges.stream().map(BaseEdge::getLabel).collect(Collectors.toSet()).size();
     }
 
+    public BaseNode nodeWithId(int id){
+        return idMapping.get(id);
+    }
+
+    public List<BaseEdge> outEdgesFor(int id){
+        return outIndex.get(id);
+    }
+
+    public List<BaseEdge> inEdgesFor(int id){
+        return inIndex.get(id);
+    }
+
     public Set<BaseNode> getNodes() {
         return nodes;
     }
