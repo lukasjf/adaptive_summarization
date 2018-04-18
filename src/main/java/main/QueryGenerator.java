@@ -3,6 +3,7 @@ package main;
 import graph.BaseEdge;
 import graph.BaseGraph;
 import graph.BaseNode;
+import graph.GraphImporter;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -17,45 +18,63 @@ public class QueryGenerator {
     private static int LOWER_SIZE = 2;
     private static int UPPER_SIZE = 3;
     private static int QUERIES_PER_SIZE = 25;
-    private static int MAX_TRIES = 100;
+    private static int MAX_TRIES = 10000;
 
-    private String dataDir;
+    private static int TEST_QUERIES_PER_SIZE = 10;
+
     private BaseGraph graph;
     private Random random = new Random(42);
 
     private int queryCounter = 1;
+    private boolean isTest;
 
-    private List<BaseNode> kddNodes = new ArrayList<>();
+    private String outputDir;
 
-    public QueryGenerator(String dataDir, String graphFile){
-        this.dataDir = dataDir;
-        this.graph = BaseGraph.parseGraph(dataDir + graphFile);
+    private List<BaseNode> seedNodes = new ArrayList<>();
 
-        BaseNode kdd = graph.getLabelMapping().get("aut:christos_faloutsos");
-        kddNodes.add(kdd);
-        for (BaseEdge edge: graph.getInIndex().get(kdd)){
-            if (!kddNodes.contains(edge.getSource()))
-                kddNodes.add(edge.getSource());
+    public QueryGenerator(String input, String output, List<String> seeds){
+        this.outputDir = output;
+        File outDir = new File(outputDir);
+        if (!outDir.exists()){
+            outDir.mkdir();
+            new File(outputDir + "train").mkdir();
+            new File(outputDir + "test").mkdir();
         }
-        for (BaseEdge edge: graph.getOutIndex().get(kdd)){
-            if (!kddNodes.contains(edge.getTarget()))
-                kddNodes.add(edge.getTarget());
+        this.graph = GraphImporter.parseGraph(input);
+
+        for (String seed: seeds){
+            BaseNode seedNode = graph.getLabelMapping().get(seed);
+            addSeedNode(seedNode);
+            for (BaseEdge edge: graph.inEdgesFor(seedNode.getId())){
+                addSeedNode(edge.getSource());
+            }
+            for (BaseEdge edge: graph.outEdgesFor(seedNode.getId())) {
+                addSeedNode(edge.getTarget());
+            }
         }
-        System.out.println(kddNodes.size());
+        if (seeds.isEmpty()){
+            seedNodes.addAll(graph.getNodes());
+        }
     }
 
-    public void generate(){
+    public void addSeedNode(BaseNode node){
+        if (! seedNodes.contains(node)){
+            seedNodes.add(node);
+        }
+    }
+
+    public void generate(boolean isTest){
+        this.isTest = isTest;
         for (int s = LOWER_SIZE; s <= UPPER_SIZE; s++) {
-            for (int i = 0; i < QUERIES_PER_SIZE; i++) {
+            int sizeBound = isTest ? TEST_QUERIES_PER_SIZE : QUERIES_PER_SIZE;
+            for (int i = 0; i < sizeBound; i++) {
                 List<BaseEdge> candidates = new ArrayList<>();
                 List<BaseEdge> queryGraph = new ArrayList<>();
 
-                //int startIndex = random.nextInt(graph.getNodeMapping().size());
-                //BaseNode startNode = graph.getNodeMapping().get(startIndex);
-                int startIndex = random.nextInt(kddNodes.size());
-                BaseNode startNode = kddNodes.get(startIndex);
-                candidates.addAll(graph.getInIndex().get(startNode));
-                candidates.addAll(graph.getInIndex().get(startNode));
+                int startIndex = random.nextInt(seedNodes.size());
+                BaseNode startNode = seedNodes.get(startIndex);
+                candidates.addAll(graph.inEdgesFor(startNode.getId()));
+                candidates.addAll(graph.outEdgesFor(startNode.getId()));
                 if (candidates.isEmpty()){
                     i--;
                     System.out.println("#");
@@ -80,17 +99,19 @@ public class QueryGenerator {
                         break;
                     }
                     queryGraph.add(taken);
-                    candidates.addAll(graph.getInIndex().get(taken.getSource()));
-                    candidates.addAll(graph.getOutIndex().get(taken.getSource()));
-                    candidates.addAll(graph.getInIndex().get(taken.getTarget()));
-                    candidates.addAll(graph.getOutIndex().get(taken.getTarget()));
+                    candidates.addAll(graph.inEdgesFor(taken.getSource().getId()));
+                    candidates.addAll(graph.outEdgesFor(taken.getSource().getId()));
+                    candidates.addAll(graph.inEdgesFor(taken.getTarget().getId()));
+                    candidates.addAll(graph.outEdgesFor(taken.getTarget().getId()));
                 }
                 System.out.println("Query created");
                 BaseGraph query = makeQuery(queryGraph);
                 System.out.println("Copy created");
                 injectVariables(query);
                 System.out.println("Variables made");
-                serializeQuery(query);
+                if(!serializeQuery(query)){
+                    i--;
+                }
                 System.out.println("Written");
             }
         }
@@ -98,13 +119,12 @@ public class QueryGenerator {
 
     private BaseGraph makeQuery(List<BaseEdge> queryGraph) {
         BaseGraph query = new BaseGraph();
-        List<BaseEdge> copy = new ArrayList<>();
         for (BaseEdge e: queryGraph){
-            if (!query.getNodeMapping().containsKey(e.getSource().getId())){
-                query.addNode(e.getSource().getId(), e.getSource().getLabel());
+            if (!query.getIdMapping().containsKey(e.getSource().getId())){
+                query.addNode(e.getSource().getId(), graph.invertedIndex.get(e.getSource().getId()));
             }
-            if (!query.getNodeMapping().containsKey(e.getTarget().getId())){
-                query.addNode(e.getTarget().getId(), e.getTarget().getLabel());
+            if (!query.getIdMapping().containsKey(e.getTarget().getId())){
+                query.addNode(e.getTarget().getId(), graph.invertedIndex.get(e.getTarget().getId()));
             }
             query.addEdge(e.getSource().getId(), e.getTarget().getId(), e.getLabel());
         }
@@ -112,7 +132,7 @@ public class QueryGenerator {
     }
 
     private void injectVariables(BaseGraph query) {
-        int variableCounter = 0;
+        int variableCounter = -1;
         List<BaseNode> nodes = new ArrayList<>(query.getNodes());
 
         int noVariableIndex = random.nextInt(nodes.size());
@@ -125,35 +145,45 @@ public class QueryGenerator {
                 continue;
             }
             if (i == variableIndex || random.nextDouble() < 1.0 / query.getEdges().size()){
-                nodes.get(i).setLabel("?" + variableCounter++);
+
+                nodes.get(i).setId(variableCounter);
+                query.invertedIndex.put(variableCounter, "*" + (-1*variableCounter--));
             }
         }
     }
 
-    private void serializeQuery(BaseGraph query) {
+    private boolean serializeQuery(BaseGraph query) {
         int nodeCounter = 0;
         int resultSize = graph.query(query).size();
-        if (resultSize > 1000){
-            return;
+
+        if (resultSize == 0 || resultSize > 10000){
+            return false;
         }
+
         System.out.println(resultSize);
-        Map<BaseNode, Integer> nodeIDs = new HashMap<>();
-        try(PrintStream queryFile = new PrintStream(new File(dataDir + "queriesfaloutsos/query" + queryCounter++))){
+        String querydir = outputDir + (isTest ? "test/" : "train/") + "query";
+        try(PrintStream queryFile = new PrintStream(new File(querydir + queryCounter++))){
             queryFile.println("#" + resultSize);
             for (BaseNode node: query.getNodes()){
-                nodeIDs.put(node, nodeCounter);
-                queryFile.println("v " + nodeCounter++ + " " + node.getLabel());
+                queryFile.println("v " + node.getId() + " " + query.invertedIndex.get(node.getId()));
             }
             for (BaseEdge edge: query.getEdges()){
-                queryFile.println("e " + nodeIDs.get(edge.getSource()) + " " + nodeIDs.get(edge.getTarget()) + " " + edge.getLabel());
+                queryFile.println("e " + edge.getSource().getId() + " " + edge.getTarget().getId() + " " + edge.getLabel());
             }
         }catch (FileNotFoundException e){
             e.printStackTrace();
         }
+        return true;
     }
 
     public static void main(String[] args){
-        QueryGenerator q = new QueryGenerator("/home/lukas/studium/thesis/code/data/citation/","graph_3");
-        q.generate();
+        String dataDir = "/home/lukas/studium/thesis/code/data/citation/";
+        String graphFile = "graph_3";
+        String outputDir = "/home/lukas/studium/thesis/code/data/movie/queriesnew/";
+        List<String> seeds = new ArrayList<>();
+        seeds.add("aut:danai_koutra");
+        QueryGenerator q = new QueryGenerator(dataDir+graphFile, outputDir, seeds);
+        q.generate(false);
+        q.generate(true);
     }
 }
