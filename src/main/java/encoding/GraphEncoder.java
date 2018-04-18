@@ -7,26 +7,14 @@ import graph.BaseNode;
 /**
  * Created by lukas on 16.04.18.
  */
+
 public class GraphEncoder {
     public long encode(BaseGraph graph){
-        long size = 0L;
-        for (BaseNode n: graph.getNodes()){
-            size += 8;
-            size += n.getLabel().length();
-        }
+        long size = 1L * graph.getNodes().size() * 8;
         for (BaseEdge e: graph.getEdges()){
             size += 16; // source & targetID
             size += e.getLabel().length();
         }
-        return size;
-    }
-
-    public long encodeNodeLabels(BaseGraph graph) {
-        long size = 0L;
-        for (BaseNode n: graph.getNodes()){
-            size += n.getLabel().length() + 1;
-        }
-        size --;
         return size;
     }
 }
