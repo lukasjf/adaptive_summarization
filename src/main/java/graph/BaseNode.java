@@ -48,6 +48,10 @@ public class BaseNode implements Serializable {
         return containedNodes;
     }
 
+    public int size(){
+        return containedNodes.size();
+    }
+
     public int getId() {
         return id;
     }

@@ -40,10 +40,10 @@ public class BaseGraph implements GraphQueryAble{
     HashMap<Integer, List<BaseEdge>> outIndex = new HashMap<>(30000);
 
 
-    public void addNode(int id, String label){
+    public BaseNode addNode(int id, String label){
         if (idMapping.keySet().contains(id)){
             System.err.println("ID already in use: " + id);
-            return;
+            return null;
         }
         String newlabel = label;
         while (labelMapping.keySet().contains(newlabel)){
@@ -60,6 +60,8 @@ public class BaseGraph implements GraphQueryAble{
 
         inIndex.put(id, new ArrayList<>());
         outIndex.put(id, new ArrayList<>());
+
+        return node;
     }
 
     public void removeNode(int id){
@@ -86,15 +88,16 @@ public class BaseGraph implements GraphQueryAble{
         outIndex.remove(id);
     }
 
-    public void addEdge(int source, int target, String label){
+    public BaseEdge addEdge(int source, int target, String label){
         if (outIndex.get(source).stream().anyMatch(e -> e.getTarget().getId() == target & e.getLabel().equals(label))){
             System.err.println("Trying to insert duplicate edge: " + source + " " + target + " " + label);
-            return;
+            return null;
         }
         BaseEdge e = new BaseEdge(idMapping.get(source), idMapping.get(target), label);
         edges.add(e);
         inIndex.get(target).add(e);
         outIndex.get(source).add(e);
+        return e;
     }
 
     public void removeEdge(BaseEdge edge){
