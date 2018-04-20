@@ -46,9 +46,9 @@ public class CrossProductUnfolder {
     }
 
     public boolean hasNext(){
-        if (totalCount > 100000){
+        if (totalCount > 10000){
             // Soft check for too large results (e.g. due to too coarse summary)
-            System.err.println("result count to high");
+            //System.err.println("result count to high");
             return false;
         }
         return currentCount < totalCount;

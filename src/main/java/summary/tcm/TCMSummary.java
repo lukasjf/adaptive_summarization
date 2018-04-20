@@ -1,5 +1,6 @@
 package summary.tcm;
 
+import evaluation.Benchmarkable;
 import graph.*;
 
 import java.util.*;
@@ -7,7 +8,7 @@ import java.util.*;
 /**
  * Created by lukas on 16.04.18.
  */
-public class TCMSummary implements GraphQueryAble {
+public class TCMSummary implements Benchmarkable {
 
     private static int LARGE_PRIME = 15485863;
 
@@ -104,5 +105,10 @@ public class TCMSummary implements GraphQueryAble {
             }
         }
         return results;
+    }
+
+    @Override
+    public void train(List<BaseGraph> queries) {
+
     }
 }

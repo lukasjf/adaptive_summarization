@@ -16,9 +16,9 @@ public class LossChoice implements SplitChoiceStrategy{
     @Override
     public void initialize(HeuristicSummary summary) {
         candidates = summary.summary.getEdges().stream()
-                .filter(e -> (double) e.bookkeeping.getOrDefault("queryLoss", 0.0) > 0)
+                .filter(e -> (double) e.bookkeeping.getOrDefault("loss", 0.0) > 0)
                 .sorted(Comparator.comparingDouble(e ->
-                        -1 * (double) e.bookkeeping.getOrDefault("queryLoss", 0.0)))
+                        -1 * (double) e.bookkeeping.getOrDefault("loss", 0.0)))
                 .collect(Collectors.toList());
     }
 

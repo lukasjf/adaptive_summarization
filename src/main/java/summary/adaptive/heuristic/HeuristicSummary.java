@@ -1,5 +1,7 @@
 package summary.adaptive.heuristic;
 
+import encoding.HeuristicEncoder;
+import evaluation.Benchmarkable;
 import graph.*;
 
 import java.util.Collections;
@@ -11,15 +13,17 @@ import java.util.stream.Collectors;
 /**
  * Created by lukas on 12.03.18.
  */
-public class HeuristicSummary implements GraphQueryAble {
+public class HeuristicSummary implements Benchmarkable {
 
     private int newNodeCounter = 2;
 
     BaseGraph graph;
     BaseGraph summary;
+    int sizeLimit;
 
-    public HeuristicSummary(BaseGraph graph){
+    public HeuristicSummary(BaseGraph graph, int sizeLimit){
         this.graph = graph;
+        this.sizeLimit = sizeLimit;
         summary = new BaseGraph();
         Set<Integer> allIds = graph.getNodes().stream().map(BaseNode::getId).collect(Collectors.toSet());
         summary.addNode(1, "");
@@ -60,11 +64,12 @@ public class HeuristicSummary implements GraphQueryAble {
     public void split(String choiceMethod, String splitMethod){
         SplitChoiceStrategy choice = SplitChoiceStrategy.algorithms.get(choiceMethod);
         choice.initialize(this);
-        if (choice.hasNext()){
+        while (choice.hasNext()){
             BaseEdge criticalEdge = SplitChoiceStrategy.algorithms.get(choiceMethod).next();
             BaseNode[] splittedNodes = SplitStrategy.algorithms.get(splitMethod).split(this, criticalEdge);
             if (splittedNodes.length == 0){
                 // split did not work
+                continue;
             } else{
                 // 3 nodes: first the splitnode, then the two new nodes
                 // create new nodes and make new edges
@@ -78,6 +83,7 @@ public class HeuristicSummary implements GraphQueryAble {
 
                 checkEdges(splitNode.getId(), newNode1.getId(), newNode2.getId());
                 summary.removeNode(splitNode.getId());
+                break;
             }
         }
     }
@@ -116,6 +122,23 @@ public class HeuristicSummary implements GraphQueryAble {
         }
     }
 
+    @Override
+    public void train(List<BaseGraph> queries) {
+        int oldSize = 1;
+        HeuristicEncoder he = new HeuristicEncoder();
+        while(he.encode(this) < sizeLimit){
+            System.out.println("new Round " + summary.getNodes().size() + " " + he.encode(this));
+            queries.forEach(this::query);
+            split("loss", "existential");
+            summary.getEdges().forEach(e -> e.bookkeeping.put("loss", 0.0));
+            if (summary.getNodes().size() == oldSize){
+                break;
+            } else{
+                oldSize = summary.getNodes().size();
+            }
+        }
+    }
+
     public BaseGraph getGraph() {
         return graph;
     }
@@ -123,4 +146,5 @@ public class HeuristicSummary implements GraphQueryAble {
     public BaseGraph getSummary() {
         return summary;
     }
+
 }
