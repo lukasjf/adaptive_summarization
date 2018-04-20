@@ -129,7 +129,7 @@ public class HeuristicSummary implements Benchmarkable {
         while(he.encode(this) < sizeLimit){
             System.out.println("new Round " + summary.getNodes().size() + " " + he.encode(this));
             queries.forEach(this::query);
-            split("loss", "existential");
+            split("loss", "variance");
             summary.getEdges().forEach(e -> e.bookkeeping.put("loss", 0.0));
             if (summary.getNodes().size() == oldSize){
                 break;
