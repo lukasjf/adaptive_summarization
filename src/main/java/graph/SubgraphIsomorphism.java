@@ -150,16 +150,13 @@ public class SubgraphIsomorphism {
 
     private List<Map<BaseEdge,BaseEdge>> queryWithoutPreviousMatch(List<BaseEdge> queryEdges, BaseEdge queryEdge, Map<BaseNode, BaseNode> match, Map<BaseEdge, BaseEdge> matchedEdges) {
         List<Map<BaseEdge, BaseEdge>> results = new ArrayList<>();
-        Stream<BaseEdge> candidateEdges = graph.edges.stream().filter(e ->
-            e.getLabel().equals(queryEdge.getLabel()));
-        /*candidateEdges(queryEdge).forEach(edge -> {
-            Map<BaseNode, BaseNode> match = new HashMap<>();
-            Map<BaseEdge, BaseEdge> matchedEdges = new HashMap<>();
-            match.put(e.getSource(), edge.getSource());
-            match.put(e.getTarget(), edge.getTarget());
-            matchedEdges.put(e, edge);
-            matchings.addAll(query(queryEdges, match, matchedEdges));
-        });*/
+        Stream<BaseEdge> candidateEdges = candidateEdges(queryEdge);
+        candidateEdges.forEach(e -> {
+            match.put(e.getSource(), queryEdge.getSource());
+            match.put(e.getTarget(), queryEdge.getTarget());
+            matchedEdges.put(e, queryEdge);
+            results.addAll(query(queryEdges, match, matchedEdges));
+        });
         return results;
     }
 }
