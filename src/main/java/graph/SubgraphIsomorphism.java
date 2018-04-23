@@ -87,13 +87,16 @@ public class SubgraphIsomorphism {
             return result;
         } else{
             List <BaseEdge> queryEdges = new ArrayList<>(_queryEdges);
-            BaseEdge queryEdge = queryEdges.remove(0);
+            BaseEdge queryEdge = queryEdges.stream().filter(e -> match.containsKey(e.getSource()) || match.containsKey(e.getTarget())).findFirst().get();
+            queryEdges.remove(queryEdge);
             if (match.containsKey(queryEdge.getSource()) && match.containsKey(queryEdge.getTarget())){
                 return querySourceTarget(queryEdges, queryEdge, match, matchedEdges);
             } else if (match.containsKey(queryEdge.getSource())) {
                 return queryWithSource(queryEdges, queryEdge, match, matchedEdges);
-            } else{
+            } else if (match.containsKey(queryEdge.getTarget())){
                 return queryWithTarget(queryEdges, queryEdge, match, matchedEdges);
+            } else{
+                return queryWithoutPreviousMatch(queryEdges, queryEdge, match, matchedEdges);
             }
         }
     }
@@ -111,7 +114,7 @@ public class SubgraphIsomorphism {
 
     private List<Map<BaseEdge, BaseEdge>> queryWithSource(List<BaseEdge> queryEdges, BaseEdge queryEdge, Map<BaseNode, BaseNode> match, Map<BaseEdge, BaseEdge> matchedEdges) {
         List<Map<BaseEdge, BaseEdge>> results = new ArrayList<>();
-        Stream<BaseEdge> candidates = graph.outIndex.get(match.get(queryEdge.getSource()).getId()).stream().filter(e ->
+        Stream<BaseEdge> candidates = graph.outEdgesFor(match.get(queryEdge.getSource()).getId()).stream().filter(e ->
                 e.getLabel().equals(queryEdge.getLabel())
                 && e.getTarget().match(queryEdge.getTarget()));
         if (isInjective){
@@ -129,7 +132,7 @@ public class SubgraphIsomorphism {
 
     private List<Map<BaseEdge, BaseEdge>> queryWithTarget(List<BaseEdge> queryEdges, BaseEdge queryEdge, Map<BaseNode, BaseNode> match, Map<BaseEdge, BaseEdge> matchedEdges) {
         List<Map<BaseEdge, BaseEdge>> results = new ArrayList<>();
-        Stream<BaseEdge> candidates = graph.inIndex.get(match.get(queryEdge.getTarget()).getId()).stream().filter(e ->
+        Stream<BaseEdge> candidates = graph.inEdgesFor(match.get(queryEdge.getTarget()).getId()).stream().filter(e ->
                 e.getLabel().equals(queryEdge.getLabel())
                 && e.getSource().match(queryEdge.getSource()));
         if (isInjective){
@@ -142,6 +145,21 @@ public class SubgraphIsomorphism {
             newMatchedEdges.put(queryEdge, e);
             results.addAll(query(queryEdges, newMatch, newMatchedEdges));
         });
+        return results;
+    }
+
+    private List<Map<BaseEdge,BaseEdge>> queryWithoutPreviousMatch(List<BaseEdge> queryEdges, BaseEdge queryEdge, Map<BaseNode, BaseNode> match, Map<BaseEdge, BaseEdge> matchedEdges) {
+        List<Map<BaseEdge, BaseEdge>> results = new ArrayList<>();
+        Stream<BaseEdge> candidateEdges = graph.edges.stream().filter(e ->
+            e.getLabel().equals(queryEdge.getLabel()));
+        /*candidateEdges(queryEdge).forEach(edge -> {
+            Map<BaseNode, BaseNode> match = new HashMap<>();
+            Map<BaseEdge, BaseEdge> matchedEdges = new HashMap<>();
+            match.put(e.getSource(), edge.getSource());
+            match.put(e.getTarget(), edge.getTarget());
+            matchedEdges.put(e, edge);
+            matchings.addAll(query(queryEdges, match, matchedEdges));
+        });*/
         return results;
     }
 }
