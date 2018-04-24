@@ -21,6 +21,8 @@ public class HeuristicSummary implements Benchmarkable {
     BaseGraph summary;
     int sizeLimit;
 
+    private HeuristicEncoder he = new HeuristicEncoder();
+
     public HeuristicSummary(BaseGraph graph, int sizeLimit){
         this.graph = graph;
         this.sizeLimit = sizeLimit;
@@ -82,7 +84,12 @@ public class HeuristicSummary implements Benchmarkable {
                 summary.nodeWithId(newNode2.getId()).getContainedNodes().addAll(newNode2.getContainedNodes());
 
                 checkEdges(splitNode.getId(), newNode1.getId(), newNode2.getId());
-                summary.removeNode(splitNode.getId());
+                if (he.encode(this) <= sizeLimit){
+                    summary.removeNode(splitNode.getId());
+                } else{
+                    summary.removeNode(newNode1.getId());
+                    summary.removeNode(newNode1.getId());
+                }
                 break;
             }
         }
