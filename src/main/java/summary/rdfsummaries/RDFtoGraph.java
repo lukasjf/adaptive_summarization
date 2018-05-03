@@ -1,12 +1,16 @@
 package summary.rdfsummaries;
 
 import graph.BaseGraph;
+import graph.GraphImporter;
+import graph.M;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
 
 import java.io.*;
 import java.sql.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by lukas on 19.04.18.
@@ -15,6 +19,7 @@ public class RDFtoGraph {
 
     public static BaseGraph parseRDFToGraph(String rdfSummaryPath, String mapDBPath, String mappingName,
             String dbserver, String dbPort, String dbname, String schema,  String username, String password){
+        BaseGraph graph = GraphImporter.parseGraph("/home/lukas/studium/thesis/code/data/citation/graph_3");
         BaseGraph rdfsummary = new BaseGraph();
 
         try (BufferedReader br = new BufferedReader(new FileReader(new File(rdfSummaryPath)))){
@@ -42,13 +47,7 @@ public class RDFtoGraph {
             e.printStackTrace();
         }
 
-
-        DB mapdb = DBMaker.newFileDB(new File(mapDBPath)).make();
-        HTreeMap<Integer, Integer> supernodeMappings = mapdb.getHashMap(mappingName);
-        for (int normalNodeId: supernodeMappings.keySet()){
-            int superNodeId = supernodeMappings.get(normalNodeId);
-            rdfsummary.nodeWithId(superNodeId).getContainedNodes().add(normalNodeId);
-        }
+        Map<Integer, Integer> rdfToRealID = new HashMap<>();
 
         try {
             Class.forName("org.postgresql.Driver");
@@ -61,9 +60,20 @@ public class RDFtoGraph {
             for (; results.next();){
                 int id = results.getInt("key");
                 String label = extractFromURL(results.getString("value"));
+                if (label.startsWith("http://example.org/entity/")){
+                    rdfToRealID.put(id, M.IDFrom(label.split("entity/")[1]));
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+
+
+        DB mapdb = DBMaker.newFileDB(new File(mapDBPath)).make();
+        HTreeMap<Integer, Integer> supernodeMappings = mapdb.getHashMap(mappingName);
+        for (int normalNodeId: supernodeMappings.keySet()){
+            int superNodeId = supernodeMappings.get(normalNodeId);
+            rdfsummary.nodeWithId(superNodeId).getContainedNodes().add(rdfToRealID.get(normalNodeId));
         }
         return rdfsummary;
     }
