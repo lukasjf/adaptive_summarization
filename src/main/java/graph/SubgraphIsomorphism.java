@@ -72,7 +72,7 @@ public class SubgraphIsomorphism {
                 Map<Integer, Integer> intResult = graphResults.next();
                 Map<String, String> labelResult = new HashMap<>();
                 for (int key: intResult.keySet()){
-                    labelResult.put(query.invertedIndex.get(key), graph.invertedIndex.get(intResult.get(key)));
+                    labelResult.put(M.labelFrom(key), M.labelFrom(intResult.get(key)));
                 }
                 results.add(labelResult);
             }

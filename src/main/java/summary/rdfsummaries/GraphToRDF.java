@@ -1,9 +1,6 @@
 package summary.rdfsummaries;
 
-import graph.BaseEdge;
-import graph.BaseGraph;
-import graph.BaseNode;
-import graph.GraphImporter;
+import graph.*;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -26,7 +23,7 @@ public class GraphToRDF {
             Map<Integer, String> entityMap = new HashMap<>();
 
             for (BaseNode n: graph.getNodes()){
-                entityMap.put(n.getId(), String.format(ENTITYBASE, graph.invertedIndex.get(n.getId())));
+                entityMap.put(n.getId(), String.format(ENTITYBASE, M.labelFrom(n.getId())));
             }
             for (BaseEdge e: graph.getEdges()){
                 String property = String.format(PROPERTYBASE, e.getLabel());

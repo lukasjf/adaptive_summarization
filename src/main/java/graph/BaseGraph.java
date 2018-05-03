@@ -28,9 +28,6 @@ public class BaseGraph implements GraphQueryAble{
     //text to append to a label to make it unique -- realised by an increasing number
     private static int DEDUPLICATE_COUNTER = 0;
 
-    public Map<String, Integer> index = new HashMap<>();
-    public Map<Integer, String> invertedIndex = new HashMap<>();
-
     Set<BaseNode> nodes = new HashSet<>(30000);
     HashMap<Integer, BaseNode> idMapping = new HashMap<>(30000);
     HashMap<String, BaseNode> labelMapping = new HashMap<>(30000);
@@ -55,8 +52,7 @@ public class BaseGraph implements GraphQueryAble{
         idMapping.put(id, node);
         labelMapping.put(newlabel, node);
 
-        index.put(newlabel, id);
-        invertedIndex.put(id, newlabel);
+        M.addPair(newlabel, id);
 
         inIndex.put(id, new ArrayList<>());
         outIndex.put(id, new ArrayList<>());
@@ -65,7 +61,7 @@ public class BaseGraph implements GraphQueryAble{
     }
 
     public void removeNode(int id){
-        String label = invertedIndex.get(id);
+        String label = M.labelFrom(id);
         BaseNode node = idMapping.get(id);
 
         nodes.remove(node);
@@ -73,8 +69,7 @@ public class BaseGraph implements GraphQueryAble{
         idMapping.remove(id);
         labelMapping.remove(label);
 
-        index.remove(label);
-        invertedIndex.remove(id);
+        M.remove(id);
 
         for (BaseEdge e: inIndex.get(id)){
             edges.remove(e);

@@ -61,8 +61,6 @@ public class RDFtoGraph {
             for (; results.next();){
                 int id = results.getInt("key");
                 String label = extractFromURL(results.getString("value"));
-                rdfsummary.invertedIndex.put(id, label);
-                rdfsummary.index.put(label, id);
             }
         } catch (SQLException e) {
             e.printStackTrace();

@@ -6,7 +6,9 @@ import graph.GraphImporter;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by lukas on 19.04.18.
@@ -26,7 +28,11 @@ public class Benchmark {
     }
 
     public double[] run(Benchmarkable b, BaseGraph g){
-        b.train(trainingQueries);
+        Map<BaseGraph, List<Map<String, String>>> trainingSet = new HashMap<>();
+        for (BaseGraph query: trainingQueries){
+            trainingSet.put(query, g.query(query));
+        }
+        b.train(trainingSet);
         double trainingResult = 0.0, testResult = 0.0;
         for (BaseGraph q: trainingQueries){
             trainingResult += F1Score.fqScoreFor(g.query(q), b.query(q));

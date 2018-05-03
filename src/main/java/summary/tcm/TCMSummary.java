@@ -76,8 +76,6 @@ public class TCMSummary implements Benchmarkable {
                 int targetHash = hash.getHash(e.getTarget().getId());
                 g.addEdge(sourceHash, targetHash, e.getLabel());
             }
-            g.index = graph.index;
-            g.invertedIndex = graph.invertedIndex;
             graphs.add(g);
         }
     }

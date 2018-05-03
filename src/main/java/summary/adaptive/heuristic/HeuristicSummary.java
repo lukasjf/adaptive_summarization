@@ -34,8 +34,6 @@ public class HeuristicSummary implements Benchmarkable {
         for (String edgeLabel: edgeLabels){
             addPotentialEdge(1, 1, edgeLabel);
         }
-        summary.index = graph.index;
-        summary.invertedIndex = graph.invertedIndex;
     }
 
     public int getNewNodeID(){
