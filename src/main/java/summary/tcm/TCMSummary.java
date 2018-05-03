@@ -108,7 +108,7 @@ public class TCMSummary implements Benchmarkable {
     }
 
     @Override
-    public void train(List<BaseGraph> queries) {
-
+    public void train(Map<BaseGraph, List<Map<String, String>>> queries) {
+        
     }
 }

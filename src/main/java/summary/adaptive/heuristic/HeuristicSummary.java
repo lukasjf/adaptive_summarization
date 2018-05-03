@@ -88,7 +88,7 @@ public class HeuristicSummary implements Benchmarkable {
                     summary.removeNode(splitNode.getId());
                 } else{
                     summary.removeNode(newNode1.getId());
-                    summary.removeNode(newNode1.getId());
+                    summary.removeNode(newNode2.getId());
                 }
                 break;
             }
@@ -130,12 +130,12 @@ public class HeuristicSummary implements Benchmarkable {
     }
 
     @Override
-    public void train(List<BaseGraph> queries) {
+    public void train(Map<BaseGraph, List<Map<String, String>>> queries) {
         int oldSize = 1;
         HeuristicEncoder he = new HeuristicEncoder();
         while(he.encode(this) < sizeLimit){
             System.out.println("new Round " + summary.getNodes().size() + " " + he.encode(this));
-            queries.forEach(this::query);
+            queries.keySet().forEach(this::query);
             split("loss", "variance");
             summary.getEdges().forEach(e -> e.bookkeeping.put("loss", 0.0));
             if (summary.getNodes().size() == oldSize){
@@ -153,5 +153,4 @@ public class HeuristicSummary implements Benchmarkable {
     public BaseGraph getSummary() {
         return summary;
     }
-
 }
