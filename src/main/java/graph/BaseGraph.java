@@ -1,5 +1,6 @@
 package graph;
 
+import guru.nidi.graphviz.engine.Engine;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.model.*;
@@ -28,6 +29,8 @@ public class BaseGraph implements GraphQueryAble{
     //text to append to a label to make it unique -- realised by an increasing number
     private static int DEDUPLICATE_COUNTER = 0;
 
+    private boolean original;
+
     Set<BaseNode> nodes = new HashSet<>(30000);
     HashMap<Integer, BaseNode> idMapping = new HashMap<>(30000);
     HashMap<String, BaseNode> labelMapping = new HashMap<>(30000);
@@ -35,6 +38,14 @@ public class BaseGraph implements GraphQueryAble{
     Set<BaseEdge> edges= new HashSet<>(50000);
     HashMap<Integer, List<BaseEdge>> inIndex = new HashMap<>(30000);
     HashMap<Integer, List<BaseEdge>> outIndex = new HashMap<>(30000);
+
+    public BaseGraph(){
+        original = false;
+    }
+
+    public BaseGraph(boolean original){
+        this.original = original;
+    }
 
 
     public BaseNode addNode(int id, String label){
@@ -52,7 +63,9 @@ public class BaseGraph implements GraphQueryAble{
         idMapping.put(id, node);
         labelMapping.put(newlabel, node);
 
-        M.addPair(newlabel, id);
+        if (original){
+            M.addPair(newlabel, id);
+        }
 
         inIndex.put(id, new ArrayList<>());
         outIndex.put(id, new ArrayList<>());
@@ -163,7 +176,7 @@ public class BaseGraph implements GraphQueryAble{
         Graph g = graph("ex").directed().with(mapping.values().stream().map(node ->
                 node.link(edgeMapping.get(node).toArray(new LinkTarget[edgeMapping.get(node).size()]))).toArray(Node[]::new));
         Graphviz viz = Graphviz.fromGraph(g).totalMemory(LARGE_MEMORY_NUMBER);
-        BufferedImage image = viz.render(Format.PNG).toImage();
+        BufferedImage image = viz.engine(Engine.NEATO).render(Format.SVG).toImage();
         File img = new File("test" + imagecount++ + ".png");
         try {
             ImageIO.write(image, "png", img);

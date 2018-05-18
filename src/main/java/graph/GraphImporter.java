@@ -11,7 +11,11 @@ import java.io.IOException;
 public class GraphImporter {
 
     public static BaseGraph parseGraph(String filename){
-        BaseGraph g = new BaseGraph();
+        return parseGraph(filename, false);
+    }
+
+    public static BaseGraph parseGraph(String filename, boolean createMaps){
+        BaseGraph g = new BaseGraph(createMaps);
         try (BufferedReader br = new BufferedReader(new FileReader(new File(filename)))){
             String line;
             while ((line = br.readLine()) != null){
