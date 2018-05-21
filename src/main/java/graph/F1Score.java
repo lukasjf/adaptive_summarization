@@ -24,8 +24,8 @@ public class F1Score {
                 fn++;
             }
         }
-        double precision = tp / 1.0 / (tp + fp + epsilon);
-        double recall = tp / 1.0 / (tp + fn + epsilon);
-        return 2 * precision * recall / (precision + recall + epsilon);
+        double precision = (tp + epsilon) / 1.0 / (tp + fp + epsilon);
+        double recall = (tp + epsilon) / 1.0 / (tp + fn + epsilon);
+        return (2 * precision * recall + epsilon) / (precision + recall + epsilon);
     }
 }
