@@ -51,7 +51,7 @@ public class BaseGraph implements GraphQueryAble{
     public BaseNode addNode(int id, String label){
         if (idMapping.keySet().contains(id)){
             System.err.println("ID already in use: " + id);
-            return null;
+            return idMapping.get(id);
         }
         String newlabel = label;
         while (labelMapping.keySet().contains(newlabel)){
