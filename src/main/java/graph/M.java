@@ -12,11 +12,19 @@ public class M {
     private static Map<Integer, String> idtoLabel = new HashMap<>();
 
     public static int IDFrom(String label){
-        return labelToID.get(label);
+        if (label.matches("-\\d+")){
+            return Integer.parseInt(label);
+        } else{
+            return labelToID.get(label);
+        }
     }
 
     public static String labelFrom(int id){
-        return idtoLabel.get(id);
+        if (id < 0){
+            return "" + id;
+        } else{
+            return idtoLabel.get(id);
+        }
     }
 
     public static void addPair(String label, int id){
