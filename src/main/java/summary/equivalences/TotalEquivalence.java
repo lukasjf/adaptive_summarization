@@ -12,8 +12,12 @@ import java.util.stream.Collectors;
  */
 public class TotalEquivalence implements EquivalenceRelation{
 
-    private List<Map<String, String>> queryResults;
     private BaseGraph graph;
+
+    @Override
+    public void initialize(BaseGraph graph, Map<BaseGraph, List<Map<String, String>>> trainingResults) {
+        this.graph = graph;
+    }
 
     @Override
     public boolean areEquivalent(int id1, int id2) {

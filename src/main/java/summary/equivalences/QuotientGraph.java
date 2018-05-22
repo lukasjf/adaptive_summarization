@@ -13,13 +13,26 @@ import java.util.*;
  */
 public class QuotientGraph implements Benchmarkable{
 
-    BaseGraph originalGraph;
-    BaseGraph summaryGraph;
+    private BaseGraph graph;
+    private BaseGraph summary;
+    private EquivalenceRelation eq;
+
 
     public QuotientGraph(BaseGraph graph, EquivalenceRelation eq){
-        summaryGraph =  new BaseGraph(false);
+        summary =  new BaseGraph(false);
+        this.graph = graph;
+        this.eq = eq;
+    }
+
+    @Override
+    public List<Map<String, String>> query(BaseGraph query) {
+        return new SubgraphIsomorphism().query(query, summary, false);
+    }
+
+    @Override
+    public void train(Map<BaseGraph, List<Map<String, String>>> queries) {
+        this.eq.initialize(graph, queries);
         int nodeCounter = 0;
-        this.originalGraph = graph;
 
         Set<Integer> done = new HashSet<>();
         List<Integer> nodesIds = new ArrayList<>(graph.getIdMapping().keySet());
@@ -29,7 +42,7 @@ public class QuotientGraph implements Benchmarkable{
             if (done.contains(id)){
                 continue;
             }
-            BaseNode newNode = summaryGraph.addNode(nodeCounter++,"");
+            BaseNode newNode = summary.addNode(nodeCounter++,"");
             newNode.getContainedNodes().add(id);
 
             for (int j = 0; j < nodesIds.size(); j++){
@@ -42,24 +55,14 @@ public class QuotientGraph implements Benchmarkable{
         }
 
         int k = 0;
-        for (BaseNode node: summaryGraph.getNodes()){
+        for (BaseNode node: summary.getNodes()){
             int containedId = node.getContainedNodes().stream().findFirst().get();
             for (BaseEdge e: graph.outEdgesFor(containedId)){
-                int targetSuperNodeID = summaryGraph.getNodes().stream()
+                int targetSuperNodeID = summary.getNodes().stream()
                         .filter(n -> n.getContainedNodes().contains(e.getTarget().getId())).findFirst().get().getId();
-                summaryGraph.addEdge(node.getId(), targetSuperNodeID, e.getLabel());
+                summary.addEdge(node.getId(), targetSuperNodeID, e.getLabel());
             }
             System.out.println("done: " + k++);
         }
-    }
-
-    @Override
-    public List<Map<String, String>> query(BaseGraph query) {
-        return new SubgraphIsomorphism().query(query, summaryGraph, false);
-    }
-
-    @Override
-    public void train(Map<BaseGraph, List<Map<String, String>>> queries) {
-
     }
 }
