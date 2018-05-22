@@ -11,6 +11,5 @@ import java.util.Map;
 public interface EquivalenceRelation {
 
     boolean areEquivalent (int id1, int id2);
-    BaseGraph createQuotientGraph(BaseGraph graph, List<Map<String, String>> trainingResults);
 
 }
