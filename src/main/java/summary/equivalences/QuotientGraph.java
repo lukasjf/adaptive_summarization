@@ -17,6 +17,8 @@ public class QuotientGraph implements Benchmarkable{
     private BaseGraph summary;
     private EquivalenceRelation eq;
 
+    private Map<Integer, Integer> supernodeMapping = new HashMap<>();
+
 
     public QuotientGraph(BaseGraph graph, EquivalenceRelation eq){
         summary =  new BaseGraph();
@@ -44,25 +46,28 @@ public class QuotientGraph implements Benchmarkable{
             }
             BaseNode newNode = summary.addNode(nodeCounter++,"");
             newNode.getContainedNodes().add(id);
+            supernodeMapping.put(id, nodeCounter-1);
 
-            for (int j = 0; j < nodesIds.size(); j++){
+
+            for (int j = i; j < nodesIds.size(); j++){
                 int otherId = nodesIds.get(j);
                 if (eq.areEquivalent(id, otherId)){
                     newNode.getContainedNodes().add(otherId);
                     done.add(otherId);
+                    supernodeMapping.put(otherId, nodeCounter-1);
                 }
             }
+            System.out.println("done node: " + i);
         }
 
         int k = 0;
         for (BaseNode node: summary.getNodes()){
             int containedId = node.getContainedNodes().stream().findFirst().get();
             for (BaseEdge e: graph.outEdgesFor(containedId)){
-                int targetSuperNodeID = summary.getNodes().stream()
-                        .filter(n -> n.getContainedNodes().contains(e.getTarget().getId())).findFirst().get().getId();
+                int targetSuperNodeID = supernodeMapping.get(e.getTarget().getId());
                 summary.addEdge(node.getId(), targetSuperNodeID, e.getLabel());
             }
-            System.out.println("done: " + k++);
+            System.out.println("done summary node: " + k++);
         }
     }
 }

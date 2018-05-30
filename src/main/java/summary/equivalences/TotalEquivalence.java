@@ -21,6 +21,9 @@ public class TotalEquivalence implements EquivalenceRelation{
 
     @Override
     public boolean areEquivalent(int id1, int id2) {
+        if (id1 == id2){
+            return true;
+        }
 
         List<BaseEdge> outEdges1 = graph.outEdgesFor(id1);
         List<BaseEdge> outEdges2 = graph.outEdgesFor(id2);
