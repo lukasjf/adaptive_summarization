@@ -19,7 +19,7 @@ public class QuotientGraph implements Benchmarkable{
 
 
     public QuotientGraph(BaseGraph graph, EquivalenceRelation eq){
-        summary =  new BaseGraph(false);
+        summary =  new BaseGraph();
         this.graph = graph;
         this.eq = eq;
     }

@@ -73,7 +73,7 @@ public class QueryGenerator {
 
                 int startIndex = random.nextInt(seedNodes.size());
                 BaseNode startNode = seedNodes.get(startIndex);
-                queryGraph.addNode(startNode.getId(), graph.invertedIndex.get(startNode.getId()));
+                queryGraph.addNode(startNode.getId(), Dataset.I.labelFrom(startNode.getId()));
                 graphQueryMapping.put(startNode, queryGraph.getIdMapping().get(startNode.getId()));
 
                 graph.inEdgesFor(startNode.getId()).forEach(e -> candidates.put(e, startNode));
@@ -109,7 +109,7 @@ public class QueryGenerator {
                     BaseNode otherNode = takenFromSource ? taken.getTarget() : taken.getSource();
                     boolean newVariable = graphQueryMapping.get(candidates.get(taken)).isVariable() ? random.nextBoolean() : true;
                     int newNodeId = newVariable ? variableCounter : otherNode.getId();
-                    String newNodeLabel = newVariable ? "*" + variableCounter-- : graph.invertedIndex.get(otherNode.getId());
+                    String newNodeLabel = newVariable ? "*" + variableCounter-- : Dataset.I.labelFrom(otherNode.getId());
 
                     queryGraph.addNode(newNodeId, newNodeLabel);
                     graphQueryMapping.put(otherNode, queryGraph.getIdMapping().get(newNodeId));
@@ -162,7 +162,7 @@ public class QueryGenerator {
         try(PrintStream queryFile = new PrintStream(new File(querydir + queryCounter++))){
             queryFile.println("#" + resultSize);
             for (BaseNode node: query.getNodes()){
-                queryFile.println("v " + node.getId() + " " + query.invertedIndex.get(node.getId()));
+                queryFile.println("v " + node.getId() + " " + Dataset.I.labelFrom(node.getId()));
             }
             for (BaseEdge edge: query.getEdges()){
                 queryFile.println("e " + edge.getSource().getId() + " " + edge.getTarget().getId() + " " + edge.getLabel());
@@ -177,7 +177,7 @@ public class QueryGenerator {
         String graphFile = "graph_3";
         String outputDir = "/home/lukas/studium/thesis/code/data/citation/queriesnew/";
         List<String> seeds = new ArrayList<>();
-        seeds.add("aut:davide_mottin");
+        seeds.add("aut:danai_koutra");
         QueryGenerator q = new QueryGenerator(dataDir+graphFile, outputDir, seeds);
         q.generate();
     }

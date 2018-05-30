@@ -2,7 +2,7 @@ package summary.rdfsummaries;
 
 import graph.BaseGraph;
 import graph.GraphImporter;
-import graph.M;
+import graph.Dataset;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
@@ -61,7 +61,7 @@ public class RDFtoGraph {
                 int id = results.getInt("key");
                 String label = extractFromURL(results.getString("value"));
                 if (label.startsWith("http://example.org/entity/")){
-                    rdfToRealID.put(id, M.IDFrom(label.split("entity/")[1]));
+                    rdfToRealID.put(id, Dataset.I.IDFrom(label.split("entity/")[1]));
                 }
             }
         } catch (SQLException e) {

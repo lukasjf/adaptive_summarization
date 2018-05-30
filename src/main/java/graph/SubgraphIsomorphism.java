@@ -44,7 +44,14 @@ public class SubgraphIsomorphism {
         });
         this.matchings = matchings;
         List<Map<BaseNode, BaseNode>> nodeMatchings =  createNodeMatchings(matchings);
-        return expandCrossProduct(nodeMatchings);
+        // remove self loops that can happen as part of cross product
+        List<Map<BaseNode, BaseNode>> withoutLoops = new ArrayList<>();
+        for (Map<BaseNode, BaseNode> match: nodeMatchings){
+            if (query.getEdges().stream().noneMatch(edge -> match.get(edge.getSource()).equals(match.get(edge.getTarget())))){
+                withoutLoops.add(match);
+            }
+        }
+        return expandCrossProduct(withoutLoops);
     }
 
     private List<Map<BaseNode,BaseNode>> createNodeMatchings(List<Map<BaseEdge, BaseEdge>> matchings) {
@@ -72,7 +79,7 @@ public class SubgraphIsomorphism {
                 Map<Integer, Integer> intResult = graphResults.next();
                 Map<String, String> labelResult = new HashMap<>();
                 for (int key: intResult.keySet()){
-                    labelResult.put(M.labelFrom(key), M.labelFrom(intResult.get(key)));
+                    labelResult.put(Dataset.I.labelFrom(key), Dataset.I.labelFrom(intResult.get(key)));
                 }
                 results.add(labelResult);
             }

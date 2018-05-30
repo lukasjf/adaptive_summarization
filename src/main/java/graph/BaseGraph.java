@@ -11,7 +11,6 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static guru.nidi.graphviz.model.Factory.graph;
 import static guru.nidi.graphviz.model.Factory.node;
@@ -29,8 +28,6 @@ public class BaseGraph implements GraphQueryAble{
     //text to append to a label to make it unique -- realised by an increasing number
     private static int DEDUPLICATE_COUNTER = 0;
 
-    private boolean original;
-
     Set<BaseNode> nodes = new HashSet<>(30000);
     HashMap<Integer, BaseNode> idMapping = new HashMap<>(30000);
     HashMap<String, BaseNode> labelMapping = new HashMap<>(30000);
@@ -38,14 +35,6 @@ public class BaseGraph implements GraphQueryAble{
     Set<BaseEdge> edges= new HashSet<>(50000);
     HashMap<Integer, List<BaseEdge>> inIndex = new HashMap<>(30000);
     HashMap<Integer, List<BaseEdge>> outIndex = new HashMap<>(30000);
-
-    public BaseGraph(){
-        original = false;
-    }
-
-    public BaseGraph(boolean original){
-        this.original = original;
-    }
 
 
     public BaseNode addNode(int id, String label){
@@ -63,10 +52,6 @@ public class BaseGraph implements GraphQueryAble{
         idMapping.put(id, node);
         labelMapping.put(newlabel, node);
 
-        if (original){
-            M.addPair(newlabel, id);
-        }
-
         inIndex.put(id, new ArrayList<>());
         outIndex.put(id, new ArrayList<>());
 
@@ -74,15 +59,13 @@ public class BaseGraph implements GraphQueryAble{
     }
 
     public void removeNode(int id){
-        String label = M.labelFrom(id);
+        String label = Dataset.I.labelFrom(id);
         BaseNode node = idMapping.get(id);
 
         nodes.remove(node);
 
         idMapping.remove(id);
         labelMapping.remove(label);
-
-        M.remove(id);
 
         for (BaseEdge e: inIndex.get(id)){
             edges.remove(e);

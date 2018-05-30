@@ -1,96 +1,69 @@
 package main;
 
-import graph.BaseGraph;
-import graph.summary.Summary;
-import graph.summary.SummaryEdge;
-import splitstrategies.*;
+import evaluation.Benchmark;
+import graph.*;
+import summary.adaptive.heuristic.*;
+import summary.caching.SummaryCache;
+import summary.equivalences.QuotientGraph;
+import summary.equivalences.TotalEquivalence;
+import summary.tcm.TCMSummary;
 
-import java.io.*;
-import java.util.ArrayList;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by lukas on 12.03.18.
  */
 public class Playground {
 
-    private static HashMap<String, Integer> queryResults = new HashMap<>();
+    private static HashMap<BaseGraph, List<Map<String, String>>> queryResults = new HashMap<>();
 
-    public static double runBenchmark(Summary s, File[] queries){
+    public static double runBenchmark(GraphQueryAble summaryGraph, BaseGraph graph, File[] queries){
         double precision = 0.0;
-        List<Integer> actuals = new ArrayList<>();
-        List<Long> summary = new ArrayList<>();
-        for (File f: queries){
-            BaseGraph q = BaseGraph.parseGraph(f.getAbsolutePath());
-            int actualResults;
-            if (queryResults.containsKey(f.getAbsolutePath())){
-                actualResults = queryResults.get(f.getAbsolutePath());
-            } else{
-                actualResults = s.getBaseGraph().query(q).size();
-                queryResults.put(f.getAbsolutePath(), actualResults);
-            }
-            long summaryResults = s.getResultSize(q);
-            actuals.add(actualResults);
-            summary.add(summaryResults);
+        for (File f: queries) {
+            BaseGraph q = GraphImporter.parseGraph(f.getAbsolutePath());
+            precision += runQuery(q, graph, summaryGraph);
+            System.out.print(".");
         }
-        for (int i = 0; i < actuals.size(); i++){
-            precision += -1 * Math.log(actuals.get(i) / 1.0 / summary.get(i));
-        }
-        return precision;
+        return precision / queries.length;
     }
 
-    public static void main(String[] args) throws IOException, ClassNotFoundException {
-        BaseGraph graph = BaseGraph.parseGraph("/home/lukas/studium/thesis/code/data/citation/graph_3");
-
-        String queryDir = "/home/lukas/studium/thesis/code/data/citation/queries";
-        String kddDir = "/home/lukas/studium/thesis/code/data/citation/querieskdd";
-        String danaiDir = "/home/lukas/studium/thesis/code/data/citation/queriesdanai";
-        String faloutsosDir = "/home/lukas/studium/thesis/code/data/citation/queriesdanai";
-
-//        for (int i = 0; i < 100; i++){
-//            s.split();
-//            System.out.println("split" + i);
-//        }
-//        new ObjectOutputStream(new FileOutputStream("summary.ser")).writeObject(s);
-
-//        Summary s = (Summary) new ObjectInputStream(new FileInputStream("summary.ser")).readObject();
-//        System.out.println("summary loaded");
-
-        //runMethod(graph, new ExistentialSplitStrategy(), queryDir, "plots/results_random_existential.csv");
-        //runMethod(graph, new VarianceSplitStrategy(), queryDir, "plots/results_random_variance.csv");
-        //runMethod(graph, new CombinedSplitStrategy(), queryDir, "plots/results_random_combined.csv");
-
-        //runMethod(graph, new ExistentialSplitStrategy(), kddDir, "plots/results_kdd_existential.csv");
-        //runMethod(graph, new VarianceSplitStrategy(), kddDir, "plots/results_kdd_variance.csv");
-        //runMethod(graph, new CombinedSplitStrategy(), kddDir, "plots/results_kdd_combined.csv");
-
-        //runMethod(graph, new ExistentialSplitStrategy(), danaiDir, "plots/results_danai_existential.csv");
-        //runMethod(graph, new VarianceSplitStrategy(), danaiDir, "plots/results_danai_variance.csv");
-        //runMethod(graph, new CombinedSplitStrategy(), danaiDir, "plots/results_danai_combined.csv");
-
-        //runMethod(graph, new ExistentialSplitStrategy(), faloutsosDir, "plots/results_faloutsos_existential.csv");
-        //runMethod(graph, new VarianceSplitStrategy(), faloutsosDir, "plots/results_faloutsos_variance.csv");
-        runMethod(graph, new CombinedSplitStrategy(), faloutsosDir, "plots/results_faloutsos_combined.csv");
+    private static double runQuery(BaseGraph q, BaseGraph graph, GraphQueryAble summaryGraph) {
+        List<Map<String, String>> actualResults;
+        if (queryResults.containsKey(q)) {
+            actualResults = queryResults.get(q);
+        } else {
+            actualResults = graph.query(q);
+            queryResults.put(q, actualResults);
+        }
+        double f1 = F1Score.fqScoreFor(actualResults, summaryGraph.query(q));
+        System.out.println(f1);
+        return f1;
     }
 
-    private static void runMethod(BaseGraph graph, SplitStrategy strategy, String queryDir, String fileName) throws FileNotFoundException {
-        Summary s = Summary.createFromGraph(graph, strategy);
-        PrintStream ps = new PrintStream(fileName);
-        int nodeThreshold = graph.getNodes().size() / 10;
-        int edgeThreshold = graph.getEdges().size() / 10;
-        ps.println("SummaryNodes,SummaryEdges,NodeThreshold,EdgeThreshold,Objective");
-        do {
-            double objective = Playground.runBenchmark(s, new File(queryDir).listFiles());
-            String output = String.format("%d %d %d %d %.4f", s.getNodes().size(), s.getEdges().size(),
-                    nodeThreshold, edgeThreshold, objective);
-            System.out.println(output);
-            ps.println(output.replace(" ", ","));
-            if (objective == 0){
-                break;
-            }
-            s.split();
-            s.getEdges().stream().map(e -> (SummaryEdge) e).forEach(e -> e.bookKeeping.clear());
-        } while (s.getNodes().size() <= nodeThreshold && s.getEdges().size() <= edgeThreshold);
+    public static void main(String[] args) throws IOException {
+        SplitStrategy.algorithms.put("existential", new ExistentialSplitStrategy());
+        SplitStrategy.algorithms.put("variance", new VarianceSplitStrategy());
+        SplitStrategy.algorithms.put("combined", new CombinedSplitStrategy());
+        SplitChoiceStrategy.algorithms.put("greedy", new GreedyChoice());
+        SplitChoiceStrategy.algorithms.put("loss", new LossChoice());
+
+        int sizeLimit = Integer.parseInt(args[0]);
+        String dataPath = args[1];
+        String queriesPath = args[2];
+
+        Dataset citation = new Dataset(dataPath);
+        String queries = queriesPath;
+        //QuotientGraph exactSummary = new QuotientGraph(citation, new TotalEquivalence());
+        Benchmark b = new Benchmark(queries);
+        SummaryCache c = new SummaryCache(sizeLimit);
+        double[] result = b.run(c, citation.getGraph());
+        System.out.println("Training: " + result[0]);
+        System.out.println("Test: " + result[1]);
+        System.out.println("Size " + c.size());
+
     }
 }

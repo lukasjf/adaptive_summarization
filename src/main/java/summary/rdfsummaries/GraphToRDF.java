@@ -23,7 +23,7 @@ public class GraphToRDF {
             Map<Integer, String> entityMap = new HashMap<>();
 
             for (BaseNode n: graph.getNodes()){
-                entityMap.put(n.getId(), String.format(ENTITYBASE, M.labelFrom(n.getId())));
+                entityMap.put(n.getId(), String.format(ENTITYBASE, Dataset.I.labelFrom(n.getId())));
             }
             for (BaseEdge e: graph.getEdges()){
                 String property = String.format(PROPERTYBASE, e.getLabel());

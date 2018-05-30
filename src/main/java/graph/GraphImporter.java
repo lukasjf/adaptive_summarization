@@ -15,7 +15,7 @@ public class GraphImporter {
     }
 
     public static BaseGraph parseGraph(String filename, boolean createMaps){
-        BaseGraph g = new BaseGraph(createMaps);
+        BaseGraph g = new BaseGraph();
         try (BufferedReader br = new BufferedReader(new FileReader(new File(filename)))){
             String line;
             while ((line = br.readLine()) != null){
@@ -31,6 +31,9 @@ public class GraphImporter {
                     String label = token[2];
                     g.addNode(id, label);
                     g.idMapping.get(id).containedNodes.add(id);
+                    if (createMaps){
+                        Dataset.I.addPair(label, id);
+                    }
                 }
                 if (token[0].equals("e")){
                     int source = Integer.parseInt(token[1]);
