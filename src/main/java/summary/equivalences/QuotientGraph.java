@@ -41,6 +41,7 @@ public class QuotientGraph implements Benchmarkable{
 
         for (int i = 0; i < nodesIds.size(); i++){
             int id = nodesIds.get(i);
+            System.out.println("doing node: " + i);
             if (done.contains(id)){
                 continue;
             }
@@ -51,13 +52,15 @@ public class QuotientGraph implements Benchmarkable{
 
             for (int j = i; j < nodesIds.size(); j++){
                 int otherId = nodesIds.get(j);
+                if (done.contains(otherId)){
+                    continue;
+                }
                 if (eq.areEquivalent(id, otherId)){
                     newNode.getContainedNodes().add(otherId);
                     done.add(otherId);
                     supernodeMapping.put(otherId, nodeCounter-1);
                 }
             }
-            System.out.println("done node: " + i);
         }
 
         int k = 0;
