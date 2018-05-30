@@ -1,4 +1,4 @@
-package summary.adaptive.heuristic;
+package summary.topdown;
 
 import graph.BaseEdge;
 
@@ -9,14 +9,17 @@ import java.util.stream.Collectors;
 /**
  * Created by lukas on 18.04.18.
  */
-public class GreedyChoice implements SplitChoiceStrategy {
+public class LossChoice implements SplitChoiceStrategy{
 
     private List<BaseEdge> candidates;
 
     @Override
     public void initialize(HeuristicSummary summary) {
-        candidates = summary.summary.getEdges().stream().sorted(Comparator.comparingDouble(e ->
-                (double)e.bookkeeping.getOrDefault("support", 1.0))).collect(Collectors.toList());
+        candidates = summary.summary.getEdges().stream()
+                .filter(e -> (double) e.bookkeeping.getOrDefault("loss", 0.0) > 0)
+                .sorted(Comparator.comparingDouble(e ->
+                        -1 * (double) e.bookkeeping.getOrDefault("loss", 0.0)))
+                .collect(Collectors.toList());
     }
 
     @Override

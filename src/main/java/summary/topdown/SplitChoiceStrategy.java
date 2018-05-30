@@ -1,4 +1,4 @@
-package summary.adaptive.heuristic;
+package summary.topdown;
 
 import graph.BaseEdge;
 

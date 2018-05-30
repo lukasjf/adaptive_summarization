@@ -1,11 +1,9 @@
-package summary.adaptive.heuristic;
+package summary.topdown;
 
 import graph.BaseEdge;
 import graph.BaseNode;
 
 import java.util.*;
-import java.util.stream.DoubleStream;
-import java.util.stream.LongStream;
 
 /**
  * Created by lukas on 20.04.18.

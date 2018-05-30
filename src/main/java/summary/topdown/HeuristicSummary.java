@@ -1,10 +1,9 @@
-package summary.adaptive.heuristic;
+package summary.topdown;
 
 import encoding.HeuristicEncoder;
 import evaluation.Benchmarkable;
 import graph.*;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
