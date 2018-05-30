@@ -1,7 +1,6 @@
 package evaluation;
 
 import graph.BaseGraph;
-import graph.F1Score;
 import graph.GraphImporter;
 
 import java.io.File;
@@ -35,11 +34,15 @@ public class Benchmark {
         b.train(trainingSet);
         double trainingResult = 0.0, testResult = 0.0;
         for (BaseGraph q: trainingQueries){
-            trainingResult += F1Score.fqScoreFor(g.query(q), b.query(q));
+            List<Map<String, String>> graphResults = g.query(q);
+            List<Map<String, String>> summaryResults = b.query(q);
+            trainingResult += F1Score.fqScoreFor(graphResults, summaryResults);
             System.out.print(".");
         }
         for (BaseGraph q: testQueries){
-            testResult += F1Score.fqScoreFor(g.query(q), b.query(q));
+            List<Map<String, String>> graphResults = g.query(q);
+            List<Map<String, String>> summaryResults = b.query(q);
+            testResult += F1Score.fqScoreFor(graphResults, summaryResults);
             System.out.print("*");
         }
         return new double[] {trainingResult / trainingQueries.size(), testResult / testQueries.size()};

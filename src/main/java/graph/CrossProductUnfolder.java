@@ -19,6 +19,8 @@ public class CrossProductUnfolder {
     private int totalCount = 1;
     private int currentCount = 0;
 
+    private Map<Integer, Integer> nextResult;
+
     public CrossProductUnfolder(Map<BaseNode, BaseNode> match){
         numberNodes = match.size();
 
@@ -43,24 +45,55 @@ public class CrossProductUnfolder {
             index++;
         }
 
+        createNextResult();
     }
 
     public boolean hasNext(){
-        if (totalCount > 10000){
-            // Soft check for too large results (e.g. due to too coarse summary)
-            //System.err.println("result count to high");
-            return false;
+        return nextResult != null;
+    }
+
+    private void createNextResult(){
+
+        boolean created = false;
+        if (currentCount >= totalCount){
+            nextResult = null;
+            return;
         }
-        return currentCount < totalCount;
+
+        Map<Integer, Integer> result;
+        while(!created){
+            if (currentCount >= totalCount){
+                nextResult = null;
+                return;
+            }
+
+            result = new HashMap<>();
+            boolean isInjective = true;
+            for (int i = 0; i < numberNodes; i++){
+                if(result.values().contains(matchIds[i][matchIndices[i]])){
+                    isInjective = false;
+                    break;
+                } else{
+                    result.put(queryIds[i], matchIds[i][matchIndices[i]]);
+                }
+            }
+            if (isInjective){
+                nextResult = result;
+                created = true;
+            }
+            incrementIndices();
+        }
     }
 
     public Map<Integer, Integer> next(){
-        Map<Integer, Integer> result = new HashMap<>();
-        for (int i = 0; i < numberNodes; i++){
-            result.put(queryIds[i], matchIds[i][matchIndices[i]]);
-        }
+        Map<Integer, Integer> result = nextResult;
+        createNextResult();
+        return result;
+    }
+
+    private void incrementIndices(){
         currentCount++;
-        if (hasNext()) {
+        if (currentCount < totalCount) {
             int updateIndex = 0;
             while (matchIndices[updateIndex] + 1 == matchIds[updateIndex].length) {
                 matchIndices[updateIndex] = 0;
@@ -68,6 +101,5 @@ public class CrossProductUnfolder {
             }
             matchIndices[updateIndex]++;
         }
-        return result;
     }
 }
