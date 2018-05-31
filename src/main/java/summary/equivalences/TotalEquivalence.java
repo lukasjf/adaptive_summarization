@@ -54,7 +54,8 @@ public class TotalEquivalence implements EquivalenceRelation{
         if (!edge1.getLabel().equals(edge2.getLabel())){
             return false;
         }
-        if (edge2.getTarget().getId() == id1 && edge1.getTarget().getId() == id2){
+        if (edge2.getSource().getId() == id2 && edge2.getTarget().getId() == id1
+                && edge1.getSource().getId() == id1 && edge1.getTarget().getId() == id2){
             return true;
         }
         if (isSource){
