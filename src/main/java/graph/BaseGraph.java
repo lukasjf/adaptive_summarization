@@ -42,15 +42,11 @@ public class BaseGraph implements GraphQueryAble{
             System.err.println("ID already in use: " + id);
             return idMapping.get(id);
         }
-        String newlabel = label;
-        while (labelMapping.keySet().contains(newlabel)){
-            newlabel += DEDUPLICATE_COUNTER++;
-        }
         BaseNode node = new BaseNode(id);
         nodes.add(node);
 
         idMapping.put(id, node);
-        labelMapping.put(newlabel, node);
+        labelMapping.put(label, node);
 
         inIndex.put(id, new ArrayList<>());
         outIndex.put(id, new ArrayList<>());
