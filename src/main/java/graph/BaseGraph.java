@@ -22,7 +22,7 @@ import static guru.nidi.graphviz.model.Factory.to;
 public class BaseGraph implements GraphQueryAble{
 
     //for drawing
-    private int LARGE_MEMORY_NUMBER = 160000000;
+    private static int LARGE_MEMORY_NUMBER = 160000000;
     private int imagecount = 1;
 
     //text to append to a label to make it unique -- realised by an increasing number

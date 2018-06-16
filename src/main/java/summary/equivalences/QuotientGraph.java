@@ -13,11 +13,11 @@ import java.util.*;
  */
 public class QuotientGraph implements Benchmarkable{
 
-    private BaseGraph graph;
-    private BaseGraph summary;
-    private EquivalenceRelation eq;
+    public BaseGraph graph;
+    public BaseGraph summary;
+    public EquivalenceRelation eq;
 
-    private Map<Integer, Integer> supernodeMapping = new HashMap<>();
+    public Map<Integer, Integer> supernodeMapping = new HashMap<>();
 
 
     public QuotientGraph(BaseGraph graph, EquivalenceRelation eq){
@@ -45,12 +45,13 @@ public class QuotientGraph implements Benchmarkable{
             if (done.contains(id)){
                 continue;
             }
+            done.add(id);
             BaseNode newNode = summary.addNode(nodeCounter++,"");
             newNode.getContainedNodes().add(id);
-            supernodeMapping.put(id, nodeCounter-1);
+            supernodeMapping.put(id, newNode.getId());
 
 
-            for (int j = i; j < nodesIds.size(); j++){
+            for (int j = i + 1; j < nodesIds.size(); j++){
                 int otherId = nodesIds.get(j);
                 if (done.contains(otherId)){
                     continue;
@@ -58,19 +59,25 @@ public class QuotientGraph implements Benchmarkable{
                 if (eq.areEquivalent(id, otherId)){
                     newNode.getContainedNodes().add(otherId);
                     done.add(otherId);
-                    supernodeMapping.put(otherId, nodeCounter-1);
+                    supernodeMapping.put(otherId, newNode.getId());
                 }
             }
         }
 
         int k = 0;
-        for (BaseNode node: summary.getNodes()){
+        for (BaseNode n: graph.getNodes()){
+            for (BaseEdge e: graph.outEdgesFor(n.getId())){
+                summary.addEdge(supernodeMapping.get(e.getSource().getId()), supernodeMapping.get(e.getTarget().getId()), e.getLabel());
+            }
+            System.out.println("done edges for node: " + k++);
+        }
+        /*for (BaseNode node: summary.getNodes()){
             int containedId = node.getContainedNodes().stream().findFirst().get();
             for (BaseEdge e: graph.outEdgesFor(containedId)){
                 int targetSuperNodeID = supernodeMapping.get(e.getTarget().getId());
                 summary.addEdge(node.getId(), targetSuperNodeID, e.getLabel());
             }
             System.out.println("done summary node: " + k++);
-        }
+        }*/
     }
 }
