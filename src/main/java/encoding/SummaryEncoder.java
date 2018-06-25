@@ -2,12 +2,12 @@ package encoding;
 
 import graph.BaseEdge;
 import graph.BaseNode;
-import summary.adaptive.heuristic.HeuristicSummary;
+import summary.topdown.HeuristicSummary;
 
 /**
  * Created by lukas on 05.04.18.
  */
-public class HeuristicEncoder {
+public class SummaryEncoder {
 
     public long encode(HeuristicSummary heuristicSummary){
         long size = 0L;
@@ -20,7 +20,6 @@ public class HeuristicEncoder {
         for (BaseEdge e: heuristicSummary.getSummary().getEdges()){
             size += 16 ; // source & targetID
             size += e.getLabel().length();
-            size += 8; // support
         }
         return size;
     }

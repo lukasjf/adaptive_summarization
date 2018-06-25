@@ -1,6 +1,6 @@
 package summary.topdown;
 
-import encoding.HeuristicEncoder;
+import encoding.SummaryEncoder;
 import evaluation.Benchmarkable;
 import graph.*;
 
@@ -19,8 +19,6 @@ public class HeuristicSummary implements Benchmarkable {
     BaseGraph graph;
     BaseGraph summary;
     int sizeLimit;
-
-    private HeuristicEncoder he = new HeuristicEncoder();
 
     public HeuristicSummary(BaseGraph graph, int sizeLimit){
         this.graph = graph;
@@ -81,12 +79,7 @@ public class HeuristicSummary implements Benchmarkable {
                 summary.nodeWithId(newNode2.getId()).getContainedNodes().addAll(newNode2.getContainedNodes());
 
                 checkEdges(splitNode.getId(), newNode1.getId(), newNode2.getId());
-                if (he.encode(this) <= sizeLimit){
-                    summary.removeNode(splitNode.getId());
-                } else{
-                    summary.removeNode(newNode1.getId());
-                    summary.removeNode(newNode2.getId());
-                }
+                summary.removeNode(splitNode.getId());
                 break;
             }
         }
@@ -129,9 +122,9 @@ public class HeuristicSummary implements Benchmarkable {
     @Override
     public void train(Map<BaseGraph, List<Map<String, String>>> queries) {
         int oldSize = 1;
-        HeuristicEncoder he = new HeuristicEncoder();
-        while(he.encode(this) < sizeLimit){
-            System.out.println("new Round " + summary.getNodes().size() + " " + he.encode(this));
+        SummaryEncoder encoder = new SummaryEncoder();
+        while(encoder.encode(this) < sizeLimit){
+            System.out.println("new Round " + summary.getNodes().size() + " " + encoder.encode(this));
             queries.keySet().forEach(this::query);
             split("loss", "variance");
             summary.getEdges().forEach(e -> e.bookkeeping.put("loss", 0.0));
