@@ -1,5 +1,6 @@
 package summary.equivalences;
 
+import encoding.SummaryEncoder;
 import evaluation.Benchmarkable;
 import graph.BaseEdge;
 import graph.BaseGraph;
@@ -79,5 +80,10 @@ public class QuotientGraph implements Benchmarkable{
             }
             System.out.println("done summary node: " + k++);
         }*/
+    }
+
+    @Override
+    public long size() {
+        return new SummaryEncoder().encode(summary);
     }
 }

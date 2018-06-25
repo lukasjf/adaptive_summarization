@@ -12,4 +12,6 @@ import java.util.Map;
 public interface Benchmarkable extends GraphQueryAble {
 
     public void train(Map<BaseGraph, List<Map<String, String>>> queries);
+
+    public long size();
 }

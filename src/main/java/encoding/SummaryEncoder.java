@@ -1,6 +1,7 @@
 package encoding;
 
 import graph.BaseEdge;
+import graph.BaseGraph;
 import graph.BaseNode;
 import summary.topdown.HeuristicSummary;
 
@@ -9,15 +10,15 @@ import summary.topdown.HeuristicSummary;
  */
 public class SummaryEncoder {
 
-    public long encode(HeuristicSummary heuristicSummary){
+    public long encode(BaseGraph summary){
         long size = 0L;
-        for (BaseNode n: heuristicSummary.getSummary().getNodes()){
+        for (BaseNode n: summary.getNodes()){
             size += 8; // nodeID
             size += 8; // node size
             size += n.getContainedNodes().size() * 8;
         }
 
-        for (BaseEdge e: heuristicSummary.getSummary().getEdges()){
+        for (BaseEdge e: summary.getEdges()){
             size += 16 ; // source & targetID
             size += e.getLabel().length();
         }

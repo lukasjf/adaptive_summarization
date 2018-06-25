@@ -1,6 +1,7 @@
 package summary.merging;
 
 import encoding.GraphEncoder;
+import encoding.SummaryEncoder;
 import evaluation.Benchmarkable;
 import evaluation.F1Score;
 import graph.*;
@@ -61,6 +62,11 @@ public class MergedSummary implements Benchmarkable {
             }
             summary.removeNode(from);
         }
+    }
+
+    @Override
+    public long size() {
+        return new SummaryEncoder().encode(summary);
     }
 
     private double computeTrainingObjective(Map<BaseGraph, List<Map<String, String>>> queries) {

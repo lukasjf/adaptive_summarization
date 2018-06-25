@@ -81,6 +81,7 @@ public class SummaryCache implements Benchmarkable{
         usage.remove(minID);
     }
 
+    @Override
     public long size(){
         return new GraphEncoder().encode(cache) + usage.size() * 8;
     }

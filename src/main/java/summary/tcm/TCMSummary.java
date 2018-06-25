@@ -1,5 +1,6 @@
 package summary.tcm;
 
+import encoding.SummaryEncoder;
 import evaluation.Benchmarkable;
 import graph.*;
 
@@ -108,5 +109,15 @@ public class TCMSummary implements Benchmarkable {
     @Override
     public void train(Map<BaseGraph, List<Map<String, String>>> queries) {
         
+    }
+
+    @Override
+    public long size() {
+        long sum = 0L;
+        SummaryEncoder se = new SummaryEncoder();
+        for (BaseGraph graph: graphs){
+            sum += se.encode(graph);
+        }
+        return sum;
     }
 }
