@@ -11,6 +11,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static guru.nidi.graphviz.model.Factory.graph;
 import static guru.nidi.graphviz.model.Factory.node;
@@ -39,7 +40,6 @@ public class BaseGraph implements GraphQueryAble{
 
     public BaseNode addNode(int id, String label){
         if (idMapping.keySet().contains(id)){
-            System.err.println("ID already in use: " + id);
             return idMapping.get(id);
         }
         BaseNode node = new BaseNode(id);
@@ -76,9 +76,11 @@ public class BaseGraph implements GraphQueryAble{
     }
 
     public BaseEdge addEdge(int source, int target, String label){
-        if (outIndex.get(source).stream().anyMatch(e -> e.getTarget().getId() == target & e.getLabel().equals(label))){
-            System.err.println("Trying to insert duplicate edge: " + source + " " + target + " " + label);
-            return null;
+        Stream<BaseEdge> candidates = outIndex.get(source).stream()
+                .filter(e -> e.getTarget().getId() == target & e.getLabel().equals(label));
+        Optional<BaseEdge> candidate = candidates.findFirst();
+        if (candidate.isPresent()){
+            return candidate.get();
         }
         BaseEdge e = new BaseEdge(idMapping.get(source), idMapping.get(target), label);
         edges.add(e);
