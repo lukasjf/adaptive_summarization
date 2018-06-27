@@ -6,18 +6,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by lukas on 19.03.18.
  */
 public class QueryGenerator {
 
-    private static int LOWER_SIZE = 2;
-    private static int UPPER_SIZE = 3;
-    private static int QUERIES_PER_SIZE = 50;
-    private static int MAX_TRIES = 10000;
-
-    private static int TEST_QUERIES_PER_SIZE = 50;
+    private static int MAX_QUERY_RESULTS = 100;
 
     private BaseGraph graph;
     private List<BaseGraph> queries;
@@ -29,7 +25,22 @@ public class QueryGenerator {
 
     private List<BaseNode> seedNodes = new ArrayList<>();
 
-    public QueryGenerator(String input, String output, List<String> seeds){
+    private int fromSize;
+    private int toSize;
+    private int numberPerSize;
+
+    private double fraction;
+
+    private List<BaseNode> focusNodes;
+    private List<BaseNode> innerNodes;
+
+    public QueryGenerator(String input, String output, int queryFromSize, int queryToSize, int queriesPerSize, double graphFraction, String seed){
+        this.fromSize = queryFromSize;
+        this.toSize = queryToSize;
+        this.numberPerSize = queriesPerSize;
+        this.fraction = graphFraction;
+
+        new Dataset(input);
         this.outputDir = output;
         File outDir = new File(outputDir);
         if (!outDir.exists()){
@@ -40,105 +51,142 @@ public class QueryGenerator {
         this.graph = GraphImporter.parseGraph(input);
         this.queries = new ArrayList<>();
 
-        for (String seed: seeds){
-            BaseNode seedNode = graph.getLabelMapping().get(seed);
-            addSeedNode(seedNode);
-            for (BaseEdge edge: graph.inEdgesFor(seedNode.getId())){
-                addSeedNode(edge.getSource());
-            }
-            for (BaseEdge edge: graph.outEdgesFor(seedNode.getId())) {
-                addSeedNode(edge.getTarget());
-            }
+        if (seed.isEmpty()){
+            List<Integer> nodes = new ArrayList<>(graph.getIdMapping().keySet());
+            seed = Dataset.I.labelFrom(nodes.get(random.nextInt(nodes.size())));
         }
-        if (seeds.isEmpty()){
-            seedNodes.addAll(graph.getNodes());
+
+        BaseNode seedNode = graph.getLabelMapping().get(seed);
+        createEnvironment(seedNode);
+    }
+
+    private void createEnvironment(BaseNode seed){
+        focusNodes = new ArrayList<>();
+        innerNodes = new ArrayList<>();
+
+        addNodeNeighbours(seed, focusNodes);
+
+        while (focusNodes.size() < fraction * graph.getNodes().size()){
+            BaseNode expandNode = focusNodes.get(random.nextInt(focusNodes.size()));
+            while (innerNodes.contains(expandNode)){
+                expandNode = focusNodes.get(random.nextInt(focusNodes.size()));
+            }
+            if (addNodeNeighbours(expandNode, focusNodes)){
+                innerNodes.add(expandNode);
+            }
         }
     }
 
-    private void addSeedNode(BaseNode node){
-        if (!seedNodes.contains(node)){
-            seedNodes.add(node);
+    private boolean addNodeNeighbours(BaseNode node, List<BaseNode> focusNodes){
+        focusNodes.add(node);
+        for (BaseEdge e: graph.outEdgesFor(node.getId())){
+            if (!focusNodes.contains(e.getTarget())){
+                if (focusNodes.size() < fraction * graph.getNodes().size()){
+                    focusNodes.add(e.getTarget());
+                } else{
+                    return false;
+                }
+            }
         }
+        for (BaseEdge e: graph.inEdgesFor(node.getId())){
+            if (!focusNodes.contains(e.getSource())){
+                if (focusNodes.size() < fraction * graph.getNodes().size()){
+                    focusNodes.add(e.getSource());
+                } else {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     private void generate(){
-        for (int s = LOWER_SIZE; s <= UPPER_SIZE; s++) {
-            int sizeBound = QUERIES_PER_SIZE + TEST_QUERIES_PER_SIZE;
-            for (int i = 0; i < sizeBound; i++) {
-                int variableCounter = -1;
-                Map<BaseNode, BaseNode> graphQueryMapping = new HashMap<>();
-                Map<BaseEdge, BaseNode> candidates = new HashMap<>();
+        // create a query
+        for (int s = fromSize; s <= toSize; s++) {
+            for (int i = 0; i < numberPerSize; i++) {
+                BaseGraph query = createQuery(s);
 
-                BaseGraph queryGraph = new BaseGraph();
-
-                int startIndex = random.nextInt(seedNodes.size());
-                BaseNode startNode = seedNodes.get(startIndex);
-                queryGraph.addNode(startNode.getId(), Dataset.I.labelFrom(startNode.getId()));
-                graphQueryMapping.put(startNode, queryGraph.getIdMapping().get(startNode.getId()));
-
-                graph.inEdgesFor(startNode.getId()).forEach(e -> candidates.put(e, startNode));
-                graph.outEdgesFor(startNode.getId()).forEach(e -> candidates.put(e, startNode));
-
-                if (candidates.isEmpty()){
-                    i--;
-                    System.out.println("bad starting node");
-                    continue;
-                }
-
-                //randomly choose edge to add
-                for (int k = 1; k < s; k++){
-                    BaseEdge taken = null;
-                    int tries = 0;
-                    boolean searching = true;
-                    while (!candidates.isEmpty() && tries < MAX_TRIES && searching){
-                        List<BaseEdge> chooseFrom = new ArrayList<>(candidates.keySet());
-                        taken = chooseFrom.get(random.nextInt(chooseFrom.size()));
-                        tries++;
-                        if (queryGraph.getEdges().contains(taken)){
-                            candidates.remove(taken);
-                        } else{
-                            searching = false;
-                        }
-                    }
-
-                    if (null == taken){
-                        break;
-                    }
-
-                    boolean takenFromSource = taken.getSource().equals(candidates.get(taken));
-                    BaseNode otherNode = takenFromSource ? taken.getTarget() : taken.getSource();
-                    boolean newVariable = graphQueryMapping.get(candidates.get(taken)).isVariable() ? random.nextBoolean() : true;
-                    int newNodeId = newVariable ? variableCounter : otherNode.getId();
-                    String newNodeLabel = newVariable ? "*" + variableCounter-- : Dataset.I.labelFrom(otherNode.getId());
-
-                    queryGraph.addNode(newNodeId, newNodeLabel);
-                    graphQueryMapping.put(otherNode, queryGraph.getIdMapping().get(newNodeId));
-                    if (takenFromSource){
-                        queryGraph.addEdge(graphQueryMapping.get(taken.getSource()).getId(), newNodeId, taken.getLabel());
-
-                    } else{
-                        queryGraph.addEdge(newNodeId, graphQueryMapping.get(taken.getTarget()).getId(), taken.getLabel());
-                    }
-                    graph.inEdgesFor(otherNode.getId()).forEach(e -> candidates.put(e, otherNode));
-                    graph.outEdgesFor(otherNode.getId()).forEach(e -> candidates.put(e, otherNode));
-                }
-
-                if (queries.stream().anyMatch(q -> areDuplicateQueries(queryGraph, q))){
+                if (queries.stream().anyMatch(q -> areDuplicateQueries(query, q))){
                     System.out.println("Query Already Made");
                     continue;
                 }
 
-                int resultSize = graph.query(queryGraph).size();
-                if (resultSize == 0 || resultSize > 1000){
+                int resultSize = graph.query(query).size();
+                if (resultSize == 0 || resultSize > MAX_QUERY_RESULTS){
                     continue;
                 }
                 System.out.println(resultSize);
 
-                queries.add(queryGraph);
+                queries.add(query);
             }
             serializeQueries();
             System.out.println("Size " + s + " queries written");
             queries.clear();
+        }
+    }
+
+    private BaseGraph createQuery(int size) {
+        BaseGraph query = new BaseGraph();
+        BaseNode startNode = innerNodes.get(random.nextInt(innerNodes.size()));
+        List<BaseEdge> outCandidates = new ArrayList<>();
+        List<BaseEdge> inCandidates = new ArrayList<>();
+        outCandidates.addAll(graph.outEdgesFor(startNode.getId()));
+        inCandidates.addAll(graph.inEdgesFor(startNode.getId()));
+        query.addNode(startNode.getId(), Dataset.I.labelFrom(startNode.getId()));
+
+        while (query.getNodes().size() < size){
+            boolean isOutEdge = random.nextBoolean();
+            if (isOutEdge){
+                if (outCandidates.isEmpty()){
+                    return createQuery(size);
+                }
+                BaseEdge expandEdge = outCandidates.get(random.nextInt(outCandidates.size()));
+                query.addNode(expandEdge.getTarget().getId(), Dataset.I.labelFrom(expandEdge.getTarget().getId()));
+                query.addEdge(expandEdge.getSource().getId(), expandEdge.getTarget().getId(), expandEdge.getLabel());
+                outCandidates.addAll(graph.outEdgesFor(expandEdge.getTarget().getId()));
+                inCandidates.addAll(graph.inEdgesFor(expandEdge.getTarget().getId()));
+                inCandidates.remove(expandEdge);
+            } else{
+                if (inCandidates.isEmpty()){
+                    return createQuery(size);
+                }
+                BaseEdge expandEdge = inCandidates.get(random.nextInt(inCandidates.size()));
+                query.addNode(expandEdge.getSource().getId(), Dataset.I.labelFrom(expandEdge.getSource().getId()));
+                query.addEdge(expandEdge.getSource().getId(), expandEdge.getTarget().getId(), expandEdge.getLabel());
+                outCandidates.addAll(graph.outEdgesFor(expandEdge.getSource().getId()));
+                inCandidates.addAll(graph.inEdgesFor(expandEdge.getSource().getId()));
+                outCandidates.remove(expandEdge);
+            }
+        }
+
+        createVariables(query);
+        return query;
+    }
+
+    private void createVariables(BaseGraph query) {
+        int variableCounter = -1;
+        Set<BaseNode> testedNodes = new HashSet<>();
+
+
+        List<BaseNode> queryInnerNodes = query.getNodes().stream()
+                .filter(n -> innerNodes.contains(n)).collect(Collectors.toList());
+        BaseNode variableNode = queryInnerNodes.get(random.nextInt(queryInnerNodes.size()));
+        variableNode.setId(variableCounter--);
+        testedNodes.add(variableNode);
+
+
+        for (BaseEdge e: query.getEdges()){
+            if (!testedNodes.contains(e.getTarget()) && innerNodes.contains(e.getSource())){
+                if (random.nextBoolean()){
+                    e.getTarget().setId(variableCounter--);
+                }
+                testedNodes.add(e.getTarget());
+            }
+            if (!testedNodes.contains(e.getTarget()) && innerNodes.contains(e.getTarget())){
+                if (random.nextBoolean()){
+                    e.getSource().setId(variableCounter--);
+                }
+            }
         }
     }
 
@@ -150,7 +198,7 @@ public class QueryGenerator {
 
     private void serializeQueries() {
         for (int i = 0; i < queries.size(); i++){
-            serializeQuery(queries.get(i), i >= QUERIES_PER_SIZE);
+            serializeQuery(queries.get(i), i >= 0.7*numberPerSize);
         }
 
     }
@@ -173,12 +221,14 @@ public class QueryGenerator {
     }
 
     public static void main(String[] args){
-        String dataDir = "/home/lukas/studium/thesis/code/data/citation/";
-        String graphFile = "graph_3";
-        String outputDir = "/home/lukas/studium/thesis/code/data/citation/queriesnew/";
-        List<String> seeds = new ArrayList<>();
-        seeds.add("aut:danai_koutra");
-        QueryGenerator q = new QueryGenerator(dataDir+graphFile, outputDir, seeds);
+        String dataFile = args[0];
+        String outputDir = args[1];
+        int queryFromSize = Integer.parseInt(args[2]);
+        int queryToSize = Integer.parseInt(args[3]);
+        int queriesPerSize = Integer.parseInt(args[4]);
+        double graphFraction = Double.parseDouble(args[5]);
+        String seed = "aut:danai_koutra";
+        QueryGenerator q = new QueryGenerator(dataFile, outputDir, queryFromSize, queryToSize, queriesPerSize, graphFraction, seed);
         q.generate();
     }
 }
