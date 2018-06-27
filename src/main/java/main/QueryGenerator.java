@@ -182,10 +182,11 @@ public class QueryGenerator {
                 }
                 testedNodes.add(e.getTarget());
             }
-            if (!testedNodes.contains(e.getTarget()) && innerNodes.contains(e.getTarget())){
+            if (!testedNodes.contains(e.getSource()) && innerNodes.contains(e.getTarget())){
                 if (random.nextBoolean()){
                     e.getSource().setId(variableCounter--);
                 }
+                testedNodes.add(e.getSource());
             }
         }
     }
