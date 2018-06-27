@@ -227,7 +227,7 @@ public class QueryGenerator {
         int queryToSize = Integer.parseInt(args[3]);
         int queriesPerSize = Integer.parseInt(args[4]);
         double graphFraction = Double.parseDouble(args[5]);
-        String seed = "aut:danai_koutra";
+        String seed = "";
         QueryGenerator q = new QueryGenerator(dataFile, outputDir, queryFromSize, queryToSize, queriesPerSize, graphFraction, seed);
         q.generate();
     }
