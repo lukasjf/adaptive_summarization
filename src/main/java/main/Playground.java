@@ -1,12 +1,16 @@
 package main;
 
 import evaluation.Benchmark;
+import evaluation.Benchmarkable;
+import evaluation.F1Score;
 import graph.*;
-import summary.adaptive.heuristic.*;
 import summary.caching.SummaryCache;
+import summary.equivalences.MinimalEquivalence;
+import summary.equivalences.QueryNodeEquivalence;
 import summary.equivalences.QuotientGraph;
 import summary.equivalences.TotalEquivalence;
-import summary.tcm.TCMSummary;
+import summary.merging.MergedSummary;
+import summary.topdown.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,15 +59,14 @@ public class Playground {
         String dataPath = args[1];
         String queriesPath = args[2];
 
-        Dataset citation = new Dataset(dataPath);
-        String queries = queriesPath;
-        //QuotientGraph exactSummary = new QuotientGraph(citation, new TotalEquivalence());
-        Benchmark b = new Benchmark(queries);
-        SummaryCache c = new SummaryCache(sizeLimit);
-        double[] result = b.run(c, citation.getGraph());
+        Dataset dataset = new Dataset(dataPath);
+        //Benchmarkable summary = new QuotientGraph(dataset.getGraph(), new MinimalEquivalence());
+        //Benchmarkable summary = new MergedSummary(dataset.getGraph(), sizeLimit);
+        Benchmarkable summary = new SummaryCache(sizeLimit);
+        Benchmark b = new Benchmark(queriesPath);
+        double[] result = b.run(summary, dataset.getGraph());
+        System.out.println();
         System.out.println("Training: " + result[0]);
         System.out.println("Test: " + result[1]);
-        System.out.println("Size " + c.size());
-
     }
 }
