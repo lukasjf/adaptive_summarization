@@ -18,6 +18,9 @@ public class TCMSummary implements Benchmarkable {
     public static TCMSummary createFromGraph(BaseGraph graph, int numberHashes, long maxSize){
         Random random = new Random(1337);
         int k = chooseK(graph, numberHashes, maxSize);
+        if (k < 0){
+            return null;
+        }
         List<HashFunction> hashes = new ArrayList<>();
         for (int i = 0; i < numberHashes; i++){
             int a = random.nextInt() % LARGE_PRIME;
@@ -41,9 +44,8 @@ public class TCMSummary implements Benchmarkable {
         k--;
         if (k == 0){
             System.err.println("Too little storage");
-            System.exit(1);
         }
-        return k;
+        return -1;
     }
 
     public TCMSummary(BaseGraph graph, List<HashFunction> hashes) {
