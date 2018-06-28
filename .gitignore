@@ -14,9 +14,10 @@ buildNumber.properties
 .idea/
 
 
+
 # generated pdfs from plotting
 plots/*.pdf
 plots/*.csv
 
-
+*.csv
 src/main/java/main/Playground.java

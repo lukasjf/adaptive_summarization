@@ -61,14 +61,14 @@ public class SubgraphIsomorphism {
             System.err.println("timed out");
         }
         List<Map<BaseNode, BaseNode>> nodeMatchings =  createNodeMatchings(matchings);
-        // remove self loops that can happen as part of cross product
-        List<Map<BaseNode, BaseNode>> withoutLoops = new ArrayList<>();
-        for (Map<BaseNode, BaseNode> match: nodeMatchings){
-            if (query.getEdges().stream().noneMatch(edge -> match.get(edge.getSource()).equals(match.get(edge.getTarget())))){
+        List<Map<String, String>> expanded = expandCrossProduct(nodeMatchings);
+        List<Map<String, String>> withoutLoops = new ArrayList<>();
+        for (Map<String, String> match: expanded){
+            if (match.values().size() == new HashSet<>(match.values()).size()){
                 withoutLoops.add(match);
             }
         }
-        return expandCrossProduct(withoutLoops);
+        return withoutLoops;
     }
 
     private List<Map<BaseNode,BaseNode>> createNodeMatchings(List<Map<BaseEdge, BaseEdge>> matchings) {
