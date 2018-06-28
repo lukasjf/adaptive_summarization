@@ -17,7 +17,7 @@ public class QueryGenerator {
 
     private BaseGraph graph;
     private List<BaseGraph> queries;
-    private Random random = new Random(42);
+    private Random random = new Random(0);
 
     private int queryCounter = 1;
 
@@ -99,7 +99,6 @@ public class QueryGenerator {
     }
 
     private void generate(){
-        // create a query
         for (int s = fromSize; s <= toSize; s++) {
             for (int i = 0; i < numberPerSize; i++) {
                 BaseGraph query = createQuery(s);
@@ -109,7 +108,7 @@ public class QueryGenerator {
                     continue;
                 }
 
-                int resultSize = graph.query(query).size();
+                int resultSize = graph.query(query,10).size();
                 if (resultSize == 0 || resultSize > MAX_QUERY_RESULTS){
                     continue;
                 }
@@ -133,6 +132,10 @@ public class QueryGenerator {
         query.addNode(startNode.getId(), Dataset.I.labelFrom(startNode.getId()));
 
         while (query.getNodes().size() < size){
+            if (outCandidates.isEmpty() && inCandidates.isEmpty()){
+                System.err.println("node candidates");
+                return createQuery(size);
+            }
             boolean isOutEdge = random.nextBoolean();
             if (isOutEdge){
                 if (outCandidates.isEmpty()){

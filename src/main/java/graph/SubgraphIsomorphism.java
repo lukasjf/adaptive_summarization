@@ -105,7 +105,7 @@ public class SubgraphIsomorphism {
     }
 
     private List<Map<BaseEdge, BaseEdge>> query(List<BaseEdge> _queryEdges, Map<BaseNode, BaseNode> match, Map<BaseEdge, BaseEdge> matchedEdges){
-        if (System.currentTimeMillis() > startTime + timeout * 1000){
+        if (startTime > 0 && System.currentTimeMillis() > startTime + timeout * 1000){
             timedout = true;
             return new ArrayList<>();
         }
