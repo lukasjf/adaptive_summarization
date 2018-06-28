@@ -20,7 +20,7 @@ public class SummaryEncoder {
 
         for (BaseEdge e: summary.getEdges()){
             size += 16 ; // source & targetID
-            size += e.getLabel().length();
+            size += 8; //e.getLabel().length();
         }
         return size;
     }

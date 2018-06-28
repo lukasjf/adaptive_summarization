@@ -13,7 +13,7 @@ public class GraphEncoder {
         long size = 1L * graph.getNodes().size() * 8;
         for (BaseEdge e: graph.getEdges()){
             size += 16; // source & targetID
-            size += e.getLabel().length();
+            size += 8; //e.getLabel().length();
         }
         return size;
     }
