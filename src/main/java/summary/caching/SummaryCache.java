@@ -30,6 +30,13 @@ public class SummaryCache implements Benchmarkable{
     }
 
     @Override
+    public List<Map<String, String>> query(BaseGraph query, int timeout) {
+        List<Map<String, String>> results = cache.query(query, timeout);
+        age();
+        return results;
+    }
+
+    @Override
     public void train(Map<BaseGraph, List<Map<String, String>>> queries) {
         for (BaseGraph query: queries.keySet()){
             for (Map<String, String> result: queries.get(query)){

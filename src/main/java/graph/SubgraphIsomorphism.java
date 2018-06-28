@@ -13,6 +13,19 @@ public class SubgraphIsomorphism {
     private boolean isInjective;
     public List<Map<BaseEdge, BaseEdge>> matchings;
 
+    private int timeout = -1;
+    private long startTime = 0;
+    boolean timedout = false;
+
+    public SubgraphIsomorphism(){
+
+    }
+
+    public SubgraphIsomorphism(int timeout){
+        this.startTime = System.currentTimeMillis();
+        this.timeout = timeout;
+    }
+
     private long candidateCount(BaseEdge queryEdge){
         return candidateEdges(queryEdge).count();
     }
@@ -43,6 +56,10 @@ public class SubgraphIsomorphism {
             matchings.addAll(query(queryEdges, match, matchedEdges));
         });
         this.matchings = matchings;
+        if (timedout){
+            this.matchings.clear();
+            System.err.println("timed out");
+        }
         List<Map<BaseNode, BaseNode>> nodeMatchings =  createNodeMatchings(matchings);
         // remove self loops that can happen as part of cross product
         List<Map<BaseNode, BaseNode>> withoutLoops = new ArrayList<>();
@@ -88,6 +105,10 @@ public class SubgraphIsomorphism {
     }
 
     private List<Map<BaseEdge, BaseEdge>> query(List<BaseEdge> _queryEdges, Map<BaseNode, BaseNode> match, Map<BaseEdge, BaseEdge> matchedEdges){
+        if (System.currentTimeMillis() > startTime + timeout * 1000){
+            timedout = true;
+            return new ArrayList<>();
+        }
         if (_queryEdges.isEmpty()){
             List<Map<BaseEdge, BaseEdge>> result = new ArrayList<>();
             result.add(matchedEdges);

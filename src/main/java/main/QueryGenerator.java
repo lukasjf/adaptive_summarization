@@ -230,4 +230,6 @@ public class QueryGenerator {
         QueryGenerator q = new QueryGenerator(dataFile, outputDir, queryFromSize, queryToSize, queriesPerSize, graphFraction, seed);
         q.generate();
     }
+
+
 }

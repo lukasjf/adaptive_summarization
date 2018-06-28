@@ -8,5 +8,7 @@ import java.util.Map;
  */
 public interface GraphQueryAble {
 
-    public List<Map<String, String>> query (BaseGraph query);
+    List<Map<String, String>> query (BaseGraph query);
+
+    List<Map<String, String>> query (BaseGraph query, int timeout);
 }

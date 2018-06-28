@@ -45,6 +45,14 @@ public class HeuristicSummary implements Benchmarkable {
         return results;
     }
 
+    @Override
+    public List<Map<String, String>> query(BaseGraph query, int timeout){
+        SubgraphIsomorphism iso = new SubgraphIsomorphism(timeout);
+        List<Map<String,String>> results = iso.query(query, summary, false);
+        updateEdgeLosses(iso.matchings);
+        return results;
+    }
+
     private void updateEdgeLosses(List<Map<BaseEdge, BaseEdge>> matchings) {
         for (Map<BaseEdge, BaseEdge> match: matchings){
             for (BaseEdge queryEdge: match.keySet()){

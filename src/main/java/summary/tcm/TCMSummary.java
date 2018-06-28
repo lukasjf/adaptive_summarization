@@ -107,6 +107,31 @@ public class TCMSummary implements Benchmarkable {
     }
 
     @Override
+    public List<Map<String, String>> query(BaseGraph query, int timeout) {
+        List<Map<String, String>> results = new ArrayList<>();
+
+        Map<Integer, List<Map<String, String>>> intermediate = new HashMap<>();
+
+        for (int i = 0; i < graphs.size(); i++) {
+            intermediate.put(i, new SubgraphIsomorphism(timeout).query(query, graphs.get(i), false));
+        }
+
+        for (Map<String,String> result: intermediate.getOrDefault(0, new ArrayList<>())) {
+            boolean missing = false;
+            for (int i = 1; i < graphs.size(); i++){
+                if (intermediate.get(i).stream().noneMatch(result::equals)){
+                    missing = true;
+                    break;
+                }
+            }
+            if (!missing){
+                results.add(result);
+            }
+        }
+        return results;
+    }
+
+    @Override
     public void train(Map<BaseGraph, List<Map<String, String>>> queries) {
         
     }

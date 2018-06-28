@@ -31,6 +31,11 @@ public class MergedSummary implements Benchmarkable {
     }
 
     @Override
+    public List<Map<String, String>> query(BaseGraph query, int timeout) {
+        return new SubgraphIsomorphism(timeout).query(query, summary, false);
+    }
+
+    @Override
     public void train(Map<BaseGraph, List<Map<String, String>>> queries) {
 
         for (BaseNode n: original.getNodes()){

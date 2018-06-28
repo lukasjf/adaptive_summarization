@@ -101,6 +101,12 @@ public class BaseGraph implements GraphQueryAble{
         return new SubgraphIsomorphism().query(query, this, true);
     }
 
+
+    @Override
+    public List<Map<String, String>> query(BaseGraph query, int timeout) {
+        return new SubgraphIsomorphism(timeout).query(query, this, true);
+    }
+
     public int getNumberEdgeTypes(){
         return edges.stream().map(BaseEdge::getLabel).collect(Collectors.toSet()).size();
     }
