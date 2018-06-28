@@ -45,8 +45,6 @@ public class QueryGenerator {
         File outDir = new File(outputDir);
         if (!outDir.exists()){
             outDir.mkdir();
-            new File(outputDir + "train").mkdir();
-            new File(outputDir + "test").mkdir();
         }
         this.graph = GraphImporter.parseGraph(input);
         this.queries = new ArrayList<>();
@@ -199,15 +197,15 @@ public class QueryGenerator {
 
     private void serializeQueries() {
         for (int i = 0; i < queries.size(); i++){
-            serializeQuery(queries.get(i), i >= 0.7*numberPerSize);
+            serializeQuery(queries.get(i));
         }
 
     }
 
 
-    private void serializeQuery(BaseGraph query, boolean isTest){
+    private void serializeQuery(BaseGraph query){
         int resultSize = graph.query(query).size();
-        String querydir = outputDir + (isTest ? "test/" : "train/") + "query";
+        String querydir = outputDir;
         try(PrintStream queryFile = new PrintStream(new File(querydir + queryCounter++))){
             queryFile.println("#" + resultSize);
             for (BaseNode node: query.getNodes()){
