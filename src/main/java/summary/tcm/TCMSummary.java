@@ -36,16 +36,16 @@ public class TCMSummary implements Benchmarkable {
     private static int chooseK(BaseGraph graph, int numberHashes, long maxSize){
         int numberEdgeTypes = graph.getNumberEdgeTypes();
         int k = 1;
-        while (maxSize >
-                graph.getNodes().size() * 4 * numberHashes +
-                k * k / 8 * numberHashes * numberEdgeTypes){
+        while (maxSize > numberHashes *
+                (8 * k + graph.getNodes().size() * 4 + k * k * 12 * numberEdgeTypes)){
             k++;
         }
         k--;
         if (k == 0){
             System.err.println("Too little storage");
+            return -1;
         }
-        return -1;
+        return k;
     }
 
     public TCMSummary(BaseGraph graph, List<HashFunction> hashes) {

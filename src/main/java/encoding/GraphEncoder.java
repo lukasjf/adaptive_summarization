@@ -10,10 +10,10 @@ import graph.BaseNode;
 
 public class GraphEncoder {
     public long encode(BaseGraph graph){
-        long size = 1L * graph.getNodes().size() * 8;
+        long size = 1L * graph.getNodes().size() * 4;
         for (BaseEdge e: graph.getEdges()){
-            size += 16; // source & targetID
-            size += 8; //e.getLabel().length();
+            size += 8; // source & targetID
+            size += 4; //e.getLabel().length();
         }
         return size;
     }
