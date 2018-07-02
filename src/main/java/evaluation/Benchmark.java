@@ -39,6 +39,7 @@ public class Benchmark {
             long start = System.currentTimeMillis();
             b.train(trainingSet);
             run.trainingtime = System.currentTimeMillis() - start;
+            run.trainingtime = run.trainingtime / 1000.0;
 
             long graphtime = 0, summarytime = 0;
             double trainingResult = 0.0, testResult = 0.0;
@@ -67,7 +68,7 @@ public class Benchmark {
             run.summarytime = summarytime / 1000.0;
             run.trainingF1 = trainingResult / trainingQueries.size();
             run.testF1 = testResult / testQueries.size();
-
+            runs.add(run);
         }
         return runs;
     }
