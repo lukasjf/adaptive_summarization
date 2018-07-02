@@ -21,10 +21,12 @@ public class Benchmark {
         }
     }
 
-    public List<Result> run(Benchmarkable b, BaseGraph g, int folds){
+    public List<Result> run(Benchmarkable[] bs, BaseGraph g){
+        int folds = bs.length;
         List<Result> runs = new ArrayList<>();
 
         for (int i = 0; i < folds; i++){
+            Benchmarkable b = bs[i];
             Result run = new Result();
             // create train/test split
             Collections.shuffle(queries);
@@ -66,6 +68,7 @@ public class Benchmark {
             }
             run.graphtime = graphtime / 1000.0;
             run.summarytime = summarytime / 1000.0;
+            run.size = b.size();
             run.trainingF1 = trainingResult / trainingQueries.size();
             run.testF1 = testResult / testQueries.size();
             runs.add(run);
@@ -74,8 +77,10 @@ public class Benchmark {
     }
 
     public class Result{
+        public double objective;
         public double trainingF1;
         public double testF1;
+        public long size;
         public double graphtime;
         public double summarytime;
         public double trainingtime;
