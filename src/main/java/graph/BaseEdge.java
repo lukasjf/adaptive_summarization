@@ -23,7 +23,7 @@ public class BaseEdge implements Serializable {
 
     @Override
     public String toString(){
-        return label;
+        return source.getId() + " " + target.getId() + " " +label;
     }
 
     @Override
@@ -35,6 +35,14 @@ public class BaseEdge implements Serializable {
             return source.getId() == otherEdge.source.getId()
                     && target.getId() == otherEdge.target.getId()
                     && label.equals(otherEdge.label);
+        }
+    }
+
+    public long size(){
+        if (source == target){
+            return source.size() * source.size() - source.size();
+        } else {
+            return source.size() * target.size();
         }
     }
 
