@@ -90,6 +90,6 @@ public class SummaryCache implements Benchmarkable{
 
     @Override
     public long size(){
-        return new GraphEncoder().encode(cache) + usage.size() * 8;
+        return new GraphEncoder().encode(cache) + usage.size() * 4;
     }
 }

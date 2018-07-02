@@ -1,6 +1,7 @@
 package main;
 
 import evaluation.Benchmark;
+import evaluation.Benchmarkable;
 import graph.Dataset;
 import summary.tcm.TCMSummary;
 
@@ -42,7 +43,7 @@ public class TCMRunner {
             }
 
             Benchmark benchmark = new Benchmark(dir);
-            List<Benchmark.Result> results = benchmark.run(summary, Dataset.I.getGraph(), 10);
+            List<Benchmark.Result> results = benchmark.run(new Benchmarkable[]{summary}, Dataset.I.getGraph());
             for (Benchmark.Result r: results){
                 output.write(String.format(TEMPLATE, "tcm", dir, sizeLimit, numberHashes, -1.0, r.trainingF1,
                         r.testF1, trainingTime, r.graphtime, r.summarytime));
