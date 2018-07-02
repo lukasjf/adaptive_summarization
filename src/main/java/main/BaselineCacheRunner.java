@@ -18,9 +18,9 @@ import java.util.List;
 public class BaselineCacheRunner {
 
     private static String HEADER = "method,queryset,storage,size,trainingF1,testF1,creationTime,graphTime,summaryTime";
-    private static String TEMPLATE = "%s,%s,%d,%d,%f,%f,%f,%f,%f,%f\n";
+    private static String TEMPLATE = "%s,%s,%d,%d,%f,%f,%f,%f,%f\n";
 
-    private static int FOLDSIZE = 10;
+    private static int FOLDSIZE = 5;
 
     public static void main(String[] args) throws IOException {
         long sizeLimit = Long.parseLong(args[0]);
