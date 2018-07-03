@@ -30,7 +30,7 @@ public class Benchmark {
             List<Map<String, String>> graphResults = g.query(q);
             graphtime += System.currentTimeMillis() - start;
             start = System.currentTimeMillis();
-            List<Map<String, String>> summaryResults = b.query(q);
+            List<Map<String, String>> summaryResults = b.query(q, 60);
             summarytime += System.currentTimeMillis() - start;
             quality += F1Score.fqScoreFor(graphResults, summaryResults);
             System.out.print(".");
@@ -72,7 +72,7 @@ public class Benchmark {
                 List<Map<String, String>> graphResults = g.query(q);
                 graphtime += System.currentTimeMillis() - start;
                 start = System.currentTimeMillis();
-                List<Map<String, String>> summaryResults = b.query(q);
+                List<Map<String, String>> summaryResults = b.query(q, 60);
                 summarytime += System.currentTimeMillis() - start;
                 trainingResult += F1Score.fqScoreFor(graphResults, summaryResults);
                 System.out.print(".");
@@ -83,7 +83,7 @@ public class Benchmark {
                 List<Map<String, String>> graphResults = g.query(q);
                 graphtime += System.currentTimeMillis() - start;
                 start = System.currentTimeMillis();
-                List<Map<String, String>> summaryResults = b.query(q);
+                List<Map<String, String>> summaryResults = b.query(q, 60);
                 summarytime += System.currentTimeMillis() - start;
                 testResult += F1Score.fqScoreFor(graphResults, summaryResults);
                 System.out.print("*");
