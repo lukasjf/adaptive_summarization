@@ -12,8 +12,8 @@ import java.util.stream.Collectors;
  */
 public class MergedSummary implements Benchmarkable {
 
-    private BaseGraph original;
-    private BaseGraph summary;
+    public BaseGraph original;
+    public BaseGraph summary;
     private int sizeLimit;
     private String method;
 
@@ -23,7 +23,7 @@ public class MergedSummary implements Benchmarkable {
     private Map<BaseEdge, Double> weights = new HashMap<>();
     private Map<BaseEdge, Integer> actual = new HashMap<>();
 
-    private double lastObjective;
+    public double lastObjective;
 
     public MergedSummary(BaseGraph originalGraph, String method, int sizeLimit){
         this.original = originalGraph;
@@ -57,9 +57,9 @@ public class MergedSummary implements Benchmarkable {
 
         SummaryEncoder se = new SummaryEncoder();
         System.out.println(se.encode(summary));
-        while (summary.getNodes().size() > 1 && se.encode(summary) > sizeLimit){
-            System.out.println(se.encode(summary) + " " + lastObjective + " " + summary.getNodes().size());
+        while (summary.getNodes().size() > 1 && size() > sizeLimit){
             merge();
+            System.out.println(se.encode(summary) + " " + lastObjective + " " + summary.getNodes().size() + " " + summary.getEdges().size());
         }
     }
 
@@ -68,8 +68,7 @@ public class MergedSummary implements Benchmarkable {
             actual.put(e, 1);
         }
         for (BaseGraph query : queries.keySet()) {
-            List<Map<String, String>> results = queries.get(query);
-            for (Map<String, String> result : results) {
+            for (Map<String, String> result : queries.get(query)) {
                 for (BaseEdge queryEdge : query.getEdges()) {
                     BaseEdge resultEdge = findResultEdge(queryEdge, result);
                     double oldWeight = weights.getOrDefault(resultEdge, 0.0);
@@ -92,7 +91,15 @@ public class MergedSummary implements Benchmarkable {
 
         BaseNode condenseNode = summary.addNode(Integer.MIN_VALUE, "");
         for (BaseNode n: new ArrayList<>(summary.getNodes())){
-            if (n.getId() != condenseNode.getId() && !usedNodes.contains(n.getId())){
+            HashSet<Integer> neighborhood = new HashSet<>(n.getContainedNodes());
+            /*for (BaseEdge e: summary.outEdgesFor(n.getId())){
+                neighborhood.add(e.getTarget().getId());
+            }
+            for (BaseEdge e: summary.inEdgesFor(n.getId())){
+                neighborhood.add(e.getSource().getId());
+            }*/
+            neighborhood.retainAll(usedNodes);
+            if (n.getId() != condenseNode.getId() && neighborhood.isEmpty()){
                 mergeNodes(condenseNode.getId(), n.getId());
             }
         }
@@ -193,7 +200,7 @@ public class MergedSummary implements Benchmarkable {
         int[] pair = new int[] {-1, -1};
         for (BaseNode n1: summary.getNodes()){
             for (BaseNode n2: summary.getNodes()){
-                if (n1.getId() <= n2.getId()){
+                if (n1.getId() <= n2.getId() || n1.getId() == Integer.MIN_VALUE || n2.getId() == Integer.MIN_VALUE){
                     continue;
                 }
                 double testObjective = testMerge(n1, n2);
@@ -212,7 +219,6 @@ public class MergedSummary implements Benchmarkable {
     }
 
     private double testMerge(BaseNode n1, BaseNode n2) {
-        System.out.print(".");
         if (n1.getId() == n2.getId()){
             return -1;
         }
@@ -245,14 +251,25 @@ public class MergedSummary implements Benchmarkable {
 
         n1.getContainedNodes().removeAll(backupContained2);
         n2.getContainedNodes().addAll(backupContained2);
+
         for (BaseEdge e: summary.outEdgesFor(n2.getId())){
             BaseEdge equivalent = findEquivalentEdge(e, n1.getId(), true);
-            if (actual.get(e) >= actual.get(equivalent)){
+            if (actual.get(e) < actual.get(equivalent)){
+                actual.put(equivalent, actual.get(equivalent) - actual.get(e));
+            } else {
                 summary.removeEdge(equivalent);
                 weights.remove(equivalent);
                 actual.remove(equivalent);
-            } else {
+            }
+        }
+        for (BaseEdge e: summary.inEdgesFor(n2.getId())){
+            BaseEdge equivalent = findEquivalentEdge(e, n1.getId(), false);
+            if (actual.get(e) < actual.get(equivalent)){
                 actual.put(equivalent, actual.get(equivalent) - actual.get(e));
+            } else {
+                summary.removeEdge(equivalent);
+                weights.remove(equivalent);
+                actual.remove(equivalent);
             }
         }
         return objective;
