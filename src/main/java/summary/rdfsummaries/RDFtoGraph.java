@@ -1,7 +1,8 @@
 package summary.rdfsummaries;
 
+import graph.BaseEdge;
 import graph.BaseGraph;
-import graph.GraphImporter;
+import graph.BaseNode;
 import graph.Dataset;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
@@ -11,15 +12,16 @@ import java.io.*;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created by lukas on 19.04.18.
  */
 public class RDFtoGraph {
 
-    public static BaseGraph parseRDFToGraph(String rdfSummaryPath, String mapDBPath, String mappingName,
-            String dbserver, String dbPort, String dbname, String schema,  String username, String password){
-        BaseGraph graph = GraphImporter.parseGraph("/home/lukas/studium/thesis/code/data/citation/graph_3");
+    public static BaseGraph buildSummary(String rdfSummaryPath, String mapDBPath, String mappingName,
+                                         String dbserver, String dbPort, String dbname, String schema, String username, String password){
+        new Dataset("/home/lukas/studium/thesis/code/data/citation/graph");
         BaseGraph rdfsummary = new BaseGraph();
 
         try (BufferedReader br = new BufferedReader(new FileReader(new File(rdfSummaryPath)))){
@@ -75,6 +77,19 @@ public class RDFtoGraph {
             int superNodeId = supernodeMappings.get(normalNodeId);
             rdfsummary.nodeWithId(superNodeId).getContainedNodes().add(rdfToRealID.get(normalNodeId));
         }
+
+        try(PrintStream ps = new PrintStream("rdfsummary")){
+            for (BaseNode n: rdfsummary.getNodes()){
+                ps.println(String.format("v %d %s", n.getId(),
+                        n.getContainedNodes().stream().map(Object::toString).collect(Collectors.joining(","))));
+            }
+            for (BaseEdge e: rdfsummary.getEdges()){
+                ps.println(String.format("e %d %d %s", e.getSource().getId(), e.getTarget().getId(), e.getLabel().split("/property/")[1]));
+            }
+        } catch (IOException e){
+
+        }
+
         return rdfsummary;
     }
 
@@ -85,9 +100,9 @@ public class RDFtoGraph {
     }
 
     public static void main(String[] args){
-        String rdfSummaryPath = "/home/lukas/studium/thesis/code/rdfsummary/src/main/resources/data/weak(citation).nt";
-        String mapDBPath = "/home/lukas/studium/thesis/code/rdfsummary/abc/citation/weak/weak(citation).db";
-        String mappingName = "weak(citation)_s_data_node_by_g_data_node";
+        String rdfSummaryPath = "/home/lukas/studium/thesis/code/rdfsummary/src/main/resources/data/fw(citation).nt";
+        String mapDBPath = "/home/lukas/studium/thesis/code/rdfsummary/abc/citation/fw/fw(citation).db";
+        String mappingName = "fw(citation)_s_data_node_by_g_data_node";
         String databaseServer = "localhost";
         String databasePort = "5432";
         String dbname = "rdf";
@@ -95,6 +110,6 @@ public class RDFtoGraph {
         String username = "postgres";
         String password = "postgres";
 
-        RDFtoGraph.parseRDFToGraph(rdfSummaryPath, mapDBPath, mappingName, databaseServer, databasePort, dbname, schema, username, password);
+        RDFtoGraph.buildSummary(rdfSummaryPath, mapDBPath, mappingName, databaseServer, databasePort, dbname, schema, username, password);
     }
 }

@@ -21,6 +21,28 @@ public class Benchmark {
         }
     }
 
+    public Result run(Benchmarkable b, BaseGraph g){
+        Result run = new Result();
+        double quality = 0.0;
+        long start, graphtime = 0, summarytime = 0;
+        for (BaseGraph q: queries){
+            start = System.currentTimeMillis();
+            List<Map<String, String>> graphResults = g.query(q);
+            graphtime += System.currentTimeMillis() - start;
+            start = System.currentTimeMillis();
+            List<Map<String, String>> summaryResults = b.query(q);
+            summarytime += System.currentTimeMillis() - start;
+            quality += F1Score.fqScoreFor(graphResults, summaryResults);
+            System.out.print(".");
+        }
+        run.trainingF1 = quality / queries.size();
+        run.testF1 = run.trainingF1;
+        run.size = b.size();
+        run.graphtime = graphtime / 1000.0;
+        run.summarytime = summarytime / 1000.0;
+        return run;
+    }
+
     public List<Result> run(Benchmarkable[] bs, BaseGraph g){
         int folds = bs.length;
         List<Result> runs = new ArrayList<>();
