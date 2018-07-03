@@ -13,8 +13,8 @@ import java.util.Arrays;
  */
 public class TCMRunner {
 
-    private static String HEADER = "graph,method,queryset,storage,hashes,objective,trainingF1,testF1,creationTime,graphTime,summaryTime";
-    private static String TEMPLATE = "%s,%s,%s,%d,%d,%f,%f,%f,%f,%f,%f\n";
+    private static String HEADER = "graph,method,queryset,storage,size,hashes,trainingF1,testF1,creationTime,graphTime,summaryTime";
+    private static String TEMPLATE = "%s,%s,%s,%d,%d,%d,%f,%f,%f,%f,%f\n";
 
     public static void main(String[] args) throws IOException {
         long sizeLimit = Long.parseLong(args[0]);
@@ -25,8 +25,7 @@ public class TCMRunner {
         new Dataset(graphFile);
         long start = System.currentTimeMillis();
         TCMSummary summary = TCMSummary.createFromGraph(Dataset.I.getGraph(), numberHashes, sizeLimit);
-        System.out.println(TCMSummary.k);
-        long trainingTime = System.currentTimeMillis() - start;
+        double trainingTime = (System.currentTimeMillis() - start) / 1000.0;
 
         File resultFile = new File("tcm.csv");
         if (! resultFile.exists()){
@@ -38,13 +37,13 @@ public class TCMRunner {
         for (String dir: benchmarks){
             System.out.println(dir);
             if (summary == null){
-                output.write(String.format(TEMPLATE, graphFile, "tcm", dir, sizeLimit, numberHashes, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0));
+                output.write(String.format(TEMPLATE, graphFile, "tcm", dir, sizeLimit, -1, numberHashes, -1.0, -1.0, -1.0, -1.0, -1.0));
                 continue;
             }
 
             Benchmark benchmark = new Benchmark(dir);
             Benchmark.Result r = benchmark.run(summary, Dataset.I.getGraph());
-            output.write(String.format(TEMPLATE, graphFile, "tcm", dir, sizeLimit, numberHashes, -1.0, r.trainingF1,
+            output.write(String.format(TEMPLATE, graphFile, "tcm", dir, sizeLimit, r.size, numberHashes, r.trainingF1,
                     r.testF1, trainingTime, r.graphtime, r.summarytime));
         }
         output.flush();

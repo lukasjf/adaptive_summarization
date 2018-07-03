@@ -23,7 +23,7 @@ public class TCMSummary implements Benchmarkable {
         if (k < 0){
             return null;
         }
-        for (int numberNodes = chooseK(graph, numberHashes, maxSize); numberNodes < Integer.MAX_VALUE; numberNodes++){
+        for (int numberNodes = k; numberNodes < Integer.MAX_VALUE; numberNodes++){
             List<HashFunction> hashes = new ArrayList<>();
             for (int i = 0; i < numberHashes; i++){
                 int a = random.nextInt() % LARGE_PRIME;
@@ -31,7 +31,7 @@ public class TCMSummary implements Benchmarkable {
                     a = random.nextInt() % LARGE_PRIME;
                 }
                 int b = random.nextInt() % LARGE_PRIME;
-                hashes.add(new HashFunction(a, b, LARGE_PRIME, k));
+                hashes.add(new HashFunction(a, b, LARGE_PRIME, numberNodes));
             }
             TCMSummary candidate = new TCMSummary(graph, hashes);
             System.out.println(candidate.size() + " " + numberNodes);
