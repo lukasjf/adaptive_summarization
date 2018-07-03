@@ -14,7 +14,7 @@ public class MergedSummary implements Benchmarkable {
 
     public BaseGraph original;
     public BaseGraph summary;
-    private int sizeLimit;
+    private long sizeLimit;
     private String method;
 
     private List<BaseNode> nodes;
@@ -25,7 +25,7 @@ public class MergedSummary implements Benchmarkable {
 
     public double lastObjective;
 
-    public MergedSummary(BaseGraph originalGraph, String method, int sizeLimit){
+    public MergedSummary(BaseGraph originalGraph, String method, long sizeLimit){
         this.original = originalGraph;
         this.summary = new BaseGraph();
         this.sizeLimit = sizeLimit;
