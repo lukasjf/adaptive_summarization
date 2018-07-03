@@ -89,6 +89,18 @@ public class SubgraphIsomorphism {
     }
 
     private List<Map<String, String>> expandCrossProduct(List<Map<BaseNode, BaseNode>> nodeMatchings) {
+        long resultCardinality = 0L;
+        for (Map<BaseNode, BaseNode> result: nodeMatchings){
+            long matchCardinality = 1L;
+            for (BaseNode n: result.values()){
+                matchCardinality *= n.getContainedNodes().size();
+            }
+            resultCardinality += matchCardinality;
+        }
+        if (resultCardinality > 1000000){
+            return  new ArrayList<>();
+        }
+
         List<Map<String, String>> results = new ArrayList<>();
         for (Map<BaseNode, BaseNode> matching: nodeMatchings){
             CrossProductUnfolder graphResults = new CrossProductUnfolder(matching);
