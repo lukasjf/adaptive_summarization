@@ -14,23 +14,34 @@ public class TCMSummary implements Benchmarkable {
     private static int LARGE_PRIME = 15485863;
 
     List<BaseGraph> graphs;
+    public static int k;
 
     public static TCMSummary createFromGraph(BaseGraph graph, int numberHashes, long maxSize){
+        TCMSummary largest = null;
         Random random = new Random(1337);
-        int k = chooseK(graph, numberHashes, maxSize);
+        k = chooseK(graph, numberHashes, maxSize);
         if (k < 0){
             return null;
         }
-        List<HashFunction> hashes = new ArrayList<>();
-        for (int i = 0; i < numberHashes; i++){
-            int a = random.nextInt() % LARGE_PRIME;
-            while (a == 0){
-                a = random.nextInt() % LARGE_PRIME;
+        for (int numberNodes = chooseK(graph, numberHashes, maxSize); numberNodes < Integer.MAX_VALUE; numberNodes++){
+            List<HashFunction> hashes = new ArrayList<>();
+            for (int i = 0; i < numberHashes; i++){
+                int a = random.nextInt() % LARGE_PRIME;
+                while (a == 0){
+                    a = random.nextInt() % LARGE_PRIME;
+                }
+                int b = random.nextInt() % LARGE_PRIME;
+                hashes.add(new HashFunction(a, b, LARGE_PRIME, k));
             }
-            int b = random.nextInt() % LARGE_PRIME;
-            hashes.add(new HashFunction(a, b, LARGE_PRIME, k));
+            TCMSummary candidate = new TCMSummary(graph, hashes);
+            System.out.println(candidate.size() + " " + numberNodes);
+            if (candidate.size() < maxSize){
+                largest = candidate;
+            } else {
+                break;
+            }
         }
-        return new TCMSummary(graph, hashes);
+        return largest;
     }
 
     private static int chooseK(BaseGraph graph, int numberHashes, long maxSize){
