@@ -92,8 +92,10 @@ public class SubgraphIsomorphism {
         long resultCardinality = 0L;
         for (Map<BaseNode, BaseNode> result: nodeMatchings){
             long matchCardinality = 1L;
-            for (BaseNode n: result.values()){
-                matchCardinality *= n.getContainedNodes().size();
+            for (BaseNode n: result.keySet()){
+                if (n.isVariable()){
+                    matchCardinality *= result.get(n).getContainedNodes().size();
+                }
             }
             resultCardinality += matchCardinality;
         }
