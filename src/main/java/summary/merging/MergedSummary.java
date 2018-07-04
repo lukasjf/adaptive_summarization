@@ -130,6 +130,7 @@ public class MergedSummary implements Benchmarkable {
     }
 
     private void mergeNodes(int destinationID, int nodeToMergeID) {
+        System.out.println("merge: " + destinationID  + "   " + nodeToMergeID);
         for (BaseEdge e: summary.outEdgesFor(nodeToMergeID)){
             BaseEdge equivalent = findEquivalentEdge(e, destinationID, true);
             if (equivalent == null){
@@ -141,6 +142,7 @@ public class MergedSummary implements Benchmarkable {
             actual.remove(e);
         }
         for (BaseEdge e: summary.inEdgesFor(nodeToMergeID)){
+            if (e.getSource() == e.getTarget()) continue;
             BaseEdge equivalent = findEquivalentEdge(e, destinationID, false);
             if (equivalent == null){
                 addNewMergeEdge(e, destinationID, false);
@@ -238,6 +240,7 @@ public class MergedSummary implements Benchmarkable {
         }
 
         for (BaseEdge e: summary.inEdgesFor(n2.getId())){
+            if (e.getSource() == e.getTarget()) continue;
             BaseEdge equivalent = findEquivalentEdge(e, n1.getId(), false);
             if (equivalent == null){
                 addNewMergeEdge(e, n1.getId(), false);
@@ -263,6 +266,7 @@ public class MergedSummary implements Benchmarkable {
             }
         }
         for (BaseEdge e: summary.inEdgesFor(n2.getId())){
+            if (e.getSource() == e.getTarget()) continue;
             BaseEdge equivalent = findEquivalentEdge(e, n1.getId(), false);
             if (actual.get(e) < actual.get(equivalent)){
                 actual.put(equivalent, actual.get(equivalent) - actual.get(e));
@@ -276,24 +280,38 @@ public class MergedSummary implements Benchmarkable {
     }
 
     private BaseEdge findEquivalentEdge(BaseEdge e, int otherNodeID, boolean isOutEdge) {
-        List<BaseEdge> candidates = isOutEdge ?
-                summary.outEdgesFor(otherNodeID) : summary.inEdgesFor(otherNodeID);
-        for (BaseEdge candidate: candidates){
-            BaseNode testNode = isOutEdge ? e.getTarget() : e.getSource();
-            BaseNode otherTestNode = isOutEdge ? candidate.getTarget() : candidate.getSource();
-            if (testNode.getId() == otherTestNode.getId() && e.getLabel().equals(candidate.getLabel())){
-                return candidate;
+        if (e.getSource() == e.getTarget()){
+            for (BaseEdge candidate: summary.outEdgesFor(otherNodeID)){
+                if (candidate.getSource().getId() == otherNodeID && candidate.getTarget().getId() == otherNodeID
+                        && e.getLabel().equals(candidate.getLabel())){
+                    return candidate;
+                }
             }
+            return null;
+        } else {
+            List<BaseEdge> candidates = isOutEdge ?
+                    summary.outEdgesFor(otherNodeID) : summary.inEdgesFor(otherNodeID);
+            for (BaseEdge candidate : candidates) {
+                BaseNode testNode = isOutEdge ? e.getTarget() : e.getSource();
+                BaseNode otherTestNode = isOutEdge ? candidate.getTarget() : candidate.getSource();
+                if (testNode.getId() == otherTestNode.getId() && e.getLabel().equals(candidate.getLabel())) {
+                    return candidate;
+                }
+            }
+            return null;
         }
-        return null;
     }
 
     private void addNewMergeEdge(BaseEdge e, int mergeNodeID,  boolean isOutEdge) {
         BaseEdge newEdge;
-        if (isOutEdge){
-            newEdge = summary.addEdge(mergeNodeID, e.getTarget().getId(), e.getLabel());
+        if (e.getSource() == e.getTarget()){
+            newEdge = summary.addEdge(mergeNodeID, mergeNodeID, e.getLabel());
         } else {
-            newEdge = summary.addEdge(e.getSource().getId(), mergeNodeID, e.getLabel());
+            if (isOutEdge) {
+                newEdge = summary.addEdge(mergeNodeID, e.getTarget().getId(), e.getLabel());
+            } else {
+                newEdge = summary.addEdge(e.getSource().getId(), mergeNodeID, e.getLabel());
+            }
         }
         if (weights.containsKey(e)){
             weights.put(newEdge, weights.get(e));
@@ -305,6 +323,15 @@ public class MergedSummary implements Benchmarkable {
         double newWeight = weights.getOrDefault(equivalent, 0.0) + weights.getOrDefault(e, 0.0);
         if (newWeight > 0){
             weights.put(equivalent, newWeight);
+        }
+        if(!actual.containsKey(equivalent) || !actual.containsKey(e)){
+            System.out.println(equivalent + "||||" + e);
+        }
+        if(!actual.containsKey(equivalent)){
+            System.out.println(equivalent);
+        }
+        if(!actual.containsKey(e)){
+            System.out.println(e);
         }
         actual.put(equivalent, actual.get(equivalent) + actual.get(e));
     }
