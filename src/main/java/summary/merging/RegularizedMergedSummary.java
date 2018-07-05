@@ -72,8 +72,8 @@ public class RegularizedMergedSummary implements Benchmarkable {
                     BaseEdge resultEdge = findResultEdge(queryEdge, result);
                     double oldWeight = weights.getOrDefault(resultEdge, 0.0);
                     weights.put(resultEdge, oldWeight + 1);
-                    addWeightToNeighbors(resultEdge, queryEdge.getSource());
-                    addWeightToNeighbors(resultEdge, queryEdge.getTarget());
+                    addWeightToNeighbors(resultEdge, resultEdge.getSource());
+                    addWeightToNeighbors(resultEdge, resultEdge.getTarget());
                 }
             }
         }
