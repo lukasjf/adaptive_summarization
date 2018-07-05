@@ -5,6 +5,7 @@ import evaluation.Benchmarkable;
 import graph.Dataset;
 import summary.caching.SummaryCache;
 import summary.merging.MergedSummary;
+import summary.merging.RegularizedMergedSummary;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -44,7 +45,7 @@ public class MergedRunner {
 
             Benchmarkable[] summaries = new Benchmarkable[FOLDSIZE];
             for (int i = 0; i < FOLDSIZE; i++){
-                summaries[i] = new MergedSummary(Dataset.I.getGraph(), "full", sizeLimit);
+                summaries[i] = new RegularizedMergedSummary(Dataset.I.getGraph(), "full", sizeLimit);
             }
             List<Benchmark.Result> results = benchmark.run(summaries, Dataset.I.getGraph());
             for (Benchmark.Result r: results){
