@@ -16,8 +16,7 @@ buildNumber.properties
 
 
 # generated pdfs from plotting
-plots/*.pdf
-plots/*.csv
+plots/**/*.pdf
 
 *.csv
 src/main/java/main/Playground.java

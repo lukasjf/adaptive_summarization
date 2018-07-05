@@ -1,0 +1,6 @@
+graph,method,queryset,storage,size,trainingF1,testF1,creationTime,graphTime,summaryTime
+/home/lukas/thesisdata/citation/graph,rdfsum,/home/lukas/thesisdata/citation/query1/,168750,1585336,0.577304,0.577304,69.241,9.171000,7.947000
+/home/lukas/thesisdata/citation/graph,rdfsum,/home/lukas/thesisdata/citation/query033/,168750,1585336,0.478337,0.478337,69.241,8.931000,3.277000
+/home/lukas/thesisdata/citation/graph,rdfsum,/home/lukas/thesisdata/citation/query01/,168750,1585336,0.848800,0.848800,69.241,9.894000,3.521000
+/home/lukas/thesisdata/citation/graph,rdfsum,/home/lukas/thesisdata/citation/query0033/,168750,1585336,0.478337,0.478337,69.241,8.357000,3.322000
+/home/lukas/thesisdata/citation/graph,rdfsum,/home/lukas/thesisdata/citation/query001/,168750,1585336,0.848800,0.848800,69.241,9.587000,3.653000
