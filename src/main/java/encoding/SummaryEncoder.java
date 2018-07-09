@@ -13,15 +13,8 @@ public class SummaryEncoder {
     public long encode(BaseGraph summary){
         long size = 0L;
         for (BaseNode n: summary.getNodes()){
-            size += 4; // nodeID
-            size += 4; // node size
             size += n.getContainedNodes().size() * 4;
         }
-
-        for (BaseEdge e: summary.getEdges()){
-            size += 8 ; // source & targetID
-            size += 4; //e.getLabel().length();
-        }
-        return size;
+        return size + summary.getNodes().size() * 40 + summary.getEdges().size() * 16;
     }
 }
