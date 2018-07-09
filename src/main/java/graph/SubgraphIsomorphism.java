@@ -60,6 +60,9 @@ public class SubgraphIsomorphism {
             this.matchings.clear();
             System.err.println("timed out");
         }
+        if (matchings.size() > 1000000){
+            return new ArrayList<>();
+        }
         List<Map<BaseNode, BaseNode>> nodeMatchings =  createNodeMatchings(matchings);
         List<Map<String, String>> expanded = expandCrossProduct(nodeMatchings);
         List<Map<String, String>> withoutLoops = new ArrayList<>();
