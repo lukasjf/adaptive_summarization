@@ -21,7 +21,7 @@ public class RDFtoGraph {
 
     public static BaseGraph buildSummary(String rdfSummaryPath, String mapDBPath, String mappingName,
                                          String dbserver, String dbPort, String dbname, String schema, String username, String password){
-        new Dataset("/home/lukas/studium/thesis/code/data/citation/graph");
+        new Dataset("/home/lukas/studium/thesis/code/data/movie/graph");
         BaseGraph rdfsummary = new BaseGraph();
 
         try (BufferedReader br = new BufferedReader(new FileReader(new File(rdfSummaryPath)))){
@@ -100,13 +100,13 @@ public class RDFtoGraph {
     }
 
     public static void main(String[] args){
-        String rdfSummaryPath = "/home/lukas/studium/thesis/code/rdfsummary/src/main/resources/data/fw(citation).nt";
-        String mapDBPath = "/home/lukas/studium/thesis/code/rdfsummary/abc/citation/fw/fw(citation).db";
-        String mappingName = "fw(citation)_s_data_node_by_g_data_node";
+        String rdfSummaryPath = "/home/lukas/studium/thesis/code/rdfsummary/src/main/resources/data/fw(movie).nt";
+        String mapDBPath = "/home/lukas/studium/thesis/code/rdfsummary/abc/citation/fw/fw(movie).db";
+        String mappingName = "fw(movie)_s_data_node_by_g_data_node";
         String databaseServer = "localhost";
         String databasePort = "5432";
         String dbname = "rdf";
-        String schema = "citation";
+        String schema = "movie";
         String username = "postgres";
         String password = "postgres";
 

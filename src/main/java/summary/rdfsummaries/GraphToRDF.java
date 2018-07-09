@@ -18,7 +18,7 @@ public class GraphToRDF {
 
     public static void parseGraphToRDF(String graphPath, String rdfPath) {
         try(PrintStream output = new PrintStream(rdfPath)){
-            BaseGraph graph = GraphImporter.parseGraph(graphPath);
+            BaseGraph graph = new Dataset(graphPath).getGraph();
 
             Map<Integer, String> entityMap = new HashMap<>();
 
@@ -37,8 +37,8 @@ public class GraphToRDF {
     }
 
     public static void main(String[] args) throws FileNotFoundException {
-        String graphPath = "/home/lukas/studium/thesis/code/data/citation/graph_3";
-        String rdfPath = "/home/lukas/studium/thesis/code/data/citation/graph_3.rdf";
+        String graphPath = "/home/lukas/studium/thesis/code/data/movie/graph";
+        String rdfPath = "/home/lukas/studium/thesis/code/data/movie/graph.rdf";
         GraphToRDF.parseGraphToRDF(graphPath, rdfPath);
     }
 }
