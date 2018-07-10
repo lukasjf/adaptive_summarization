@@ -14,7 +14,7 @@ buildNumber.properties
 .idea/
 
 
-
+*.csv
 # generated pdfs from plotting
 plots/**/*.pdf
 

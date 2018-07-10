@@ -29,6 +29,9 @@ public class Runner {
             case "merge":
                 MergedRunner.main(Arrays.copyOfRange(args, 2, args.length));
                 break;
+            case "topdown":
+                TopDownRunner.main(Arrays.copyOfRange(args, 2, args.length));
+                break;
         }
     }
 }

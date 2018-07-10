@@ -18,9 +18,18 @@ public class HeuristicSummary implements Benchmarkable {
 
     BaseGraph graph;
     BaseGraph summary;
-    int sizeLimit;
+    long sizeLimit;
+    String splitmethod;
 
-    public HeuristicSummary(BaseGraph graph, int sizeLimit){
+    public HeuristicSummary(BaseGraph graph, long sizeLimit, String method){
+
+        SplitChoiceStrategy.algorithms.put("loss", new LossChoice());
+        SplitStrategy.algorithms.put("combined", new CombinedSplitStrategy());
+        SplitStrategy.algorithms.put("exist", new ExistentialSplitStrategy());
+        SplitStrategy.algorithms.put("variance", new VarianceSplitStrategy());
+
+        this.splitmethod = method;
+
         this.graph = graph;
         this.sizeLimit = sizeLimit;
         summary = new BaseGraph();
@@ -134,7 +143,7 @@ public class HeuristicSummary implements Benchmarkable {
         while(encoder.encode(summary) < sizeLimit){
             System.out.println("new Round " + summary.getNodes().size() + " " + encoder.encode(summary));
             queries.keySet().forEach(this::query);
-            split("loss", "variance");
+            split("loss", splitmethod);
             summary.getEdges().forEach(e -> e.bookkeeping.put("loss", 0.0));
             if (summary.getNodes().size() == oldSize){
                 break;
