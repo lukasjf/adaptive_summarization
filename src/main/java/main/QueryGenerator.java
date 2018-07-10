@@ -14,10 +14,11 @@ import java.util.stream.Collectors;
 public class QueryGenerator {
 
     private static int MAX_QUERY_RESULTS = 100;
+    private static int tries = 10000;
 
     private BaseGraph graph;
     private List<BaseGraph> queries;
-    private Random random = new Random(0);
+    private Random random;
 
     private int queryCounter = 1;
 
@@ -34,7 +35,11 @@ public class QueryGenerator {
     private List<BaseNode> focusNodes;
     private List<BaseNode> innerNodes;
 
+    private Set<String> queryNodes = new HashSet<>();
+
     public QueryGenerator(String input, String output, int queryFromSize, int queryToSize, int queriesPerSize, double graphFraction, String seed){
+        random = new Random((long) (1 + queryFromSize * queryToSize * queriesPerSize / graphFraction));
+
         this.fromSize = queryFromSize;
         this.toSize = queryToSize;
         this.numberPerSize = queriesPerSize;
@@ -66,7 +71,7 @@ public class QueryGenerator {
 
         while (focusNodes.size() < fraction * graph.getNodes().size()){
             BaseNode expandNode = focusNodes.get(random.nextInt(focusNodes.size()));
-            while (innerNodes.contains(expandNode)){
+            while (innerNodes.contains(expandNode) || graph.outEdgesFor(expandNode.getId()).size() > fraction * 0.1 * graph.getNodes().size()){
                 expandNode = focusNodes.get(random.nextInt(focusNodes.size()));
             }
             if (addNodeNeighbours(expandNode, focusNodes)){
@@ -101,30 +106,35 @@ public class QueryGenerator {
     private void generate(){
         for (int s = fromSize; s <= toSize; s++) {
             for (int i = 0; i < numberPerSize; i++) {
-                BaseGraph query = createQuery(s);
+                for (int run = 0; run < tries ; run++){
+                    BaseGraph query = createQuery(s);
 
-                if (queries.stream().anyMatch(q -> areDuplicateQueries(query, q))){
-                    System.out.println("Query Already Made");
-                    continue;
+                    if (queries.stream().anyMatch(q -> areDuplicateQueries(query, q))){
+                        System.out.println("Query Already Made");
+                        continue;
+                    }
+
+                    int resultSize = graph.query(query,10).size();
+                    if (resultSize == 0 || resultSize > MAX_QUERY_RESULTS){
+                        continue;
+                    }
+                    System.out.println(resultSize);
+
+                    queries.add(query);
+                    break;
                 }
-
-                int resultSize = graph.query(query,10).size();
-                if (resultSize == 0 || resultSize > MAX_QUERY_RESULTS){
-                    continue;
-                }
-                System.out.println(resultSize);
-
-                queries.add(query);
             }
             serializeQueries();
             System.out.println("Size " + s + " queries written");
             queries.clear();
         }
+        System.out.println(String.format("In total %d nodes out of %f were used", queryNodes.size(), graph.getNodes().size() * fraction));
+        System.out.println(innerNodes.size() + "    " + focusNodes.size());
     }
 
     private BaseGraph createQuery(int size) {
         BaseGraph query = new BaseGraph();
-        BaseNode startNode = innerNodes.get(random.nextInt(innerNodes.size()));
+        BaseNode startNode = focusNodes.get(random.nextInt(focusNodes.size()));
         List<BaseEdge> outCandidates = new ArrayList<>();
         List<BaseEdge> inCandidates = new ArrayList<>();
         outCandidates.addAll(graph.outEdgesFor(startNode.getId()));
@@ -144,8 +154,16 @@ public class QueryGenerator {
                 BaseEdge expandEdge = outCandidates.get(random.nextInt(outCandidates.size()));
                 query.addNode(expandEdge.getTarget().getId(), Dataset.I.labelFrom(expandEdge.getTarget().getId()));
                 query.addEdge(expandEdge.getSource().getId(), expandEdge.getTarget().getId(), expandEdge.getLabel());
-                outCandidates.addAll(graph.outEdgesFor(expandEdge.getTarget().getId()));
-                inCandidates.addAll(graph.inEdgesFor(expandEdge.getTarget().getId()));
+                for (BaseEdge e: graph.outEdgesFor(expandEdge.getTarget().getId())){
+                    if (focusNodes.contains(e.getTarget()) && !outCandidates.contains(e)){
+                        outCandidates.add(e);
+                    }
+                }
+                for (BaseEdge e: graph.inEdgesFor(expandEdge.getTarget().getId())){
+                    if (focusNodes.contains(e.getSource()) && !inCandidates.contains(e)){
+                        inCandidates.add(e);
+                    }
+                }
                 inCandidates.remove(expandEdge);
             } else{
                 if (inCandidates.isEmpty()){
@@ -154,8 +172,16 @@ public class QueryGenerator {
                 BaseEdge expandEdge = inCandidates.get(random.nextInt(inCandidates.size()));
                 query.addNode(expandEdge.getSource().getId(), Dataset.I.labelFrom(expandEdge.getSource().getId()));
                 query.addEdge(expandEdge.getSource().getId(), expandEdge.getTarget().getId(), expandEdge.getLabel());
-                outCandidates.addAll(graph.outEdgesFor(expandEdge.getSource().getId()));
-                inCandidates.addAll(graph.inEdgesFor(expandEdge.getSource().getId()));
+                for (BaseEdge e: graph.outEdgesFor(expandEdge.getSource().getId())){
+                    if (focusNodes.contains(e.getTarget()) && !outCandidates.contains(e)){
+                        outCandidates.add(e);
+                    }
+                }
+                for (BaseEdge e: graph.inEdgesFor(  expandEdge.getSource().getId())){
+                    if (focusNodes.contains(e.getSource()) && !inCandidates.contains(e)){
+                        inCandidates.add(e);
+                    }
+                }
                 outCandidates.remove(expandEdge);
             }
         }
@@ -169,21 +195,20 @@ public class QueryGenerator {
         Set<BaseNode> testedNodes = new HashSet<>();
 
 
-        List<BaseNode> queryInnerNodes = query.getNodes().stream()
-                .filter(n -> innerNodes.contains(n)).collect(Collectors.toList());
-        BaseNode variableNode = queryInnerNodes.get(random.nextInt(queryInnerNodes.size()));
+        List<BaseNode> queryNodes = new ArrayList<>(query.getNodes());
+        BaseNode variableNode = queryNodes.get(random.nextInt(queryNodes.size()));
         variableNode.setId(variableCounter--);
         testedNodes.add(variableNode);
 
 
         for (BaseEdge e: query.getEdges()){
-            if (!testedNodes.contains(e.getTarget()) && innerNodes.contains(e.getSource())){
+            if (!testedNodes.contains(e.getTarget())){
                 if (random.nextBoolean()){
                     e.getTarget().setId(variableCounter--);
                 }
                 testedNodes.add(e.getTarget());
             }
-            if (!testedNodes.contains(e.getSource()) && innerNodes.contains(e.getTarget())){
+            if (!testedNodes.contains(e.getSource())){
                 if (random.nextBoolean()){
                     e.getSource().setId(variableCounter--);
                 }
@@ -207,7 +232,12 @@ public class QueryGenerator {
 
 
     private void serializeQuery(BaseGraph query){
-        int resultSize = graph.query(query).size();
+        List<Map<String,String>> results = graph.query(query);
+        for (Map<String, String> res: results){
+            queryNodes.addAll(res.values());
+        }
+
+        int resultSize = results.size();
         String querydir = outputDir;
         try(PrintStream queryFile = new PrintStream(new File(querydir + queryCounter++))){
             queryFile.println("#" + resultSize);
