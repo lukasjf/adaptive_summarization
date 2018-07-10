@@ -28,7 +28,7 @@ public class RDFSummaryRunner {
         String graphFile = args[1];
         String[] benchmarks = Arrays.copyOfRange(args, 2, args.length);
 
-        File resultFile = new File("rdfsum.csv");
+        File resultFile = new File(Runner.outputFile);
         if (!resultFile.exists()) {
             resultFile.createNewFile();
             new PrintStream(resultFile).println(HEADER);

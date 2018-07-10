@@ -31,7 +31,7 @@ public class MergedRunner {
 
         new Dataset(graphFile);
 
-        File resultFile = new File("merged.csv");
+        File resultFile = new File(Runner.outputFile);
         if (!resultFile.exists()) {
             resultFile.createNewFile();
             new PrintStream(resultFile).println(HEADER);
@@ -49,7 +49,7 @@ public class MergedRunner {
             }
             List<Benchmark.Result> results = benchmark.run(summaries, Dataset.I.getGraph());
             for (Benchmark.Result r: results){
-                output.write(String.format(TEMPLATE, graphFile, "cache", dir, sizeLimit, r.size, r.trainingF1,
+                output.write(String.format(TEMPLATE, graphFile, "merge", dir, sizeLimit, r.size, r.trainingF1,
                         r.testF1, r.trainingtime, r.graphtime, r.summarytime));
             }
             output.flush();

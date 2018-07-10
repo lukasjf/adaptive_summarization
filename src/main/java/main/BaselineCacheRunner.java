@@ -29,7 +29,7 @@ public class BaselineCacheRunner {
 
         new Dataset(graphFile);
 
-        File resultFile = new File("cache.csv");
+        File resultFile = new File(Runner.outputFile);
         if (!resultFile.exists()) {
             resultFile.createNewFile();
             new PrintStream(resultFile).println(HEADER);

@@ -27,7 +27,7 @@ public class TCMRunner {
         TCMSummary summary = TCMSummary.createFromGraph(Dataset.I.getGraph(), numberHashes, sizeLimit);
         double trainingTime = (System.currentTimeMillis() - start) / 1000.0;
 
-        File resultFile = new File("tcm.csv");
+        File resultFile = new File(Runner.outputFile);
         if (! resultFile.exists()){
             resultFile.createNewFile();
             new PrintStream(resultFile).println(HEADER);
