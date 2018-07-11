@@ -3,6 +3,7 @@ package summary.merging;
 import encoding.SummaryEncoder;
 import evaluation.Benchmarkable;
 import graph.*;
+import org.ejml.simple.SimpleMatrix;
 
 import java.util.*;
 
@@ -20,11 +21,16 @@ public class HeatMergedSummary implements Benchmarkable {
     private Random random = new Random(0);
 
     private Map<BaseEdge, Double> weights = new HashMap<>();
+    private Map<BaseNode, Double> heats = new HashMap<>();
+    private Map<BaseNode, Double> nodeweights = new HashMap<>();
     private Map<BaseEdge, Integer> actual = new HashMap<>();
 
     public double lastObjective;
 
     SummaryEncoder se = new SummaryEncoder();
+
+    public int k = 2;
+    public double c = 0.85;
 
     public HeatMergedSummary(BaseGraph originalGraph, String method, long sizeLimit){
         this.original = originalGraph;
@@ -67,48 +73,74 @@ public class HeatMergedSummary implements Benchmarkable {
         for (BaseEdge e : summary.getEdges()) {
             actual.put(e, 1);
         }
-        for (BaseGraph query : queries.keySet()) {
-            for (Map<String, String> result : queries.get(query)) {
-                for (BaseEdge queryEdge : query.getEdges()) {
-                    BaseEdge resultEdge = findResultEdge(queryEdge, result);
-                    addHeat(resultEdge, 0, 1.0);
-                    System.out.print("'");
-                }
-            }
-            System.out.println();
+
+        int counter = 0;
+        Map<Integer, Integer> forward = new HashMap<>();
+        Map<Integer, Integer> backward = new HashMap<>();
+
+        Set<BaseNode> kNeighborHood = findNeighborhood(queries);
+
+        SimpleMatrix uStart = new SimpleMatrix(1, kNeighborHood.size());
+        SimpleMatrix L = new SimpleMatrix(kNeighborHood.size(), kNeighborHood.size());
+
+        for (BaseNode n: kNeighborHood){
+            forward.put(n.getId(), counter);
+            backward.put(counter, n.getId());
+            uStart.set(0, counter, heats.getOrDefault(n, 0.0));
+            L.set(counter, counter, c);
         }
 
+        for (BaseNode n: kNeighborHood){
+            int id = forward.get(n.getId());
+            int size = Dataset.I.getGraph().outEdgesFor(n.getId()).size()
+                    + Dataset.I.getGraph().inEdgesFor(n.getId()).size();
+            for (BaseEdge e: Dataset.I.getGraph().outEdgesFor(n.getId())){
+                int otherid = forward.get(e.getTarget().getId());
+                L.set(id, otherid, (1-c) / size);
+            }
+            for (BaseEdge e: Dataset.I.getGraph().inEdgesFor(n.getId())){
+                int otherid = forward.get(e.getTarget().getId());
+                L.set(id, otherid, (1-c) / size);
+            }
+        }
+
+        for (int i = 0; i < k; i++){
+            SimpleMatrix delta = uStart.mult(L.scale(-1));
+            uStart = uStart.plus(delta);
+        }
+
+        for (int i = 0; i < uStart.numCols(); i++){
+            
+        }
     }
 
-    private void addHeat(BaseEdge resultEdge, int depth, double heat) {
-        double oldweight = weights.getOrDefault(resultEdge, 0.0);
-        weights.put(resultEdge, oldweight + 2.0/3.0 * heat);
-        if (depth < 2){
-            int sourceNeighborCount = summary.outEdgesFor(resultEdge.getSource().getId()).size() +
-                    summary.inEdgesFor(resultEdge.getTarget().getId()).size();
-            for (BaseEdge e: summary.outEdgesFor(resultEdge.getSource().getId())){
-                if (e != resultEdge){
-                    addHeat(e, depth+1, 1.0/3.0 * heat / sourceNeighborCount);
-                }
-            }
-            for (BaseEdge e: summary.inEdgesFor(resultEdge.getSource().getId())){
-                if (e != resultEdge){
-                    addHeat(e, depth+1, 1.0/3.0 * heat / sourceNeighborCount);
-                }
-            }
-            int targetNeighborCount = summary.outEdgesFor(resultEdge.getSource().getId()).size() +
-                    summary.inEdgesFor(resultEdge.getTarget().getId()).size();
-            for (BaseEdge e: summary.outEdgesFor(resultEdge.getTarget().getId())){
-                if (e != resultEdge){
-                    addHeat(e, depth+1, 1.0/3.0 * heat / targetNeighborCount);
-                }
-            }
-            for (BaseEdge e: summary.inEdgesFor(resultEdge.getTarget().getId())){
-                if (e != resultEdge){
-                    addHeat(e, depth+1, 1.0/3.0 * heat / targetNeighborCount);
+    private Set<BaseNode> findNeighborhood(Map<BaseGraph, List<Map<String, String>>> queries) {
+        Set<BaseNode> nb = new HashSet<>();
+
+        for (List<Map<String, String>> results: queries.values()){
+            for (Map<String, String> result: results){
+                for (String res: result.values()){
+                    BaseNode node = Dataset.I.getGraph().getLabelMapping().get(res);
+                    nb.add(node);
+                    heats.put(node, heats.getOrDefault(node, 0.0));
                 }
             }
         }
+        Set<BaseNode> expandNodes = new HashSet<>(nb);
+        for (int i = 0; i < k; i++){
+            Set<BaseNode> newNodes = new HashSet<>();
+            for (BaseNode n: expandNodes){
+                for (BaseEdge e: Dataset.I.getGraph().outEdgesFor(n.getId())){
+                    newNodes.add(e.getTarget());
+                }
+                for (BaseEdge e: Dataset.I.getGraph().inEdgesFor(n.getId())){
+                    newNodes.add(e.getSource());
+                }
+            }
+            expandNodes = new HashSet<>(newNodes);
+            nb.addAll(newNodes);
+        }
+        return nb;
     }
 
     private void condenseUnusedNodes(Map<BaseGraph, List<Map<String, String>>> queries) {

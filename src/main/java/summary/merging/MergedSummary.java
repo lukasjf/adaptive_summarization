@@ -5,7 +5,6 @@ import evaluation.Benchmarkable;
 import graph.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Created by lukas on 25.06.18.
@@ -16,21 +15,23 @@ public class MergedSummary implements Benchmarkable {
     public BaseGraph summary;
     private long sizeLimit;
     private String method;
+    WeightCreation initializer;
 
     private List<BaseNode> nodes;
     private Random random = new Random(0);
 
-    private Map<BaseEdge, Double> weights = new HashMap<>();
-    private Map<BaseEdge, Integer> actual = new HashMap<>();
+    Map<BaseEdge, Double> weights = new HashMap<>();
+    Map<BaseEdge, Integer> actual = new HashMap<>();
 
     public double lastObjective;
     SummaryEncoder se = new SummaryEncoder();
 
-    public MergedSummary(BaseGraph originalGraph, String method, long sizeLimit){
+    public MergedSummary(BaseGraph originalGraph, String method, long sizeLimit, WeightCreation weights){
         this.original = originalGraph;
         this.summary = new BaseGraph();
         this.sizeLimit = sizeLimit;
         this.method = method;
+        this.initializer = weights;
     }
 
     @Override
@@ -54,7 +55,7 @@ public class MergedSummary implements Benchmarkable {
         }
         initializeEdgeMetaData(queries);
 
-        condenseUnusedNodes(queries);
+        condenseUnusedNodes();
 
         SummaryEncoder se = new SummaryEncoder();
         System.out.println(se.encode(summary));
@@ -65,53 +66,36 @@ public class MergedSummary implements Benchmarkable {
     }
 
     private void initializeEdgeMetaData(Map<BaseGraph, List<Map<String, String>>> queries) {
-        for (BaseEdge e : summary.getEdges()) {
-            actual.put(e, 1);
-        }
-        for (BaseGraph query : queries.keySet()) {
-            for (Map<String, String> result : queries.get(query)) {
-                for (BaseEdge queryEdge : query.getEdges()) {
-                    BaseEdge resultEdge = findResultEdge(queryEdge, result);
-                    double oldWeight = weights.getOrDefault(resultEdge, 0.0);
-                    weights.put(resultEdge, oldWeight + 1);
-                }
-            }
-        }
+        initializer.initializeWeights(this, queries);
 
     }
 
-    private void condenseUnusedNodes(Map<BaseGraph, List<Map<String, String>>> queries) {
-        Set<Integer> usedNodes = new HashSet<>();
-        for (List<Map<String,String>> queryResults: queries.values()){
-            for (Map<String, String> result: queryResults){
-                for (String nodeLabel: result.values()){
-                    usedNodes.add(Dataset.I.IDFrom(nodeLabel));
-                }
-            }
-        }
-
+    private void condenseUnusedNodes() {
         BaseNode condenseNode = summary.addNode(Integer.MIN_VALUE, "");
         for (BaseNode n: new ArrayList<>(summary.getNodes())){
-            HashSet<Integer> neighborhood = new HashSet<>(n.getContainedNodes());
             if (se.encode(summary) < sizeLimit){
                 break;
             }
-            neighborhood.retainAll(usedNodes);
-            if (n.getId() != condenseNode.getId() && neighborhood.isEmpty()){
+            boolean prune = true;
+            for (BaseEdge e: summary.outEdgesFor(n.getId())){
+                if (weights.getOrDefault(e, 0.0) > 0.0){
+                    prune = false;
+                    break;
+                }
+            }
+            if (!prune){
+                continue;
+            }
+            for (BaseEdge e: summary.inEdgesFor(n.getId())){
+                if (weights.getOrDefault(e, 0.0) > 0.0){
+                    prune = false;
+                    break;
+                }
+            }
+            if (prune){
                 mergeNodes(condenseNode.getId(), n.getId());
             }
         }
-    }
-
-    private BaseEdge findResultEdge(BaseEdge queryEdge, Map<String, String> result) {
-        String sourceLabel = result.get(Dataset.I.labelFrom(queryEdge.getSource().getId()));
-        String targetLabel = result.get(Dataset.I.labelFrom(queryEdge.getTarget().getId()));
-        for (BaseEdge e: summary.outEdgesFor(Dataset.I.IDFrom(sourceLabel))){
-            if (e.getTarget().getId() == Dataset.I.IDFrom(targetLabel) && e.getLabel().equals(queryEdge.getLabel())){
-                return e;
-            }
-        }
-        return null;
     }
 
     private void merge() {

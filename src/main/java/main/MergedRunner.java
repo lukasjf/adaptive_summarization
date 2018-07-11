@@ -3,12 +3,10 @@ package main;
 import evaluation.Benchmark;
 import evaluation.Benchmarkable;
 import graph.Dataset;
-import summary.caching.SummaryCache;
-import summary.merging.HeatMergedSummary;
+import summary.merging.KHopNeighborWeights;
+import summary.merging.KNeighborWeightsNormalized;
 import summary.merging.MergedSummary;
-import summary.merging.NeighborMergedSummary;
-import summary.merging.RegularizedMergedSummary;
-import summary.topdown.HeuristicSummary;
+import summary.merging.PlainWeights;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -51,16 +49,13 @@ public class MergedRunner {
                 Benchmarkable summary;
                 switch (mergeMethod){
                     case "reg":
-                        summary = new RegularizedMergedSummary(Dataset.I.getGraph(), "full", sizeLimit);
+                        summary = new MergedSummary(Dataset.I.getGraph(), "full", sizeLimit, new KHopNeighborWeights(1, 0.15));
                         break;
                     case "neighbor":
-                        summary = new NeighborMergedSummary(Dataset.I.getGraph(), "full", sizeLimit);
-                        break;
-                    case "heat":
-                        summary = new HeatMergedSummary(Dataset.I.getGraph(), "full", sizeLimit);
+                        summary = new MergedSummary(Dataset.I.getGraph(), "full", sizeLimit, new KNeighborWeightsNormalized(1, 0.15));
                         break;
                     default:
-                        summary = new MergedSummary(Dataset.I.getGraph(), "full", sizeLimit);
+                        summary = new MergedSummary(Dataset.I.getGraph(), "full", sizeLimit, new PlainWeights());
                         break;
                 }
                 summaries[i] = summary;
