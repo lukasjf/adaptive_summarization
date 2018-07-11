@@ -5,12 +5,11 @@ import evaluation.Benchmarkable;
 import graph.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
- * Created by lukas on 25.06.18.
+ * Created by lukas on 05.07.18.
  */
-public class MergedSummary implements Benchmarkable {
+public class NeighborMergedSummary implements Benchmarkable {
 
     public BaseGraph original;
     public BaseGraph summary;
@@ -24,9 +23,10 @@ public class MergedSummary implements Benchmarkable {
     private Map<BaseEdge, Integer> actual = new HashMap<>();
 
     public double lastObjective;
+
     SummaryEncoder se = new SummaryEncoder();
 
-    public MergedSummary(BaseGraph originalGraph, String method, long sizeLimit){
+    public NeighborMergedSummary(BaseGraph originalGraph, String method, long sizeLimit){
         this.original = originalGraph;
         this.summary = new BaseGraph();
         this.sizeLimit = sizeLimit;
@@ -74,10 +74,26 @@ public class MergedSummary implements Benchmarkable {
                     BaseEdge resultEdge = findResultEdge(queryEdge, result);
                     double oldWeight = weights.getOrDefault(resultEdge, 0.0);
                     weights.put(resultEdge, oldWeight + 1);
+                    addWeightToNeighbors(resultEdge, resultEdge.getSource());
+                    addWeightToNeighbors(resultEdge, resultEdge.getTarget());
                 }
             }
         }
 
+    }
+
+    private void addWeightToNeighbors(BaseEdge resultEdge, BaseNode node) {
+        int neighborhoodSize = summary.outEdgesFor(node.getId()).size() + summary.inEdgesFor( node.getId()).size();
+        for (BaseEdge e: summary.outEdgesFor(node.getId())){
+            if (e != resultEdge){
+                weights.put(e, 0.25 / neighborhoodSize);
+            }
+        }
+        for (BaseEdge e: summary.inEdgesFor(node.getId())){
+            if (e != resultEdge){
+                weights.put(e, 0.25 / neighborhoodSize);
+            }
+        }
     }
 
     private void condenseUnusedNodes(Map<BaseGraph, List<Map<String, String>>> queries) {
@@ -92,10 +108,10 @@ public class MergedSummary implements Benchmarkable {
 
         BaseNode condenseNode = summary.addNode(Integer.MIN_VALUE, "");
         for (BaseNode n: new ArrayList<>(summary.getNodes())){
-            HashSet<Integer> neighborhood = new HashSet<>(n.getContainedNodes());
             if (se.encode(summary) < sizeLimit){
                 break;
             }
+            HashSet<Integer> neighborhood = new HashSet<>(n.getContainedNodes());
             neighborhood.retainAll(usedNodes);
             if (n.getId() != condenseNode.getId() && neighborhood.isEmpty()){
                 mergeNodes(condenseNode.getId(), n.getId());

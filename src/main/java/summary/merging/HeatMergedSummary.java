@@ -5,12 +5,11 @@ import evaluation.Benchmarkable;
 import graph.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
- * Created by lukas on 25.06.18.
+ * Created by lukas on 05.07.18.
  */
-public class MergedSummary implements Benchmarkable {
+public class HeatMergedSummary implements Benchmarkable {
 
     public BaseGraph original;
     public BaseGraph summary;
@@ -24,9 +23,10 @@ public class MergedSummary implements Benchmarkable {
     private Map<BaseEdge, Integer> actual = new HashMap<>();
 
     public double lastObjective;
+
     SummaryEncoder se = new SummaryEncoder();
 
-    public MergedSummary(BaseGraph originalGraph, String method, long sizeLimit){
+    public HeatMergedSummary(BaseGraph originalGraph, String method, long sizeLimit){
         this.original = originalGraph;
         this.summary = new BaseGraph();
         this.sizeLimit = sizeLimit;
@@ -56,7 +56,6 @@ public class MergedSummary implements Benchmarkable {
 
         condenseUnusedNodes(queries);
 
-        SummaryEncoder se = new SummaryEncoder();
         System.out.println(se.encode(summary));
         while (summary.getNodes().size() > 1 && size() > sizeLimit){
             merge();
@@ -72,12 +71,44 @@ public class MergedSummary implements Benchmarkable {
             for (Map<String, String> result : queries.get(query)) {
                 for (BaseEdge queryEdge : query.getEdges()) {
                     BaseEdge resultEdge = findResultEdge(queryEdge, result);
-                    double oldWeight = weights.getOrDefault(resultEdge, 0.0);
-                    weights.put(resultEdge, oldWeight + 1);
+                    addHeat(resultEdge, 0, 1.0);
+                    System.out.print("'");
+                }
+            }
+            System.out.println();
+        }
+
+    }
+
+    private void addHeat(BaseEdge resultEdge, int depth, double heat) {
+        double oldweight = weights.getOrDefault(resultEdge, 0.0);
+        weights.put(resultEdge, oldweight + 2.0/3.0 * heat);
+        if (depth < 2){
+            int sourceNeighborCount = summary.outEdgesFor(resultEdge.getSource().getId()).size() +
+                    summary.inEdgesFor(resultEdge.getTarget().getId()).size();
+            for (BaseEdge e: summary.outEdgesFor(resultEdge.getSource().getId())){
+                if (e != resultEdge){
+                    addHeat(e, depth+1, 1.0/3.0 * heat / sourceNeighborCount);
+                }
+            }
+            for (BaseEdge e: summary.inEdgesFor(resultEdge.getSource().getId())){
+                if (e != resultEdge){
+                    addHeat(e, depth+1, 1.0/3.0 * heat / sourceNeighborCount);
+                }
+            }
+            int targetNeighborCount = summary.outEdgesFor(resultEdge.getSource().getId()).size() +
+                    summary.inEdgesFor(resultEdge.getTarget().getId()).size();
+            for (BaseEdge e: summary.outEdgesFor(resultEdge.getTarget().getId())){
+                if (e != resultEdge){
+                    addHeat(e, depth+1, 1.0/3.0 * heat / targetNeighborCount);
+                }
+            }
+            for (BaseEdge e: summary.inEdgesFor(resultEdge.getTarget().getId())){
+                if (e != resultEdge){
+                    addHeat(e, depth+1, 1.0/3.0 * heat / targetNeighborCount);
                 }
             }
         }
-
     }
 
     private void condenseUnusedNodes(Map<BaseGraph, List<Map<String, String>>> queries) {
@@ -92,10 +123,10 @@ public class MergedSummary implements Benchmarkable {
 
         BaseNode condenseNode = summary.addNode(Integer.MIN_VALUE, "");
         for (BaseNode n: new ArrayList<>(summary.getNodes())){
-            HashSet<Integer> neighborhood = new HashSet<>(n.getContainedNodes());
             if (se.encode(summary) < sizeLimit){
                 break;
             }
+            HashSet<Integer> neighborhood = new HashSet<>(n.getContainedNodes());
             neighborhood.retainAll(usedNodes);
             if (n.getId() != condenseNode.getId() && neighborhood.isEmpty()){
                 mergeNodes(condenseNode.getId(), n.getId());

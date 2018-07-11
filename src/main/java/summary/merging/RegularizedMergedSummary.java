@@ -23,6 +23,7 @@ public class RegularizedMergedSummary implements Benchmarkable {
     private Map<BaseEdge, Integer> actual = new HashMap<>();
 
     public double lastObjective;
+    SummaryEncoder se = new SummaryEncoder();
 
     public RegularizedMergedSummary(BaseGraph originalGraph, String method, long sizeLimit){
         this.original = originalGraph;
@@ -106,12 +107,9 @@ public class RegularizedMergedSummary implements Benchmarkable {
         BaseNode condenseNode = summary.addNode(Integer.MIN_VALUE, "");
         for (BaseNode n: new ArrayList<>(summary.getNodes())){
             HashSet<Integer> neighborhood = new HashSet<>(n.getContainedNodes());
-            /*for (BaseEdge e: summary.outEdgesFor(n.getId())){
-                neighborhood.add(e.getTarget().getId());
+            if (se.encode(summary) < sizeLimit){
+                break;
             }
-            for (BaseEdge e: summary.inEdgesFor(n.getId())){
-                neighborhood.add(e.getSource().getId());
-            }*/
             neighborhood.retainAll(usedNodes);
             if (n.getId() != condenseNode.getId() && neighborhood.isEmpty()){
                 mergeNodes(condenseNode.getId(), n.getId());
