@@ -21,7 +21,7 @@ public class TopDownRunner {
     private static String HEADER = "graph,method,queryset,split,storage,size,trainingF1,testF1,creationTime,graphTime,summaryTime";
     private static String TEMPLATE = "%s,%s,%s,%s,%d,%d,%f,%f,%f,%f,%f\n";
 
-    private static int FOLDSIZE = 5;
+    private static int FOLDSIZE = 1;
 
     public static void main(String[] args) throws IOException {
         long sizeLimit = Long.parseLong(args[1]);
