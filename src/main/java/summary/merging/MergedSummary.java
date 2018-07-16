@@ -15,10 +15,14 @@ public class MergedSummary implements Benchmarkable {
     public BaseGraph summary;
     private long sizeLimit;
     private String method;
+
+    int prunecounter = 0;
     WeightCreation initializer;
 
     private List<BaseNode> nodes;
     private Random random = new Random(0);
+
+    Set<BaseNode> blackList = new HashSet<>();
 
     Map<BaseEdge, Double> weights = new HashMap<>();
     Map<BaseEdge, Integer> actual = new HashMap<>();
@@ -53,26 +57,39 @@ public class MergedSummary implements Benchmarkable {
         for (BaseEdge e: original.getEdges()){
             summary.addEdge(e.getSource().getId(), e.getTarget().getId(), e.getLabel());
         }
+
+        blackListNodes();
+
         initializeEdgeMetaData(queries);
 
         condenseUnusedNodes();
 
         SummaryEncoder se = new SummaryEncoder();
-        System.out.println(se.encode(summary));
+        System.out.println("Sumary size after pruning " + prunecounter + " elements: " + se.encode(summary));
+
         while (summary.getNodes().size() > 1 && size() > sizeLimit){
             merge();
             System.out.println(se.encode(summary) + " " + lastObjective + " " + summary.getNodes().size() + " " + summary.getEdges().size());
         }
     }
 
-    private void initializeEdgeMetaData(Map<BaseGraph, List<Map<String, String>>> queries) {
-        initializer.initializeWeights(this, queries);
+    private void blackListNodes() {
+        
+    }
 
+    private void initializeEdgeMetaData(Map<BaseGraph, List<Map<String, String>>> queries) {
+        for (BaseEdge e : summary.getEdges()) {
+            actual.put(e, 1);
+        }
+        initializer.initializeWeights(this, queries);
     }
 
     private void condenseUnusedNodes() {
         BaseNode condenseNode = summary.addNode(Integer.MIN_VALUE, "");
         for (BaseNode n: new ArrayList<>(summary.getNodes())){
+            if (n.getId() == condenseNode.getId()){
+                continue;
+            }
             if (se.encode(summary) < sizeLimit){
                 break;
             }
@@ -93,6 +110,8 @@ public class MergedSummary implements Benchmarkable {
                 }
             }
             if (prune){
+                System.out.println("prune " + n.getId());
+                prunecounter++;
                 mergeNodes(condenseNode.getId(), n.getId());
             }
         }
@@ -112,7 +131,9 @@ public class MergedSummary implements Benchmarkable {
     }
 
     private void mergeNodes(int destinationID, int nodeToMergeID) {
-        System.out.println("merge: " + destinationID  + "   " + nodeToMergeID);
+        if (destinationID != Integer.MIN_VALUE){
+            System.out.println("merge: " + destinationID  + "   " + nodeToMergeID);
+        }
         for (BaseEdge e: summary.outEdgesFor(nodeToMergeID)){
             BaseEdge equivalent = findEquivalentEdge(e, destinationID, true);
             if (equivalent == null){

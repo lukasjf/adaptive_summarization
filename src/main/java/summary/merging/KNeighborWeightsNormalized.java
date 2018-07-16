@@ -25,9 +25,6 @@ public class KNeighborWeightsNormalized implements WeightCreation {
     @Override
     public void initializeWeights(MergedSummary merged, Map<BaseGraph, List<Map<String, String>>> queries) {
         this.merged = merged;
-        for (BaseEdge e : merged.summary.getEdges()) {
-            merged.actual.put(e, 1);
-        }
         for (BaseGraph query : queries.keySet()) {
             for (Map<String, String> result : queries.get(query)) {
                 for (BaseEdge queryEdge : query.getEdges()) {
