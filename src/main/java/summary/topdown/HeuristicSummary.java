@@ -146,6 +146,7 @@ public class HeuristicSummary implements Benchmarkable {
             split("loss", splitmethod);
             summary.getEdges().forEach(e -> e.bookkeeping.put("loss", 0.0));
             if (summary.getNodes().size() == oldSize){
+                System.out.println("Stucked");
                 break;
             } else{
                 oldSize = summary.getNodes().size();
