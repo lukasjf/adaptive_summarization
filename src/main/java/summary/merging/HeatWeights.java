@@ -101,6 +101,10 @@ public class HeatWeights implements WeightCreation {
             heats.put(backward.get(i), heat[i][0]);
         }
 
+        for (int i: heats.keySet()){
+            heats.put(i, heats.get(i) * heats.get(i));
+        }
+
         for (BaseEdge e: merged.summary.getEdges()){
             if (kNeighborHood.contains(e.getSource()) || kNeighborHood.contains(e.getTarget())){
                 double sourceHeat = heats.getOrDefault(e.getSource().getId(), 0.0);
