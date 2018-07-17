@@ -16,19 +16,26 @@ public class MergedSummary implements Benchmarkable {
     private long sizeLimit;
     private String method;
 
-    int prunecounter = 0;
-    WeightCreation initializer;
 
-    private List<BaseNode> nodes;
+    String mergeMethod = "diff";
+
+    private int prunecounter = 0;
+    private WeightCreation initializer;
+
     private Random random = new Random(0);
 
     Set<BaseNode> blackList = new HashSet<>();
 
+    Map<Integer,Map<Integer,Double>> cache = new HashMap<>();
+
     Map<BaseEdge, Double> weights = new HashMap<>();
     Map<BaseEdge, Integer> actual = new HashMap<>();
 
-    public double lastObjective;
+    double totalWeight = 0.0;
+
+    public double lastObjective = 1.0;
     SummaryEncoder se = new SummaryEncoder();
+    DiffObjective diffO = new DiffObjective();
 
     public MergedSummary(BaseGraph originalGraph, String method, long sizeLimit, WeightCreation weights){
         this.original = originalGraph;
@@ -53,6 +60,7 @@ public class MergedSummary implements Benchmarkable {
         for (BaseNode n: original.getNodes()){
             summary.addNode(n.getId(), Dataset.I.labelFrom(n.getId()));
             summary.nodeWithId(n.getId()).getContainedNodes().addAll(n.getContainedNodes());
+            cache.put(n.getId(), new HashMap<>());
         }
         for (BaseEdge e: original.getEdges()){
             summary.addEdge(e.getSource().getId(), e.getTarget().getId(), e.getLabel());
@@ -68,13 +76,23 @@ public class MergedSummary implements Benchmarkable {
         System.out.println("Sumary size after pruning " + prunecounter + " elements: " + se.encode(summary));
 
         while (summary.getNodes().size() > 1 && size() > sizeLimit){
-            merge();
+            lastObjective = computeObjective();
             System.out.println(se.encode(summary) + " " + lastObjective + " " + summary.getNodes().size() + " " + summary.getEdges().size());
+            merge();
+
         }
     }
 
     private void blackListNodes() {
-        
+        PriorityQueue<BaseNode> pq = new PriorityQueue<>((n1, n2) -> {
+            int degree1 = summary.outEdgesFor(n1.getId()).size() + summary.inEdgesFor(n1.getId()).size();
+            int degree2 = summary.outEdgesFor(n2.getId()).size() + summary.inEdgesFor(n2.getId()).size();
+            return Integer.compare(-degree1, -degree2);
+        });
+        pq.addAll(summary.getNodes());
+        for (int i = 0; i < 0.01 * summary.getNodes().size(); i++){
+            blackList.add(pq.poll());
+        }
     }
 
     private void initializeEdgeMetaData(Map<BaseGraph, List<Map<String, String>>> queries) {
@@ -82,10 +100,14 @@ public class MergedSummary implements Benchmarkable {
             actual.put(e, 1);
         }
         initializer.initializeWeights(this, queries);
+        for (double w: weights.values()){
+            totalWeight += w;
+        }
     }
 
     private void condenseUnusedNodes() {
         BaseNode condenseNode = summary.addNode(Integer.MIN_VALUE, "");
+        cache.put(Integer.MIN_VALUE, new HashMap<>());
         for (BaseNode n: new ArrayList<>(summary.getNodes())){
             if (n.getId() == condenseNode.getId()){
                 continue;
@@ -141,6 +163,7 @@ public class MergedSummary implements Benchmarkable {
             } else{
                 combineEdges(equivalent, e);
             }
+            cache.get(e.getTarget().getId()).remove(nodeToMergeID);
             weights.remove(e);
             actual.remove(e);
         }
@@ -152,43 +175,75 @@ public class MergedSummary implements Benchmarkable {
             } else {
                 combineEdges(equivalent, e);
             }
+            cache.get(e.getSource().getId()).remove(nodeToMergeID);
             weights.remove(e);
             actual.remove(e);
         }
         summary.nodeWithId(destinationID).getContainedNodes()
                 .addAll(summary.nodeWithId(nodeToMergeID).getContainedNodes());
         summary.removeNode(nodeToMergeID);
+
+        for (BaseEdge e: summary.outEdgesFor(destinationID)){
+            cache.get(e.getTarget().getId()).remove(destinationID);
+        }
+
+        for (BaseEdge e: summary.outEdgesFor(destinationID)){
+            cache.get(e.getSource().getId()).remove(destinationID);
+        }
+
+        cache.get(destinationID).clear();
+        cache.remove(nodeToMergeID);
     }
 
     private int[] mergeRandomized() {
         double bestObjective = -1.0;
         int[] pair = new int[]{-1, -1};
-        if (nodes == null) {
-            nodes = new ArrayList<>(summary.getNodes());
-        }
+        List<BaseNode> nodes = new ArrayList<>(summary.getNodes());
         for (int i = 0; i < 5; i++){
             BaseNode n1 = nodes.get(random.nextInt(nodes.size()));
+            while (blackList.contains(n1)){
+                n1 = nodes.get(random.nextInt(nodes.size()));
+            }
             Set<BaseNode> candidates = new HashSet<>();
             for (BaseEdge e: summary.outEdgesFor(n1.getId())){
+                if (blackList.contains(e.getTarget())){
+                    continue;
+                }
                 for (BaseEdge e2: summary.outEdgesFor(e.getTarget().getId())){
-                    candidates.add(e2.getTarget());
+                    if (!blackList.contains(e2.getTarget())){
+                        candidates.add(e2.getTarget());
+                    }
                 }
                 for (BaseEdge e2: summary.inEdgesFor(e.getTarget().getId())){
-                    candidates.add(e2.getSource());
+                    if (!blackList.contains(e2.getSource())){
+                        candidates.add(e2.getSource());
+                    }
                 }
             }
             for (BaseEdge e: summary.inEdgesFor(n1.getId())){
-                for (BaseEdge e2: summary.outEdgesFor(e.getTarget().getId())){
-                    candidates.add(e2.getTarget());
+                if (blackList.contains(e.getSource())){
+                    continue;
                 }
-                for (BaseEdge e2: summary.inEdgesFor(e.getTarget().getId())){
-                    candidates.add(e2.getSource());
+                for (BaseEdge e2: summary.outEdgesFor(e.getSource().getId())){
+                    if (!blackList.contains(e2.getTarget())){
+                        candidates.add(e2.getTarget());
+                    }
+                }
+                for (BaseEdge e2: summary.inEdgesFor(e.getSource().getId())){
+                    if (!blackList.contains(e2.getSource())){
+                        candidates.add(e2.getSource());
+                    }
                 }
             }
+            System.out.println("" + candidates.size() + " candidates");
+            if (candidates.isEmpty()){
+                return mergeRandomized();
+            }
             for (BaseNode n2: candidates){
-                double objective = testMerge(n1, n2);
+                //double objective = testMerge(n1, n2);
+                double objective = testMerge(n1,n2);
                 if (objective == 1.0){
-                    lastObjective = 1.0;
+                    System.out.println("perfect merge found");
                     return new int[]{n1.getId(), n2.getId()};
                 }
                 if (objective > bestObjective){
@@ -205,17 +260,18 @@ public class MergedSummary implements Benchmarkable {
         int[] pair = new int[] {-1, -1};
         for (BaseNode n1: summary.getNodes()){
             for (BaseNode n2: summary.getNodes()){
-                if (n1.getId() <= n2.getId() || n1.getId() == Integer.MIN_VALUE || n2.getId() == Integer.MIN_VALUE){
+                if (n1.getId() >= n2.getId() || n1.getId() == Integer.MIN_VALUE || n2.getId() == Integer.MIN_VALUE){
+                    continue;
+                }
+                if (blackList.contains(n1) || blackList.contains(n2)){
                     continue;
                 }
                 double testObjective = testMerge(n1, n2);
                 if (testObjective == 1.0){
-                    lastObjective = testObjective;
                     return new int[]{n1.getId(), n2.getId()};
                 }
                 if (testObjective > bestObjective){
                     bestObjective = testObjective;
-                    this.lastObjective = testObjective;
                     pair = new int[]{n1.getId(), n2.getId()};
                 }
             }
@@ -224,62 +280,73 @@ public class MergedSummary implements Benchmarkable {
     }
 
     private double testMerge(BaseNode n1, BaseNode n2) {
-        if (n1.getId() == n2.getId()){
+        if (n1.getId() == n2.getId() || n1.getId() == Integer.MIN_VALUE || n2.getId() == Integer.MIN_VALUE){
             return -1;
         }
-        Set<Integer> backupContained2 = new HashSet<>(n2.getContainedNodes());
-
-        n2.getContainedNodes().clear();
-        n1.getContainedNodes().addAll(backupContained2);
-
-        for (BaseEdge e: summary.outEdgesFor(n2.getId())){
-            BaseEdge equivalent = findEquivalentEdge(e, n1.getId(), true);
-            if (equivalent == null){
-                addNewMergeEdge(e, n1.getId(), true);
+        if ("diff".equals(mergeMethod)){
+            if (cache.get(n1.getId()).containsKey(n2.getId())){
+                return cache.get(n1.getId()).get(n2.getId());
             }
-            else{
-                combineEdges(equivalent, e);
+
+            double objective = diffO.getDiffObjective(this, n1, n2);
+            cache.get(n1.getId()).put(n2.getId(), objective);
+            cache.get(n2.getId()).put(n1.getId(), objective);
+            return objective;
+        } else{
+            Set<Integer> backupContained2 = new HashSet<>(n2.getContainedNodes());
+
+            n2.getContainedNodes().clear();
+            n1.getContainedNodes().addAll(backupContained2);
+
+            for (BaseEdge e: summary.outEdgesFor(n2.getId())){
+                mergeEdge(e, n1.getId(), true);
             }
+
+            for (BaseEdge e: summary.inEdgesFor(n2.getId())){
+                if (e.getSource() != e.getTarget()) {
+                    mergeEdge(e, n1.getId(), false);
+                }
+            }
+
+            double objective = computeObjective();
+
+            n1.getContainedNodes().removeAll(backupContained2);
+            n2.getContainedNodes().addAll(backupContained2);
+
+            for (BaseEdge e: summary.outEdgesFor(n2.getId())){
+                unmergeEdge(e, n1.getId(), true);
+            }
+            for (BaseEdge e: summary.inEdgesFor(n2.getId())){
+                if (e.getSource() != e.getTarget()) {
+                    unmergeEdge(e, n1.getId(), false);
+                }
+            }
+            return objective;
         }
+    }
 
-        for (BaseEdge e: summary.inEdgesFor(n2.getId())){
-            if (e.getSource() == e.getTarget()) continue;
-            BaseEdge equivalent = findEquivalentEdge(e, n1.getId(), false);
-            if (equivalent == null){
-                addNewMergeEdge(e, n1.getId(), false);
-            }
-            else{
-                combineEdges(equivalent, e);
-            }
+    void mergeEdge(BaseEdge e, int nodeID, boolean isOutEdge){
+        BaseEdge equivalent = findEquivalentEdge(e, nodeID, isOutEdge);
+        if (equivalent == null){
+            addNewMergeEdge(e, nodeID, isOutEdge);
         }
-
-        double objective = computeObjective();
-
-        n1.getContainedNodes().removeAll(backupContained2);
-        n2.getContainedNodes().addAll(backupContained2);
-
-        for (BaseEdge e: summary.outEdgesFor(n2.getId())){
-            BaseEdge equivalent = findEquivalentEdge(e, n1.getId(), true);
-            if (actual.get(e) < actual.get(equivalent)){
-                actual.put(equivalent, actual.get(equivalent) - actual.get(e));
-            } else {
-                summary.removeEdge(equivalent);
-                weights.remove(equivalent);
-                actual.remove(equivalent);
-            }
+        else{
+            combineEdges(equivalent, e);
         }
-        for (BaseEdge e: summary.inEdgesFor(n2.getId())){
-            if (e.getSource() == e.getTarget()) continue;
-            BaseEdge equivalent = findEquivalentEdge(e, n1.getId(), false);
-            if (actual.get(e) < actual.get(equivalent)){
-                actual.put(equivalent, actual.get(equivalent) - actual.get(e));
-            } else {
-                summary.removeEdge(equivalent);
-                weights.remove(equivalent);
-                actual.remove(equivalent);
+    }
+
+    void unmergeEdge(BaseEdge e, int nodeID, boolean isOutEdge){
+        BaseEdge equivalent = findEquivalentEdge(e, nodeID, isOutEdge);
+        if (actual.get(e) < actual.get(equivalent)){
+            actual.put(equivalent, actual.get(equivalent) - actual.get(e));
+        } else {
+            if (actual.get(e) > actual.get(equivalent)){
+                int i = 0;
             }
+            summary.removeEdge(equivalent);
+            weights.remove(equivalent);
+            actual.remove(equivalent);
         }
-        return objective;
     }
 
     private BaseEdge findEquivalentEdge(BaseEdge e, int otherNodeID, boolean isOutEdge) {
@@ -327,28 +394,20 @@ public class MergedSummary implements Benchmarkable {
         if (newWeight > 0){
             weights.put(equivalent, newWeight);
         }
-        if(!actual.containsKey(equivalent) || !actual.containsKey(e)){
-            System.out.println(equivalent + "||||" + e);
-        }
-        if(!actual.containsKey(equivalent)){
-            System.out.println(equivalent);
-        }
-        if(!actual.containsKey(e)){
-            System.out.println(e);
-        }
         actual.put(equivalent, actual.get(equivalent) + actual.get(e));
     }
 
     private double computeObjective() {
         double objective = 0.0;
-        double totalWeight = 0.0;
+        double totalW = 0.0;
         for (BaseEdge e: weights.keySet()){
             if (e.getSource().getContainedNodes().isEmpty() || e.getTarget().getContainedNodes().isEmpty()){
                 continue;
             }
             objective += weights.get(e) * actual.get(e) / e.size();
-            totalWeight += weights.get(e);
+            totalW += weights.get(e);
         }
+        totalWeight = totalW;
         return  objective / totalWeight;
     }
 

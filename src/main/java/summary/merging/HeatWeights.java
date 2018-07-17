@@ -27,9 +27,6 @@ public class HeatWeights implements WeightCreation {
     @Override
     public void initializeWeights(MergedSummary merged, Map<BaseGraph, List<Map<String, String>>> queries) {
         this.merged = merged;
-        for (BaseEdge e : merged.summary.getEdges()) {
-            merged.actual.put(e, 1);
-        }
 
         for (List<Map<String,String>> results: queries.values()){
             for (Map<String, String> result: results){
@@ -46,12 +43,7 @@ public class HeatWeights implements WeightCreation {
         Map<Integer, Integer> backward = new HashMap<>();
 
         Set<BaseNode> kNeighborHood = findNeighborhood(queries);
-        System.out.println(kNeighborHood.size());
-
-        //SimpleMatrix uStart = new SimpleMatrix(kNeighborHood.size(), 1);
-        //SimpleMatrix L = new SimpleMatrix(kNeighborHood.size(), kNeighborHood.size());
-        //DoubleMatrix uStart = new DoubleMatrix(kNeighborHood.size(), 1);
-        //DoubleMatrix L = new DoubleMatrix(kNeighborHood.size(), kNeighborHood.size());
+        System.out.println(merged.summary.getNodes().size()+" "+merged.blackList.size()+" "+kNeighborHood.size());
 
         double[][] uStart = new double[kNeighborHood.size()][1];
         double[][] L = new double[kNeighborHood.size()][kNeighborHood.size()];
@@ -59,43 +51,29 @@ public class HeatWeights implements WeightCreation {
         for (BaseNode n: kNeighborHood){
             forward.put(n.getId(), counter);
             backward.put(counter, n.getId());
-            uStart[counter][0] = heats.getOrDefault(n, 0.0);
-            //uStart.put(counter, 0, heats.getOrDefault(n, 0.0));
+            uStart[counter][0] = heats.getOrDefault(n.getId(), 0.0);
             int degree = merged.summary.outEdgesFor(n.getId()).size() + merged.summary.inEdgesFor(n.getId()).size();
             L[counter][counter] = 1.0/degree;
-            //L.put(counter, counter, 1.0 / degree);
             counter++;
         }
 
         for (BaseNode n: kNeighborHood){
             int id = forward.get(n.getId());
-            for (BaseEdge e: Dataset.I.getGraph().outEdgesFor(n.getId())){
+            for (BaseEdge e: merged.summary.outEdgesFor(n.getId())){
                 if (!kNeighborHood.contains(e.getTarget())){
                     continue;
                 }
                 int otherid = forward.get(e.getTarget().getId());
-                if (L[otherid][otherid] > 0.01){
-                    L[id][otherid] = -1.0 * L[otherid][otherid];
-                }
-                if (L[id][id] > 0.01){
-                    L[otherid][id] = -1.0 * L[id][id];
-                }
-                //L.put(id, otherid, 1.0 / L.get(otherid, otherid));
-                //L.put(otherid, id, 1.0 / L.get(id, id));
+                L[id][otherid] = -1.0 * L[otherid][otherid];
+                L[otherid][id] = -1.0 * L[id][id];
             }
         }
 
         for (int i = 0; i < kNeighborHood.size(); i++){
             L[i][i] = 1.0;
         }
-
         System.out.println("Matrices initialized");
 
-
-        //SimpleMatrix exp = SimpleMatrix.identity(kNeighborHood.size());
-        //SimpleMatrix running = SimpleMatrix.identity(kNeighborHood.size());
-        //DoubleMatrix running = new DoubleMatrix(kNeighborHood.size(), kNeighborHood.size());
-        //DoubleMatrix exp = DoubleMatrix.eye(kNeighborHood.size());
         double[][] running = new double[kNeighborHood.size()][kNeighborHood.size()];
         double[][] exp = new double[kNeighborHood.size()][kNeighborHood.size()];
         for (int i = 0; i < exp.length; i++){
@@ -105,7 +83,7 @@ public class HeatWeights implements WeightCreation {
         double factorial = 1;
         double power = 1;
         System.out.println("Start exponential");
-        for (int i = 1; i <= k; i++){
+        for (int i = 1; i <= 1; i++){
             running = mult(running, L);
             //running = running.mmul(L);
             factorial *= i;
@@ -120,17 +98,23 @@ public class HeatWeights implements WeightCreation {
         //DoubleMatrix heat = exp.mmul(uStart);
         double[][] heat = mult(exp, uStart);
         for (int i = 0; i < heat.length; i++){
-            int nodeId = backward.get(i);
-            int degree = merged.summary.outEdgesFor(nodeId).size() + merged.summary.inEdgesFor(nodeId).size();
-            if (degree < 100){
-                heats.put(backward.get(i), heat[i][0]);
-            }
+            heats.put(backward.get(i), heat[i][0]);
         }
 
         for (BaseEdge e: merged.summary.getEdges()){
-            double sourceHeat = heats.getOrDefault(e.getSource().getId(), 0.0);
-            double targetHeat = heats.getOrDefault(e.getTarget().getId(), 0.0);
-                merged.weights.put(e, (sourceHeat + targetHeat) / 2.0);
+            if (kNeighborHood.contains(e.getSource()) || kNeighborHood.contains(e.getTarget())){
+                double sourceHeat = heats.getOrDefault(e.getSource().getId(), 0.0);
+                double targetHeat = heats.getOrDefault(e.getTarget().getId(), 0.0);
+                if (merged.blackList.contains(e.getSource())){
+                    sourceHeat = 0.0;
+                }
+                if (merged.blackList.contains(e.getTarget())){
+                    targetHeat = 0.0;
+                }
+                if (sourceHeat + targetHeat > 0){
+                    merged.weights.put(e, (sourceHeat + targetHeat) / 2.0);
+                }
+            }
         }
         System.out.println("Weights Computed");
     }
@@ -141,8 +125,10 @@ public class HeatWeights implements WeightCreation {
         for (List<Map<String, String>> results: queries.values()){
             for (Map<String, String> result: results){
                 for (String res: result.values()){
-                    BaseNode node = Dataset.I.getGraph().getLabelMapping().get(res);
-                    nb.add(node);
+                    BaseNode node = merged.summary.nodeWithId(Dataset.I.IDFrom(res));
+                    if (!merged.blackList.contains(node)){
+                        nb.add(node);
+                    }
                 }
             }
         }
@@ -150,11 +136,15 @@ public class HeatWeights implements WeightCreation {
         for (int i = 0; i < k; i++){
             Set<BaseNode> newNodes = new HashSet<>();
             for (BaseNode n: expandNodes){
-                for (BaseEdge e: Dataset.I.getGraph().outEdgesFor(n.getId())){
-                    newNodes.add(e.getTarget());
+                for (BaseEdge e: merged.summary.outEdgesFor(n.getId())){
+                    if (!merged.blackList.contains(e.getTarget())){
+                        newNodes.add(e.getTarget());
+                    }
                 }
-                for (BaseEdge e: Dataset.I.getGraph().inEdgesFor(n.getId())){
-                    newNodes.add(e.getSource());
+                for (BaseEdge e: merged.summary.inEdgesFor(n.getId())){
+                    if (!merged.blackList.contains(e.getSource())) {
+                        newNodes.add(e.getSource());
+                    }
                 }
             }
             expandNodes = new HashSet<>(newNodes);
