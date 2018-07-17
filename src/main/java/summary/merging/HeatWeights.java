@@ -83,7 +83,7 @@ public class HeatWeights implements WeightCreation {
         double factorial = 1;
         double power = 1;
         System.out.println("Start exponential");
-        for (int i = 1; i <= 1; i++){
+        for (int i = 1; i <= k; i++){
             running = mult(running, L);
             //running = running.mmul(L);
             factorial *= i;
