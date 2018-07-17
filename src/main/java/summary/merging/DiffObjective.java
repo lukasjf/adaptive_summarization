@@ -13,15 +13,14 @@ import java.util.Set;
 public class DiffObjective {
 
     MergedSummary merged;
-    double nominator;
-    double diffNominator;
+    double delta;
+
     Set<BaseEdge> diffEdges;
 
-    double getDiffObjective(MergedSummary mergedSummary, BaseNode n1, BaseNode n2){
+    double getObjectiveDelta(MergedSummary mergedSummary, BaseNode n1, BaseNode n2){
         merged = mergedSummary;
 
-        nominator = merged.lastObjective * merged.totalWeight;
-        diffNominator = merged.lastObjective;
+        double delta = 0.0;
 
         diffEdges = new HashSet<>();
         for (BaseEdge e: merged.summary.outEdgesFor(n1.getId())){
@@ -75,7 +74,7 @@ public class DiffObjective {
             }
         }
 
-        return diffNominator / merged.totalWeight;
+        return delta / merged.totalWeight;
     }
 
     private void removediff(BaseEdge e, boolean nodeToMerge) {
@@ -84,11 +83,11 @@ public class DiffObjective {
         }
         if (merged.weights.containsKey(e)){
             diffEdges.add(e);
-            diffNominator -= merged.weights.get(e) * merged.actual.get(e) / e.size();
+            delta -= merged.weights.get(e) * merged.actual.get(e) / e.size();
         }
     }
 
     private void adddiff(BaseEdge e){
-        diffNominator += merged.weights.get(e) * merged.actual.get(e) / e.size();
+        delta += merged.weights.get(e) * merged.actual.get(e) / e.size();
     }
 }

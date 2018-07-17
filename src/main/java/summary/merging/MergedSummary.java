@@ -33,7 +33,9 @@ public class MergedSummary implements Benchmarkable {
 
     double totalWeight = 0.0;
 
-    public double lastObjective = 1.0;
+    public double currentObjective = 1.0;
+    public double mergeObjective = -1.0;
+
     SummaryEncoder se = new SummaryEncoder();
     DiffObjective diffO = new DiffObjective();
 
@@ -76,8 +78,8 @@ public class MergedSummary implements Benchmarkable {
         System.out.println("Sumary size after pruning " + prunecounter + " elements: " + se.encode(summary));
 
         while (summary.getNodes().size() > 1 && size() > sizeLimit){
-            lastObjective = computeObjective();
-            System.out.println(se.encode(summary) + " " + lastObjective + " " + summary.getNodes().size() + " " + summary.getEdges().size());
+            currentObjective = computeObjective();
+            System.out.println(se.encode(summary) + " " + currentObjective + " " + mergeObjective + " " + summary.getNodes().size() + " " + summary.getEdges().size());
             merge();
 
         }
@@ -132,7 +134,7 @@ public class MergedSummary implements Benchmarkable {
                 }
             }
             if (prune){
-                System.out.println("prune " + n.getId());
+                //System.out.println("prune " + n.getId());
                 prunecounter++;
                 mergeNodes(condenseNode.getId(), n.getId());
             }
@@ -235,15 +237,15 @@ public class MergedSummary implements Benchmarkable {
                     }
                 }
             }
-            System.out.println("" + candidates.size() + " candidates");
+            //System.out.println("" + candidates.size() + " candidates");
             if (candidates.isEmpty()){
                 return mergeRandomized();
             }
             for (BaseNode n2: candidates){
-                //double objective = testMerge(n1, n2);
                 double objective = testMerge(n1,n2);
                 if (objective == 1.0){
                     System.out.println("perfect merge found");
+                    mergeObjective = 1.0;
                     return new int[]{n1.getId(), n2.getId()};
                 }
                 if (objective > bestObjective){
@@ -252,6 +254,7 @@ public class MergedSummary implements Benchmarkable {
                 }
             }
         }
+        mergeObjective = bestObjective;
         return pair;
     }
 
@@ -268,6 +271,7 @@ public class MergedSummary implements Benchmarkable {
                 }
                 double testObjective = testMerge(n1, n2);
                 if (testObjective == 1.0){
+                    mergeObjective = 1.0;
                     return new int[]{n1.getId(), n2.getId()};
                 }
                 if (testObjective > bestObjective){
@@ -276,6 +280,7 @@ public class MergedSummary implements Benchmarkable {
                 }
             }
         }
+        mergeObjective = bestObjective;
         return pair;
     }
 
@@ -285,13 +290,15 @@ public class MergedSummary implements Benchmarkable {
         }
         if ("diff".equals(mergeMethod)){
             if (cache.get(n1.getId()).containsKey(n2.getId())){
+                //System.out.print("*");
                 return cache.get(n1.getId()).get(n2.getId());
             }
 
-            double objective = diffO.getDiffObjective(this, n1, n2);
-            cache.get(n1.getId()).put(n2.getId(), objective);
-            cache.get(n2.getId()).put(n1.getId(), objective);
-            return objective;
+            double delta = diffO.getObjectiveDelta(this, n1, n2);
+            cache.get(n1.getId()).put(n2.getId(), delta);
+            cache.get(n2.getId()).put(n1.getId(), delta);
+            //System.out.print(".");
+            return currentObjective + delta;
         } else{
             Set<Integer> backupContained2 = new HashSet<>(n2.getContainedNodes());
 
@@ -340,9 +347,6 @@ public class MergedSummary implements Benchmarkable {
         if (actual.get(e) < actual.get(equivalent)){
             actual.put(equivalent, actual.get(equivalent) - actual.get(e));
         } else {
-            if (actual.get(e) > actual.get(equivalent)){
-                int i = 0;
-            }
             summary.removeEdge(equivalent);
             weights.remove(equivalent);
             actual.remove(equivalent);
