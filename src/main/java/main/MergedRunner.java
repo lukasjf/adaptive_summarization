@@ -65,6 +65,9 @@ public class MergedRunner {
                     case "heat":
                         summary = new MergedSummary(Dataset.I.getGraph(), "random", sizeLimit, new HeatWeights(k,t));
                         break;
+                    case "stupid":
+                        summary = new StupidMerge(Dataset.I.getGraph(), "", sizeLimit, k, t);
+                        break;
                     default:
                         summary = new MergedSummary(Dataset.I.getGraph(), "random", sizeLimit, new PlainWeights());
                         break;
