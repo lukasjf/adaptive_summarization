@@ -18,8 +18,8 @@ import java.util.List;
  */
 public class MergedRunner {
 
-    private static String HEADER = "graph,method,queryset,method,storage,size,trainingF1,testF1,creationTime,graphTime,summaryTime";
-    private static String TEMPLATE = "%s,%s,%s,%s,%d,%d,%f,%f,%f,%f,%f\n";
+    private static String HEADER = "graph,method,queryset,method,k,t,storage,size,trainingF1,testF1,creationTime,graphTime,summaryTime";
+    private static String TEMPLATE = "%s,%s,%s,%s,%d,%f,%d,%d,%f,%f,%f,%f,%f\n";
 
     private static int FOLDSIZE = 5;
 
@@ -28,8 +28,8 @@ public class MergedRunner {
         long sizeLimit = Long.parseLong(args[1]);
         String graphFile = args[2];
         String[] benchmarks;
-        int k = 0;
-        double t = 0.0;
+        int k = -1;
+        double t = -1.0;
         String aggregate = "";
         switch (mergeMethod){
             case "heat":
@@ -77,7 +77,7 @@ public class MergedRunner {
                         break;
                 }
                 Benchmark.Result r = benchmark.run(new Benchmarkable[]{summary}, Dataset.I.getGraph()).get(0);
-                output.write(String.format(TEMPLATE, graphFile, "merge", dir, mergeMethod, sizeLimit, r.size, r.trainingF1,
+                output.write(String.format(TEMPLATE, graphFile, "merge", dir, mergeMethod, k, t, sizeLimit, r.size, r.trainingF1,
                         r.testF1, r.trainingtime, r.graphtime, r.summarytime));
                 output.flush();
             }
