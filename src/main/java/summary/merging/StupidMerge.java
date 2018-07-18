@@ -65,10 +65,13 @@ public class StupidMerge implements Benchmarkable {
         pq.addAll(summary.getNodes());
         summary.addNode(Integer.MIN_VALUE, "");
 
+        int i = 0;
         while (summary.getNodes().size() > 1 && size() > sizeLimit){
             BaseNode node = pq.poll();
-            System.out.println(se.encode(summary) + " " + heats.getOrDefault(node.getId(), 0.0)
-                    + " " + summary.getNodes().size() + " " + summary.getEdges().size());
+            if (i++ % 1000 == 0){
+                System.out.println(se.encode(summary) + " " + heats.getOrDefault(node.getId(), 0.0)
+                        + " " + summary.getNodes().size() + " " + summary.getEdges().size());
+            }
             mergeNodes(Integer.MIN_VALUE, node.getId());
         }
     }
@@ -87,7 +90,7 @@ public class StupidMerge implements Benchmarkable {
 
     private void mergeNodes(int destinationID, int nodeToMergeID) {
         if (destinationID != Integer.MIN_VALUE){
-            System.out.println("merge: " + destinationID  + "   " + nodeToMergeID);
+            //System.out.println("merge: " + destinationID  + "   " + nodeToMergeID);
         }
         for (BaseEdge e: summary.outEdgesFor(nodeToMergeID)){
             BaseEdge equivalent = findEquivalentEdge(e, destinationID, true);

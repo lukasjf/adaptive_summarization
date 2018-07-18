@@ -21,7 +21,7 @@ public class MergedRunner {
     private static String HEADER = "graph,method,queryset,method,storage,size,trainingF1,testF1,creationTime,graphTime,summaryTime";
     private static String TEMPLATE = "%s,%s,%s,%s,%d,%d,%f,%f,%f,%f,%f\n";
 
-    private static int FOLDSIZE = 1;
+    private static int FOLDSIZE = 5;
 
     public static void main(String[] args) throws IOException {
         String mergeMethod = args[0];
@@ -33,15 +33,11 @@ public class MergedRunner {
         String aggregate = "";
         switch (mergeMethod){
             case "heat":
+            case "stupid":
                 k = Integer.parseInt(args[3]);
                 t = Double.parseDouble(args[4]);
                 aggregate = args[5];
                 benchmarks = Arrays.copyOfRange(args, 6, args.length);
-                break;
-            case "stupid":
-                k = Integer.parseInt(args[3]);
-                t = Double.parseDouble(args[4]);
-                benchmarks = Arrays.copyOfRange(args, 5, args.length);
                 break;
             default:
                 benchmarks = Arrays.copyOfRange(args, 3, args.length);

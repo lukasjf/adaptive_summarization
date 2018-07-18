@@ -77,9 +77,12 @@ public class MergedSummary implements Benchmarkable {
         SummaryEncoder se = new SummaryEncoder();
         System.out.println("Sumary size after pruning " + prunecounter + " elements: " + se.encode(summary));
 
+        int i = 0;
         while (summary.getNodes().size() > 1 && size() > sizeLimit){
             currentObjective = computeObjective();
-            System.out.println(se.encode(summary) + " " + currentObjective + " " + mergeObjective + " " + summary.getNodes().size() + " " + summary.getEdges().size());
+            if (i++ % 1000 == 0){
+                System.out.println(se.encode(summary) + " " + currentObjective + " " + mergeObjective + " " + summary.getNodes().size() + " " + summary.getEdges().size());
+            }
             merge();
 
         }
@@ -156,7 +159,7 @@ public class MergedSummary implements Benchmarkable {
 
     private void mergeNodes(int destinationID, int nodeToMergeID) {
         if (destinationID != Integer.MIN_VALUE){
-            System.out.println("merge: " + destinationID  + "   " + nodeToMergeID);
+            //System.out.println("merge: " + destinationID  + "   " + nodeToMergeID);
         }
         for (BaseEdge e: summary.outEdgesFor(nodeToMergeID)){
             BaseEdge equivalent = findEquivalentEdge(e, destinationID, true);
