@@ -124,10 +124,9 @@ public class QueryGenerator {
                     break;
                 }
             }
-            serializeQueries();
-            System.out.println("Size " + s + " queries written");
-            queries.clear();
+            System.out.println("Size " + s + " queries done");
         }
+        serializeQueries();
         System.out.println(String.format("In total %d nodes out of %f were used", queryNodes.size(), graph.getNodes().size() * fraction));
         System.out.println(innerNodes.size() + "    " + focusNodes.size());
     }
@@ -224,8 +223,10 @@ public class QueryGenerator {
 
 
     private void serializeQueries() {
+        Collections.shuffle(queries);
         for (int i = 0; i < queries.size(); i++){
             serializeQuery(queries.get(i));
+            System.out.print(".");
         }
 
     }
