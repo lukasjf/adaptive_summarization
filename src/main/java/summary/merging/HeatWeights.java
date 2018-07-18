@@ -18,10 +18,12 @@ public class HeatWeights implements WeightCreation {
 
     int k;
     double t;
+    String aggregate;
 
-    public HeatWeights(int k, double t){
+    public HeatWeights(String aggregate, int k, double t){
         this.k = k;
         this.t = t;
+        this.aggregate = aggregate;
     }
 
     @Override
@@ -101,22 +103,13 @@ public class HeatWeights implements WeightCreation {
             heats.put(backward.get(i), heat[i][0]);
         }
 
-        for (int i: heats.keySet()){
-            heats.put(i, heats.get(i) * heats.get(i));
-        }
-
         for (BaseEdge e: merged.summary.getEdges()){
             if (kNeighborHood.contains(e.getSource()) || kNeighborHood.contains(e.getTarget())){
                 double sourceHeat = heats.getOrDefault(e.getSource().getId(), 0.0);
                 double targetHeat = heats.getOrDefault(e.getTarget().getId(), 0.0);
-                if (merged.blackList.contains(e.getSource())){
-                    sourceHeat = 0.0;
-                }
-                if (merged.blackList.contains(e.getTarget())){
-                    targetHeat = 0.0;
-                }
-                if (sourceHeat + targetHeat > 0){
-                    merged.weights.put(e, (sourceHeat + targetHeat) / 2.0);
+                double edgeHeat = aggregate(sourceHeat, targetHeat);
+                if (edgeHeat > 0){
+                    merged.weights.put(e, edgeHeat);
                 }
             }
         }
@@ -155,6 +148,23 @@ public class HeatWeights implements WeightCreation {
             nb.addAll(newNodes);
         }
         return nb;
+    }
+
+    public double aggregate(double h1, double h2){
+        switch (aggregate){
+            case "harmonic":
+                return harmonicMean(h1, h2);
+            default:
+                return geometricMean(h1, h2);
+        }
+    }
+
+    public double harmonicMean(double h1, double h2){
+        return 2 * h1 + h2 / (h1 + h2);
+    }
+
+    public double geometricMean(double h1, double h2){
+        return Math.sqrt(h1 * h2);
     }
 
     public double[][] mult(double[][] a, double[][]b){

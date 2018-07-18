@@ -30,14 +30,17 @@ public class MergedRunner {
         String[] benchmarks;
         int k = 0;
         double t = 0.0;
+        String aggregate = "";
         switch (mergeMethod){
-            case "normal":
-                benchmarks = Arrays.copyOfRange(args, 3, args.length);
-                break;
-            default:
+            case "heat":
                 k = Integer.parseInt(args[3]);
                 t = Double.parseDouble(args[4]);
-                benchmarks = Arrays.copyOfRange(args, 5, args.length);
+                aggregate = args[5];
+                benchmarks = Arrays.copyOfRange(args, 6, args.length);
+                break;
+            default:
+                benchmarks = Arrays.copyOfRange(args, 3, args.length);
+                break;
         }
 
         new Dataset(graphFile);
@@ -63,7 +66,7 @@ public class MergedRunner {
                         summary = new MergedSummary(Dataset.I.getGraph(), "full", sizeLimit, new KNeighborWeightsNormalized(1, 0.15));
                         break;
                     case "heat":
-                        summary = new MergedSummary(Dataset.I.getGraph(), "random", sizeLimit, new HeatWeights(k,t));
+                        summary = new MergedSummary(Dataset.I.getGraph(), "random", sizeLimit, new HeatWeights(aggregate, k, t));
                         break;
                     case "stupid":
                         summary = new StupidMerge(Dataset.I.getGraph(), "", sizeLimit, k, t);
