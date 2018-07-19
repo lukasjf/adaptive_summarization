@@ -113,30 +113,25 @@ public class MergedSummary implements Benchmarkable {
     private void condenseUnusedNodes() {
         BaseNode condenseNode = summary.addNode(Integer.MIN_VALUE, "");
         cache.put(Integer.MIN_VALUE, new HashMap<>());
+
+        Set<BaseNode> usedNodes = new HashSet<>();
+        for (BaseEdge e: weights.keySet()){
+            if (weights.get(e) > 0){
+                usedNodes.add(e.getSource());
+                usedNodes.add(e.getTarget());
+            }
+        }
+
+
         for (BaseNode n: new ArrayList<>(summary.getNodes())){
+            System.out.print(".");
             if (n.getId() == condenseNode.getId()){
                 continue;
             }
             if (se.encode(summary) < sizeLimit){
                 break;
             }
-            boolean prune = true;
-            for (BaseEdge e: summary.outEdgesFor(n.getId())){
-                if (weights.getOrDefault(e, 0.0) > 0.0){
-                    prune = false;
-                    break;
-                }
-            }
-            if (!prune){
-                continue;
-            }
-            for (BaseEdge e: summary.inEdgesFor(n.getId())){
-                if (weights.getOrDefault(e, 0.0) > 0.0){
-                    prune = false;
-                    break;
-                }
-            }
-            if (prune){
+            if (!usedNodes.contains(n)){
                 //System.out.println("prune " + n.getId());
                 prunecounter++;
                 mergeNodes(condenseNode.getId(), n.getId());
@@ -266,7 +261,7 @@ public class MergedSummary implements Benchmarkable {
         int[] pair = new int[] {-1, -1};
         for (BaseNode n1: summary.getNodes()){
             for (BaseNode n2: summary.getNodes()){
-                if (n1.getId() >= n2.getId() || n1.getId() == Integer.MIN_VALUE || n2.getId() == Integer.MIN_VALUE){
+                if (n1.getId() >= n2.getId()){
                     continue;
                 }
                 if (blackList.contains(n1) || blackList.contains(n2)){
@@ -288,7 +283,7 @@ public class MergedSummary implements Benchmarkable {
     }
 
     private double testMerge(BaseNode n1, BaseNode n2) {
-        if (n1.getId() == n2.getId() || n1.getId() == Integer.MIN_VALUE || n2.getId() == Integer.MIN_VALUE){
+        if (n1.getId() == n2.getId()){// || n1.getId() == Integer.MIN_VALUE || n2.getId() == Integer.MIN_VALUE){
             return -1;
         }
         if ("diff".equals(mergeMethod)){
@@ -349,6 +344,13 @@ public class MergedSummary implements Benchmarkable {
         BaseEdge equivalent = findEquivalentEdge(e, nodeID, isOutEdge);
         if (actual.get(e) < actual.get(equivalent)){
             actual.put(equivalent, actual.get(equivalent) - actual.get(e));
+            double equivalentWeight = weights.getOrDefault(equivalent, 0.0);
+            double eWeight = weights.getOrDefault(e, 0.0);
+            if (equivalentWeight - eWeight > 0){
+                weights.put(equivalent, equivalentWeight - eWeight);
+            } else {
+                weights.remove(equivalent);
+            }
         } else {
             summary.removeEdge(equivalent);
             weights.remove(equivalent);
