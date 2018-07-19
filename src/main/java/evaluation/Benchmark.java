@@ -2,6 +2,7 @@ package evaluation;
 
 import graph.BaseGraph;
 import graph.GraphImporter;
+import main.Runner;
 
 import java.io.File;
 import java.util.*;
@@ -17,7 +18,11 @@ public class Benchmark {
 
     public Benchmark(String queryDir) {
         for (File f: new File(queryDir).listFiles()){
-            queries.add(GraphImporter.parseGraph(f.getAbsolutePath()));
+            String path = f.getAbsolutePath();
+            String[] pathParts = path.split("/");
+            if (Integer.parseInt(pathParts[pathParts.length-1]) < Runner.queryLimit) {
+                queries.add(GraphImporter.parseGraph(f.getAbsolutePath()));
+            }
         }
     }
 
