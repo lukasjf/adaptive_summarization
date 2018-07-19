@@ -209,8 +209,8 @@ public class StupidMerge implements Benchmarkable {
         double factorial = 1;
         double power = 1;
         System.out.println("Start exponential");
-        for (int i = 1; i <= k; i++){
-            running = mult(running, L);
+        for (int i = 1; i <= 4; i++){
+            running = mult(L, running);
             //running = running.mmul(L);
             factorial *= i;
             power *= -1 * t;

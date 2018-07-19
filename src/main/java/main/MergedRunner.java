@@ -30,7 +30,6 @@ public class MergedRunner {
         String[] benchmarks;
         int k = -1;
         double t = -1.0;
-        String aggregate = "";
         switch (mergeMethod){
             case "heat":
                 k = Integer.parseInt(args[3]);
