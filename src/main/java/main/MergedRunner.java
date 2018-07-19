@@ -33,11 +33,15 @@ public class MergedRunner {
         String aggregate = "";
         switch (mergeMethod){
             case "heat":
+                k = Integer.parseInt(args[3]);
+                t = Double.parseDouble(args[4]);
+                MergedSummary.objetive = args[5];
+                benchmarks = Arrays.copyOfRange(args, 6, args.length);
+                break;
             case "stupid":
                 k = Integer.parseInt(args[3]);
                 t = Double.parseDouble(args[4]);
-                aggregate = args[5];
-                benchmarks = Arrays.copyOfRange(args, 6, args.length);
+                benchmarks = Arrays.copyOfRange(args, 5, args.length);
                 break;
             default:
                 benchmarks = Arrays.copyOfRange(args, 3, args.length);
@@ -67,7 +71,7 @@ public class MergedRunner {
                         summary = new MergedSummary(Dataset.I.getGraph(), "full", sizeLimit, new KNeighborWeightsNormalized(1, 0.15));
                         break;
                     case "heat":
-                        summary = new MergedSummary(Dataset.I.getGraph(), "random", sizeLimit, new HeatWeights(aggregate, k, t));
+                        summary = new MergedSummary(Dataset.I.getGraph(), "random", sizeLimit, new HeatWeights(k, t));
                         break;
                     case "stupid":
                         summary = new StupidMerge(Dataset.I.getGraph(), "", sizeLimit, k, t);

@@ -83,11 +83,11 @@ public class DiffObjective {
         }
         if (merged.weights.containsKey(e)){
             diffEdges.add(e);
-            delta -= merged.weights.get(e) * merged.actual.get(e) / e.size();
+            delta -= merged.getSupport(e);
         }
     }
 
     private void adddiff(BaseEdge e){
-        delta += merged.weights.get(e) * merged.actual.get(e) / e.size();
+        delta += merged.getSupport(e);
     }
 }

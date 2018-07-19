@@ -18,12 +18,10 @@ public class HeatWeights implements WeightCreation {
 
     int k;
     double t;
-    String aggregate;
 
-    public HeatWeights(String aggregate, int k, double t){
+    public HeatWeights(int k, double t){
         this.k = k;
         this.t = t;
-        this.aggregate = aggregate;
     }
 
     @Override
@@ -85,8 +83,8 @@ public class HeatWeights implements WeightCreation {
         double factorial = 1;
         double power = 1;
         System.out.println("Start exponential");
-        for (int i = 1; i <= k; i++){
-            running = mult(running, L);
+        for (int i = 1; i <= 4; i++){
+            running = mult(L, running);
             //running = running.mmul(L);
             factorial *= i;
             power *= -1 * t;
@@ -107,7 +105,7 @@ public class HeatWeights implements WeightCreation {
             if (kNeighborHood.contains(e.getSource()) || kNeighborHood.contains(e.getTarget())){
                 double sourceHeat = heats.getOrDefault(e.getSource().getId(), 0.0);
                 double targetHeat = heats.getOrDefault(e.getTarget().getId(), 0.0);
-                double edgeHeat = aggregate(sourceHeat, targetHeat);
+                double edgeHeat = harmonicMean(sourceHeat, targetHeat);
                 if (edgeHeat > 0){
                     merged.weights.put(e, edgeHeat);
                 }
@@ -150,21 +148,8 @@ public class HeatWeights implements WeightCreation {
         return nb;
     }
 
-    public double aggregate(double h1, double h2){
-        switch (aggregate){
-            case "harmonic":
-                return harmonicMean(h1, h2);
-            default:
-                return geometricMean(h1, h2);
-        }
-    }
-
     public double harmonicMean(double h1, double h2){
-        return 2 * h1 + h2 / (h1 + h2);
-    }
-
-    public double geometricMean(double h1, double h2){
-        return Math.sqrt(h1 * h2);
+        return 2 * h1 * h2 / (h1 + h2);
     }
 
     public double[][] mult(double[][] a, double[][]b){

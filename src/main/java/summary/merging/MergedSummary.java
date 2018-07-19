@@ -16,8 +16,8 @@ public class MergedSummary implements Benchmarkable {
     private long sizeLimit;
     private String method;
 
-
     String mergeMethod = "diff";
+    public static String objetive = "normal";
 
     private int prunecounter = 0;
     private WeightCreation initializer;
@@ -75,7 +75,7 @@ public class MergedSummary implements Benchmarkable {
         condenseUnusedNodes();
 
         SummaryEncoder se = new SummaryEncoder();
-        System.out.println("Sumary size after pruning " + prunecounter + " elements: " + se.encode(summary));
+        System.err.println("Sumary size after pruning " + prunecounter + " elements: " + se.encode(summary));
 
         int i = 0;
         while (summary.getNodes().size() > 1 && size() > sizeLimit){
@@ -411,11 +411,19 @@ public class MergedSummary implements Benchmarkable {
             if (e.getSource().getContainedNodes().isEmpty() || e.getTarget().getContainedNodes().isEmpty()){
                 continue;
             }
-            objective += weights.get(e) * actual.get(e) / e.size();
+            objective += getSupport(e);
             totalW += weights.get(e);
         }
         totalWeight = totalW;
         return  objective / totalWeight;
+    }
+
+    double getSupport(BaseEdge edge){
+        double support = weights.get(edge) * actual.get(edge) / edge.size();
+        if ("relu".equals(objetive ) && support < 0.5){
+            return 0.0;
+        }
+        return support;
     }
 
     @Override
