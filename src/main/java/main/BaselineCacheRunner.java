@@ -17,8 +17,8 @@ import java.util.List;
  */
 public class BaselineCacheRunner {
 
-    private static String HEADER = "graph,method,queryset,storage,size,trainingF1,testF1,creationTime,graphTime,summaryTime";
-    private static String TEMPLATE = "%s,%s,%s,%d,%d,%f,%f,%f,%f,%f\n";
+    private static String HEADER = "graph,method,queryset,numqueries,storage,size,trainingF1,testF1,creationTime,graphTime,summaryTime";
+    private static String TEMPLATE = "%s,%s,%s,%d,%d,%d,%f,%f,%f,%f,%f\n";
 
     private static int FOLDSIZE = 5;
 
@@ -47,7 +47,7 @@ public class BaselineCacheRunner {
             }
             List<Benchmark.Result> results = benchmark.run(summaries, Dataset.I.getGraph());
             for (Benchmark.Result r: results){
-                output.write(String.format(TEMPLATE, graphFile, "cache", dir, sizeLimit, r.size, r.trainingF1,
+                output.write(String.format(TEMPLATE, graphFile, "cache", dir, Runner.queryLimit, sizeLimit, r.size, r.trainingF1,
                         r.testF1, r.trainingtime, r.graphtime, r.summarytime));
             }
             output.flush();
