@@ -1,8 +1,7 @@
 package graph;
 
 import javax.xml.crypto.Data;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by lukas on 03.05.18.
@@ -10,6 +9,7 @@ import java.util.Map;
 public class Dataset {
 
     public static Dataset I;
+    public List<Integer> blacklist = new ArrayList<>();
 
     private Map<String, Integer> labelToID;
     private Map<Integer, String> idtoLabel = new HashMap<>();
@@ -19,7 +19,17 @@ public class Dataset {
         Dataset.I = this;
         labelToID = new HashMap<>();
         idtoLabel = new HashMap<>();
-        this.graph = GraphImporter.parseGraph(filename, true);
+        graph = GraphImporter.parseGraph(filename, true);
+
+        PriorityQueue<BaseNode> pq = new PriorityQueue<>((n1, n2) -> {
+            int degree1 = graph.outEdgesFor(n1.getId()).size() + graph.inEdgesFor(n1.getId()).size();
+            int degree2 = graph.outEdgesFor(n2.getId()).size() + graph.inEdgesFor(n2.getId()).size();
+            return Integer.compare(-degree1, -degree2);
+        });
+        pq.addAll(graph.getNodes());
+        for (int i = 0; i < 0.01 * graph.getNodes().size(); i++){
+            blacklist.add(pq.poll().getId());
+        }
     }
 
     public BaseGraph getGraph(){
