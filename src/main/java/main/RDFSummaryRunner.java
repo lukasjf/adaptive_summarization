@@ -21,8 +21,6 @@ public class RDFSummaryRunner {
     private static String HEADER = "graph,method,queryset,storage,size,trainingF1,testF1,creationTime,graphTime,summaryTime";
     private static String TEMPLATE = "%s,%s,%s,%d,%d,%f,%f,%f,%f,%f\n";
 
-    private static int FOLDSIZE = 2;
-
     public static void main(String[] args) throws IOException {
         long sizeLimit = Long.parseLong(args[0]);
         String graphFile = args[1];
@@ -40,8 +38,9 @@ public class RDFSummaryRunner {
             System.out.println(dir);
             Benchmark benchmark = new Benchmark(dir);
 
-            Benchmark.Result result = benchmark.run(new RDFSummary(graphFile), Dataset.I.getGraph());
-            output.write(String.format(TEMPLATE, graphFile, "rdfsum", dir, sizeLimit, result.size, result.trainingF1,
+            RDFSummary rdf = new RDFSummary(graphFile);
+            Benchmark.Result result = benchmark.run(rdf, Dataset.I.getGraph());
+            output.write(String.format(TEMPLATE, graphFile, "rdfsum", dir, sizeLimit, rdf.size(), result.trainingF1,
                         result.testF1, -111.11, result.graphtime, result.summarytime));
             output.flush();
         }
