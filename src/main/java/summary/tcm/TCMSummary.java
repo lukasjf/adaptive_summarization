@@ -48,7 +48,7 @@ public class TCMSummary implements Benchmarkable {
         int numberEdgeTypes = graph.getNumberEdgeTypes();
         int k = 1;
         while (maxSize > numberHashes *
-                (8 * k + graph.getNodes().size() * 4 + k * k * 12 * numberEdgeTypes)){
+                (40 * k + graph.getNodes().size() * 4 + k * k * 16 * numberEdgeTypes)){
             k++;
         }
         k--;
