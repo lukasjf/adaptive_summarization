@@ -11,8 +11,8 @@ public class Dataset {
     public static Dataset I;
     public List<Integer> blacklist = new ArrayList<>();
 
-    private Map<String, Integer> labelToID;
-    private Map<Integer, String> idtoLabel = new HashMap<>();
+    public Map<String, Integer> labelToID;
+    public Map<Integer, String> idtoLabel = new HashMap<>();
     private BaseGraph graph;
 
     public Dataset(String filename){
