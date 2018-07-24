@@ -20,7 +20,7 @@ public class Benchmark {
         for (File f: new File(queryDir).listFiles()){
             String path = f.getAbsolutePath();
             String[] pathParts = path.split("/");
-            if (Integer.parseInt(pathParts[pathParts.length-1]) < Runner.queryLimit) {
+            if (Integer.parseInt(pathParts[pathParts.length-1]) <= Runner.queryLimit) {
                 queries.add(GraphImporter.parseGraph(f.getAbsolutePath()));
             }
         }
