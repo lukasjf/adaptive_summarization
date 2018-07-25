@@ -140,6 +140,13 @@ public class QueryGenerator {
             }
             System.out.println("Size " + s + " queries done");
         }
+
+
+        try(PrintStream ps = new PrintStream("focusmovie005")){
+            ps.println(focusNodes.stream().map(n->""+n.getId()).collect(Collectors.joining(",")));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
         serializeQueries();
         System.out.println(String.format("In total %d nodes out of %f were used", queryNodes.size(), graph.getNodes().size() * fraction));
         Set<String> focusLabels = focusNodes.stream().map(n->Dataset.I.labelFrom(n.getId())).collect(Collectors.toSet());
@@ -337,11 +344,6 @@ public class QueryGenerator {
                 queryFile.println("e " + edge.getSource().getId() + " " + edge.getTarget().getId() + " " + edge.getLabel());
             }
         }catch (FileNotFoundException e){
-            e.printStackTrace();
-        }
-        try(PrintStream ps = new PrintStream("focusmovie005")){
-            ps.println(focusNodes.stream().map(n->""+n.getId()).collect(Collectors.joining(",")));
-        } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
     }
