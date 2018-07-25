@@ -14,6 +14,10 @@ public class Runner {
 
     public static void main(String[] args) throws IOException {
         String method = args[0];
+        if ("noisy".equals(method)){
+            NoisyRunner.main(Arrays.copyOfRange(args, 1, args.length));
+            return;
+        }
         String output = args[1];
         Runner.queryLimit = Integer.parseInt(args[2]);
         Runner.outputFile = output;
