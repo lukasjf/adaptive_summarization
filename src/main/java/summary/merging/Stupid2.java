@@ -71,7 +71,7 @@ public class Stupid2 implements Benchmarkable {
                 outgoingLabelIndex.values().stream().mapToInt(Map::size).sum() * 16 < sizeLimit ){
             BaseNode node = pq.poll();
             last.add(node);
-            if (i++ % 100 == 0){
+            if (i++ % 1000 == 0){
                 System.out.println(se.encode(summary) + " " + (40 + 4 * pq.size()) + " " +
                         ingoingLabelIndex.values().stream().mapToInt(Map::size).sum() * 16 + " " +
                         outgoingLabelIndex.values().stream().mapToInt(Map::size).sum() * 16);
@@ -129,14 +129,14 @@ public class Stupid2 implements Benchmarkable {
 
         BaseNode largeNode = summary.addNode(Integer.MIN_VALUE, "");
 
-        for (int id: outgoingFor.keySet()){
-            for (BaseEdge e: outgoingFor.get(id)){
-                summary.addEdge(Integer.MIN_VALUE, e.getTarget().getId(), e.getLabel());
+        for (int id: ingoingLabelIndex.keySet()){
+            for (String openEdgeLabel: ingoingLabelIndex.get(id).keySet()){
+                summary.addEdge(Integer.MIN_VALUE, id, openEdgeLabel);
             }
         }
-        for (int id: ingoingFor.keySet()){
-            for (BaseEdge e: ingoingFor.get(id)){
-                summary.addEdge(e.getSource().getId(), Integer.MIN_VALUE, e.getLabel());
+        for (int id: outgoingLabelIndex.keySet()){
+            for (String openEdgeLabel: outgoingLabelIndex.get(id).keySet()){
+                summary.addEdge(id, Integer.MIN_VALUE, openEdgeLabel);
             }
         }
 
