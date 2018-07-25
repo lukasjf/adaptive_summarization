@@ -58,66 +58,84 @@ public class Stupid2 implements Benchmarkable {
 
 
         Set<Integer> hottest = new HashSet<>();
-        Map<Integer, List<BaseEdge>> ingoing = new HashMap<>();
-        int ingoingSize = 0;
-        Map<Integer, List<BaseEdge>> outgoing = new HashMap<>();
-        int outgoingSize = 0;
+        Map<Integer, List<BaseEdge>> ingoingFor = new HashMap<>();
+        Map<Integer, Map<String, Integer>> ingoingLabelIndex = new HashMap<>();
+        Map<Integer, List<BaseEdge>> outgoingFor = new HashMap<>();
+        Map<Integer, Map<String, Integer>> outgoingLabelIndex = new HashMap<>();
 
         List<BaseNode> last = new ArrayList<>();
 
         int i = 0;
-        while (size() + pq.size()*4 + ingoingSize + outgoingSize < sizeLimit ){
+        while (size() + 40 + pq.size()*4 +
+                ingoingLabelIndex.values().stream().mapToInt(Map::size).sum() * 16 +
+                outgoingLabelIndex.values().stream().mapToInt(Map::size).sum() * 16 < sizeLimit ){
             BaseNode node = pq.poll();
             last.add(node);
             if (i++ % 100 == 0){
-                System.out.println(se.encode(summary) + " " + heats.getOrDefault(node.getId(), 0.0)
-                        + " " + summary.getNodes().size() + " " + summary.getEdges().size());
+                System.out.println(se.encode(summary) + " " + (40 + 4 * pq.size()) + " " +
+                        ingoingLabelIndex.values().stream().mapToInt(Map::size).sum() * 16 + " " +
+                        outgoingLabelIndex.values().stream().mapToInt(Map::size).sum() * 16);
             }
             hottest.add(node.getId());
             BaseNode newNode = summary.addNode(node.getId(), Dataset.I.labelFrom(node.getId()));
             newNode.getContainedNodes().add(node.getId());
-            for (BaseEdge e: ingoing.getOrDefault(node.getId(), new ArrayList<>())){
-                summary.addEdge(e.getSource().getId(), e.getTarget().getId(), e.getLabel());
-                ingoingSize -= 16;
+            for (BaseEdge e: ingoingFor.getOrDefault(node.getId(), new ArrayList<>())){
+                summary.addEdge(e.getSource().getId(), node.getId(), e.getLabel());
+                int usage = outgoingLabelIndex.get(e.getSource().getId()).get(e.getLabel()) -1;
+                if (usage == 0){
+                    outgoingLabelIndex.get(e.getSource().getId()).remove(e.getLabel());
+                } else{
+                    outgoingLabelIndex.get(e.getSource().getId()).put(e.getLabel(), usage);
+                }
             }
-            ingoing.remove(node.getId());
+            ingoingFor.remove(node.getId());
 
-            for (BaseEdge e: outgoing.getOrDefault(node.getId(), new ArrayList<>())){
-                summary.addEdge(e.getSource().getId(), e.getTarget().getId(), e.getLabel());
-                outgoingSize -= 16;
+            for (BaseEdge e: outgoingFor.getOrDefault(node.getId(), new ArrayList<>())){
+                summary.addEdge(node.getId(), e.getTarget().getId(), e.getLabel());
+                int usage = ingoingLabelIndex.get(e.getTarget().getId()).get(e.getLabel()) - 1;
+                if (usage == 0){
+                    ingoingLabelIndex.get(e.getTarget().getId()).remove(e.getLabel());
+                } else {
+                    ingoingLabelIndex.get(e.getTarget().getId()).put(e.getLabel(), usage);
+                }
             }
-            outgoing.remove(node.getId());
+            outgoingFor.remove(node.getId());
 
+
+            outgoingLabelIndex.put(node.getId(), new HashMap<>());
+            ingoingLabelIndex.put(node.getId(), new HashMap<>());
             for (BaseEdge e: original.outEdgesFor(node.getId())){
                 if (!hottest.contains(e.getTarget().getId())){
-                    if (!ingoing.containsKey(e.getTarget().getId())){
-                        ingoing.put(e.getTarget().getId(), new ArrayList<>());
+                    if (!ingoingFor.containsKey(e.getTarget().getId())){
+                        ingoingFor.put(e.getTarget().getId(), new ArrayList<>());
                     }
-                    ingoing.get(e.getTarget().getId()).add(e);
-                    ingoingSize += 16;
+                    ingoingFor.get(e.getTarget().getId()).add(e);
+                    int usage = outgoingLabelIndex.get(node.getId()).getOrDefault(e.getLabel(), 0) + 1;
+                    outgoingLabelIndex.get(node.getId()).put(e.getLabel(), usage);
                 }
             }
 
             for (BaseEdge e: original.inEdgesFor(node.getId())){
                 if (!hottest.contains(e.getSource().getId())){
-                    if (!outgoing.containsKey(e.getSource().getId())){
-                        outgoing.put(e.getSource().getId(), new ArrayList<>());
+                    if (!outgoingFor.containsKey(e.getSource().getId())){
+                        outgoingFor.put(e.getSource().getId(), new ArrayList<>());
                     }
-                    outgoing.get(e.getSource().getId()).add(e);
-                    outgoingSize += 16;
+                    outgoingFor.get(e.getSource().getId()).add(e);
+                    int usage = ingoingLabelIndex.get(node.getId()).getOrDefault(e.getLabel(), 0) + 1;
+                    ingoingLabelIndex.get(node.getId()).put(e.getLabel(), usage);
                 }
             }
         }
 
         BaseNode largeNode = summary.addNode(Integer.MIN_VALUE, "");
 
-        for (int id: outgoing.keySet()){
-            for (BaseEdge e: outgoing.get(id)){
+        for (int id: outgoingFor.keySet()){
+            for (BaseEdge e: outgoingFor.get(id)){
                 summary.addEdge(Integer.MIN_VALUE, e.getTarget().getId(), e.getLabel());
             }
         }
-        for (int id: ingoing.keySet()){
-            for (BaseEdge e: ingoing.get(id)){
+        for (int id: ingoingFor.keySet()){
+            for (BaseEdge e: ingoingFor.get(id)){
                 summary.addEdge(e.getSource().getId(), Integer.MIN_VALUE, e.getLabel());
             }
         }
@@ -148,6 +166,8 @@ public class Stupid2 implements Benchmarkable {
             System.out.println("Merge again node " + n.getId());
             mergeNodes(Integer.MIN_VALUE, n.getId());
         }
+        System.out.println("Nodes: " + summary.getNodes().size());
+        System.out.println("Start Queries ");
     }
 
     private void mergeNodes(int destinationID, int nodeToMergeID) {
