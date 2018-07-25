@@ -141,7 +141,10 @@ public class Stupid2 implements Benchmarkable {
         }
 
         Set<String> superLabels = new HashSet<>();
-        for (;pq.size() > 0;){
+        for (int k = 0;pq.size() > 0;k++){
+            if (k % 10000 == 0){
+                System.out.print(".");
+            }
             BaseNode n = pq.poll();
             largeNode.getContainedNodes().add(n.getId());
             for (BaseEdge e: original.outEdgesFor(n.getId())){
