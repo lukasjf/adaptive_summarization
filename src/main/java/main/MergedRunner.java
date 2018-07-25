@@ -4,6 +4,7 @@ import evaluation.Benchmark;
 import evaluation.Benchmarkable;
 import graph.Dataset;
 import summary.merging.*;
+import summary.merging.Stupid2;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -42,6 +43,11 @@ public class MergedRunner {
                 t = Double.parseDouble(args[4]);
                 benchmarks = Arrays.copyOfRange(args, 5, args.length);
                 break;
+            case "stupid2":
+                k = Integer.parseInt(args[3]);
+                t = Double.parseDouble(args[4]);
+                benchmarks = Arrays.copyOfRange(args, 5, args.length);
+                break;
             default:
                 benchmarks = Arrays.copyOfRange(args, 3, args.length);
                 break;
@@ -74,6 +80,9 @@ public class MergedRunner {
                         break;
                     case "stupid":
                         summary = new StupidMerge(Dataset.I.getGraph(), "", sizeLimit, k, t);
+                        break;
+                    case "stupid2":
+                        summary = new Stupid2(Dataset.I.getGraph(), sizeLimit, k, t);
                         break;
                     default:
                         summary = new MergedSummary(Dataset.I.getGraph(), "random", sizeLimit, new PlainWeights());
