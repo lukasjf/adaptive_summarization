@@ -53,6 +53,7 @@ public class Benchmark {
         List<Result> runs = new ArrayList<>();
 
         for (int i = 0; i < folds; i++){
+            long graphtime = 0, summarytime = 0;
             Benchmarkable b = bs[i];
             Result run = new Result();
             // create train/test split
@@ -61,25 +62,25 @@ public class Benchmark {
             trainingQueries = queries.subList(0, splitIndex);
             testQueries = queries.subList(splitIndex + 1, queries.size()-1);
 
+            long start;
             Map<BaseGraph, List<Map<String, String>>> trainingSet = new HashMap<>();
             for (BaseGraph query: trainingQueries){
-                trainingSet.put(query, g.query(query));
+                start = System.currentTimeMillis();
+                List<Map<String, String>> results = g.query(query);
+                graphtime += System.currentTimeMillis() - start;
+                trainingSet.put(query, results);
             }
-            long start = System.currentTimeMillis();
+            start = System.currentTimeMillis();
             b.train(trainingSet);
             run.trainingtime = System.currentTimeMillis() - start;
             run.trainingtime = run.trainingtime / 1000.0;
 
-            long graphtime = 0, summarytime = 0;
             double trainingResult = 0.0, testResult = 0.0;
             for (BaseGraph q: trainingQueries){
                 start = System.currentTimeMillis();
-                List<Map<String, String>> graphResults = g.query(q);
-                graphtime += System.currentTimeMillis() - start;
-                start = System.currentTimeMillis();
                 List<Map<String, String>> summaryResults = b.query(q, 15);
                 summarytime += System.currentTimeMillis() - start;
-                trainingResult += F1Score.fqScoreFor(graphResults, summaryResults);
+                trainingResult += F1Score.fqScoreFor(trainingSet.get(q), summaryResults);
                 System.out.print(".");
             }
 
