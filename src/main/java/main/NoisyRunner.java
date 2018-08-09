@@ -8,6 +8,9 @@ import summary.merging.HeatWeights;
 import summary.merging.MergedSummary;
 import summary.merging.Stupid2;
 import summary.merging.StupidMerge;
+import summary.rdfsummaries.RDFSummary;
+import summary.tcm.TCMSummary;
+import summary.topdown.HeuristicSummary;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -34,6 +37,7 @@ public class NoisyRunner {
         String graph = args[4];
         new Dataset(graph);
         String queryset = args[5];
+        int folds = Integer.parseInt(args[6]);
         Benchmarkable b = null;
         boolean isAdaptive = false;
 
@@ -48,19 +52,35 @@ public class NoisyRunner {
         FileWriter outputFile = new FileWriter(resultFile, true);
 
         System.out.println(queryset);
-        for (int i = 0; i < FOLDSIZE; i++){
+        for (int i = 0; i < folds; i++){
             switch (method){
+                case "tcm":
+                    b = TCMSummary.createFromGraph(Dataset.I.getGraph(), 3, sizeLimit);
+                    isAdaptive = false;
+                    folds = -1;
+                    break;
+                case "rdf":
+                    b = new RDFSummary(graph);
+                    isAdaptive = false;
+                    folds = -1;
+                    break;
+                case "topdown":
+                    b = new HeuristicSummary(Dataset.I.getGraph(), sizeLimit, "exist");
+                    isAdaptive = true;
+                    break;
                 case "cache":
                     b = new SummaryCache(sizeLimit);
+                    isAdaptive = true;
                     break;
                 case "stupid":
-                    t = Double.parseDouble(args[6]);
+                    t = Double.parseDouble(args[7]);
                     b = new Stupid2(Dataset.I.getGraph(), sizeLimit, t);
                     isAdaptive = true;
                     break;
                 case "bottomup":
-                    t = Double.parseDouble(args[6]);
+                    t = Double.parseDouble(args[7]);
                     b = new MergedSummary(Dataset.I.getGraph(), "full", sizeLimit, new HeatWeights(t));
+                    isAdaptive = true;
                     break;
             }
             NoisyBenchmark.Result r = new NoisyBenchmark(queryset).run(b, Dataset.I.getGraph(), isAdaptive);
