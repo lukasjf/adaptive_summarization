@@ -5,6 +5,7 @@ import evaluation.Benchmarkable;
 import graph.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by lukas on 25.06.18.
@@ -21,12 +22,12 @@ public class Stupid2 implements Benchmarkable {
     int k;
     double t;
 
-    public Stupid2(BaseGraph originalGraph, long sizeLimit, int k, double t){
+    public Stupid2(BaseGraph originalGraph, long sizeLimit, double t){
         this.original = originalGraph;
         this.summary = new BaseGraph();
         this.sizeLimit = sizeLimit;
         this.t = t;
-        this.k = k;
+        this.k = (int) (2 * t * Math.log(1/0.001)) + 1;
     }
 
     @Override
@@ -41,14 +42,6 @@ public class Stupid2 implements Benchmarkable {
 
     @Override
     public void train(Map<BaseGraph, List<Map<String, String>>> queries) {
-        /*for (BaseNode n: original.getNodes()){
-            summary.addNode(n.getId(), Dataset.I.labelFrom(n.getId()));
-            summary.nodeWithId(n.getId()).getContainedNodes().addAll(n.getContainedNodes());
-        }
-        for (BaseEdge e: original.getEdges()){
-            summary.addEdge(e.getSource().getId(), e.getTarget().getId(), e.getLabel());
-        }*/
-
         initializeWeights(queries);
 
         PriorityQueue<BaseNode> pq = new PriorityQueue<>((o1, o2) ->
@@ -238,131 +231,80 @@ public class Stupid2 implements Benchmarkable {
             }
         }
 
+        double eps = 1.0E-7;
+        double[] psis = computePsis();
 
-        int counter = 0;
-        Map<Integer, Integer> forward = new HashMap<>();
-        Map<Integer, Integer> backward = new HashMap<>();
+        Map<BaseNode, Double> heat = new HashMap<>();
+        Map<Entry, Double> residuals = new HashMap<>();
 
-        Set<BaseNode> kNeighborHood = findNeighborhood(queries);
-        System.out.println(original.getNodes().size()+ " " + kNeighborHood.size());
-
-        double[][] uStart = new double[kNeighborHood.size()][1];
-        double[][] L = new double[kNeighborHood.size()][kNeighborHood.size()];
-
-        for (BaseNode n: kNeighborHood){
-            forward.put(n.getId(), counter);
-            backward.put(counter, n.getId());
-            uStart[counter][0] = heats.getOrDefault(n.getId(), 0.0);
-            int degree = original.outEdgesFor(n.getId()).size() + original.inEdgesFor(n.getId()).size();
-            L[counter][counter] = 1.0/degree;
-            counter++;
+        List<Entry> queue = new ArrayList<>();
+        for (int key: heats.keySet()){
+            Entry entry = new Entry(Dataset.I.getGraph().nodeWithId(key), 0);
+            residuals.put(entry, heats.get(key));
+            queue.add(entry);
         }
 
-        for (BaseNode n: kNeighborHood){
-            int id = forward.get(n.getId());
-            for (BaseEdge e: original.outEdgesFor(n.getId())){
-                if (!kNeighborHood.contains(e.getTarget())){
+        while (!queue.isEmpty()){
+            Entry entry = queue.remove(0);
+            Set<BaseNode> neighbors = getNeighbors(entry.node);
+            double res = residuals.get(entry);
+            heat.put(entry.node, res + heat.getOrDefault(entry.node, 0.0));
+            double mass = (t * res) / (1.0 + entry.iter) / neighbors.size();
+            residuals.put(entry, 0.0);
+            for (BaseNode n: neighbors){
+                Entry next = new Entry(n, entry.iter + 1);
+                if (next.iter == k){
+                    heat.put(next.node, heat.getOrDefault(next.node, 0.0) + res/neighbors.size());
                     continue;
                 }
-                int otherid = forward.get(e.getTarget().getId());
-                L[id][otherid] = -1.0 * L[otherid][otherid];
-                L[otherid][id] = -1.0 * L[id][id];
+                if (!residuals.containsKey(next)){
+                    residuals.put(next, 0.0);
+                }
+                double threshold = Math.exp(t)*eps*getNeighbors(n).size();
+                threshold /= (k * psis[next.iter]);
+                if (residuals.get(next) < threshold && residuals.get(next) + mass >= threshold){
+                    queue.add(entry);
+                }
+                residuals.put(next, residuals.get(next) + mass);
             }
         }
-
-        for (int i = 0; i < kNeighborHood.size(); i++){
-            L[i][i] = 1.0;
-        }
-        System.out.println("Matrices initialized");
-
-        double[][] running = new double[kNeighborHood.size()][kNeighborHood.size()];
-        double[][] exp = new double[kNeighborHood.size()][kNeighborHood.size()];
-        for (int i = 0; i < exp.length; i++){
-            exp[i][i] = 1.0;
-            running[i][i] = 1.0;
-        }
-        double factorial = 1;
-        double power = 1;
-        System.out.println("Start exponential");
-        for (int i = 1; i <= 4; i++){
-            running = mult(L, running);
-            //running = running.mmul(L);
-            factorial *= i;
-            power *= -1 * t;
-            add(exp, running, power / factorial);
-            //exp = exp.add(running.mul(power/ factorial));
-            System.out.println("Iteration complete");
-        }
-
-        System.out.println("Exponential Matrix computed");
-
-        //DoubleMatrix heat = exp.mmul(uStart);
-        double[][] heat = mult(exp, uStart);
-        for (int i = 0; i < heat.length; i++){
-            heats.put(backward.get(i), heat[i][0]);
-        }
-        System.out.println("Weights Computed");
     }
 
-    private Set<BaseNode> findNeighborhood(Map<BaseGraph, List<Map<String, String>>> queries) {
-        Set<BaseNode> nb = new HashSet<>();
-
-        for (List<Map<String, String>> results: queries.values()){
-            for (Map<String, String> result: results){
-                for (String res: result.values()){
-                    BaseNode node = original.nodeWithId(Dataset.I.IDFrom(res));
-                    if (!Dataset.I.blacklist.contains(node.getId())){
-                        nb.add(node);
-                    }
-                }
-            }
+    private double[] computePsis() {
+        double[] psis = new double[k+1];
+        psis[k] = 1.0;
+        for (int i = k-1; i > 0; i--){
+            psis[i] = psis[i+1] * t / (1.0 + i) + 1;
         }
-        Set<BaseNode> expandNodes = new HashSet<>(nb);
-        for (int i = 0; i < k; i++){
-            Set<BaseNode> newNodes = new HashSet<>();
-            for (BaseNode n: expandNodes){
-                for (BaseEdge e: original.outEdgesFor(n.getId())){
-                    if (!Dataset.I.blacklist.contains(e.getTarget().getId())){
-                        newNodes.add(e.getTarget());
-                    }
-                }
-                for (BaseEdge e: original.inEdgesFor(n.getId())){
-                    if (!Dataset.I.blacklist.contains(e.getSource().getId())) {
-                        newNodes.add(e.getSource());
-                    }
-                }
-            }
-            expandNodes = new HashSet<>(newNodes);
-            nb.addAll(newNodes);
-        }
-        return nb;
+        return psis;
     }
 
-    private double[][] mult(double[][] a, double[][]b){
-        double[][] result = new double[a.length][b[0].length];
-        for (int i = 0; i < result.length; i++){
-            for (int k = 0; k < a.length; k++){
-                if (a[i][k] != 0){
-                    for (int j = 0; j < b[0].length; j++){
-                        result[i][j] += a[i][k] * b[k][j];
-                    }
-                }
-            }
-        }
-        return result;
-    }
-
-    public void add(double[][] target, double[][] add, double scale){
-        for (int i = 0; i < target.length; i++){
-            for (int j = 0; j < target[0].length; j++){
-                target[i][j] += add[i][j] * scale;
-            }
-        }
+    private Set<BaseNode> getNeighbors(BaseNode node) {
+        Set<BaseNode> nodes = Dataset.I.getGraph().outEdgesFor(node.getId()).stream()
+                .map(BaseEdge::getTarget).collect(Collectors.toSet());
+        nodes.addAll(Dataset.I.getGraph().inEdgesFor(node.getId()).stream()
+                .map(BaseEdge::getSource).collect(Collectors.toList()));
+        return nodes;
     }
 
     @Override
     public long size() {
         return new SummaryEncoder().encode(summary);
     }
+
+    private class Entry{
+        int iter;
+        BaseNode node;
+        Entry(BaseNode node, int iter){
+            this.iter = iter;
+            this.node = node;
+        }
+
+        @Override
+        public int hashCode(){
+            return Integer.valueOf(iter).hashCode() + node.hashCode();
+        }
+    }
+
 
 }

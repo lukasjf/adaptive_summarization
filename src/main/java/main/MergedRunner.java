@@ -82,7 +82,7 @@ public class MergedRunner {
                         summary = new StupidMerge(Dataset.I.getGraph(), "", sizeLimit, k, t);
                         break;
                     case "stupid2":
-                        summary = new Stupid2(Dataset.I.getGraph(), sizeLimit, k, t);
+                        summary = new Stupid2(Dataset.I.getGraph(), sizeLimit, t);
                         break;
                     default:
                         summary = new MergedSummary(Dataset.I.getGraph(), "random", sizeLimit, new PlainWeights());

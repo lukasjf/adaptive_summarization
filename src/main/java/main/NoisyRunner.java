@@ -4,6 +4,8 @@ import evaluation.Benchmarkable;
 import evaluation.NoisyBenchmark;
 import graph.Dataset;
 import summary.caching.SummaryCache;
+import summary.merging.HeatWeights;
+import summary.merging.MergedSummary;
 import summary.merging.Stupid2;
 import summary.merging.StupidMerge;
 
@@ -33,6 +35,7 @@ public class NoisyRunner {
         new Dataset(graph);
         String queryset = args[5];
         Benchmarkable b = null;
+        boolean isAdaptive = false;
 
         int k = -1;
         double t = -1;
@@ -51,17 +54,16 @@ public class NoisyRunner {
                     b = new SummaryCache(sizeLimit);
                     break;
                 case "stupid":
-                    k = Integer.parseInt(args[7]);
-                    t = Double.parseDouble(args[8]);
-                    b = new StupidMerge(Dataset.I.getGraph(), "", sizeLimit, k, t);
+                    t = Double.parseDouble(args[6]);
+                    b = new Stupid2(Dataset.I.getGraph(), sizeLimit, t);
+                    isAdaptive = true;
                     break;
-                case "stupid2":
-                    k = Integer.parseInt(args[7]);
-                    t = Double.parseDouble(args[8]);
-                    b = new Stupid2(Dataset.I.getGraph(), sizeLimit, k, t);
+                case "bottomup":
+                    t = Double.parseDouble(args[6]);
+                    b = new MergedSummary(Dataset.I.getGraph(), "full", sizeLimit, new HeatWeights(k, t));
                     break;
             }
-            NoisyBenchmark.Result r = new NoisyBenchmark(queryset).run(b, Dataset.I.getGraph());
+            NoisyBenchmark.Result r = new NoisyBenchmark(queryset).run(b, Dataset.I.getGraph(), isAdaptive);
             outputFile.write(String.format(TEMPLATE, graph, method, queryset, Runner.queryLimit, k, t, sizeLimit,
                     b.size(), r.trainingF1, r.testF1, r.cleanTrainingF1, r.cleanTestF1, r.trainingtime,
                     r.graphtime, r.summarytime));
