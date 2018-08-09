@@ -28,8 +28,6 @@ public class Generator2 {
     private Map<BaseNode, Double> residuals = new HashMap<>();
     private Map<BaseNode, Double> values = new HashMap<>();
 
-    private int fromSize;
-    private int toSize;
     private int numberPerSize;
 
     boolean noisy;
@@ -44,13 +42,11 @@ public class Generator2 {
 
     int seedNumber;
 
-    public Generator2(String input, String output, int queryFromSize, int queryToSize, int queriesPerSize,
+    public Generator2(String input, String output, int queriesPerSize,
                           double graphFraction, boolean noisy, int seedNumber){
         long seedValue = 1L;
         random = new Random(seedValue);
 
-        this.fromSize = queryFromSize;
-        this.toSize = queryToSize;
         this.numberPerSize = queriesPerSize;
         this.fraction = graphFraction;
         this.noisy = noisy;
@@ -159,16 +155,24 @@ public class Generator2 {
     }
 
     private void generate(){
+        int[] sizes = new int[]{2,2,2,2,2,2,2,3,4,5};
         for (int i = 0; i < numberPerSize; i++){
+            attempt:
             for (int run = 0; run < tries; run++){
-                int size = random.nextInt(toSize - fromSize + 1) + fromSize;
+                int size = sizes[random.nextInt(sizes.length)];
                 BaseGraph query = new BaseGraph();
                 BaseNode starting = getRandomNode();
                 BaseNode next = starting;
                 query.addNode(starting.getId(), Dataset.I.labelFrom(starting.getId()));
                 for (int k = 1; k < size; k++){
-                    List<BaseEdge> candidates = Dataset.I.getGraph().outEdgesFor(next.getId());
-                    candidates.addAll(Dataset.I.getGraph().inEdgesFor(next.getId()));
+                    List<BaseEdge> candidates = Dataset.I.getGraph().outEdgesFor(next.getId()).stream().filter(e ->
+                        focusNodes.contains(e.getTarget())).collect(Collectors.toList());
+                    candidates.addAll(Dataset.I.getGraph().inEdgesFor(next.getId()).stream().filter(e ->
+                        focusNodes.contains(e.getSource())).collect(Collectors.toList()));
+                    if (candidates.isEmpty()){
+                        continue attempt;
+                    }
+
                     BaseEdge expanding = candidates.get(random.nextInt(candidates.size()));
                     while (expanding.getSource() == expanding.getTarget()){
                         candidates.get(random.nextInt(candidates.size()));
@@ -274,13 +278,11 @@ public class Generator2 {
     public static void main(String[] args){
         String dataFile = args[0];
         String outputDir = args[1];
-        int queryFromSize = Integer.parseInt(args[2]);
-        int queryToSize = Integer.parseInt(args[3]);
-        int queriesPerSize = Integer.parseInt(args[4]);
-        double graphFraction = Double.parseDouble(args[5]);
-        boolean noisy = Boolean.parseBoolean(args[6]);
-        int numberseeds = Integer.parseInt(args[7]);
-        Generator2 q = new Generator2(dataFile, outputDir, queryFromSize, queryToSize, queriesPerSize, graphFraction, noisy, numberseeds);
+        int queriesPerSize = Integer.parseInt(args[2]);
+        double graphFraction = Double.parseDouble(args[3]);
+        boolean noisy = Boolean.parseBoolean(args[4]);
+        int numberseeds = Integer.parseInt(args[5]);
+        Generator2 q = new Generator2(dataFile, outputDir, queriesPerSize, graphFraction, noisy, numberseeds);
         q.generate();
     }
 }
