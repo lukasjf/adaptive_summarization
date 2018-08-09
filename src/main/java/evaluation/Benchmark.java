@@ -6,6 +6,7 @@ import main.Runner;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by lukas on 19.04.18.
@@ -16,13 +17,11 @@ public class Benchmark {
     private List<BaseGraph> trainingQueries = new ArrayList<>();
     private List<BaseGraph> testQueries = new ArrayList<>();
 
+    private Random random = new Random();
+
     public Benchmark(String queryDir) {
         for (File f: new File(queryDir).listFiles()){
-            String path = f.getAbsolutePath();
-            String[] pathParts = path.split("/");
-            if (Integer.parseInt(pathParts[pathParts.length-1]) <= Runner.queryLimit) {
-                queries.add(GraphImporter.parseGraph(f.getAbsolutePath()));
-            }
+            queries.add(GraphImporter.parseGraph(f.getAbsolutePath()));
         }
     }
 
@@ -59,8 +58,14 @@ public class Benchmark {
             // create train/test split
             Collections.shuffle(queries);
             int splitIndex = (int) (0.7 * queries.size());
-            trainingQueries = queries.subList(0, splitIndex);
-            testQueries = queries.subList(splitIndex + 1, queries.size()-1);
+            for (int j = 0; j < Runner.queryLimit; j++){
+                BaseGraph query = queries.get(random.nextInt(queries.size()));
+                while (trainingQueries.contains(query)){
+                    query = queries.get(random.nextInt(queries.size()));
+                }
+                trainingQueries.add(query);
+            }
+            testQueries = queries.stream().filter(q -> !trainingQueries.contains(q)).collect(Collectors.toList());
 
             long start;
             Map<BaseGraph, List<Map<String, String>>> trainingSet = new HashMap<>();
