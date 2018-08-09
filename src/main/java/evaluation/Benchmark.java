@@ -57,7 +57,6 @@ public class Benchmark {
             Result run = new Result();
             // create train/test split
             Collections.shuffle(queries);
-            int splitIndex = (int) (0.7 * queries.size());
             for (int j = 0; j < Runner.queryLimit; j++){
                 BaseGraph query = queries.get(random.nextInt(queries.size()));
                 while (trainingQueries.contains(query)){

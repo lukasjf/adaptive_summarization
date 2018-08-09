@@ -32,7 +32,6 @@ public class NoisyRunner {
         String graph = args[4];
         new Dataset(graph);
         String queryset = args[5];
-        String foucsset = args[6];
         Benchmarkable b = null;
 
         int k = -1;
@@ -62,7 +61,7 @@ public class NoisyRunner {
                     b = new Stupid2(Dataset.I.getGraph(), sizeLimit, k, t);
                     break;
             }
-            NoisyBenchmark.Result r = new NoisyBenchmark(queryset, foucsset).run(b, Dataset.I.getGraph());
+            NoisyBenchmark.Result r = new NoisyBenchmark(queryset).run(b, Dataset.I.getGraph());
             outputFile.write(String.format(TEMPLATE, graph, method, queryset, Runner.queryLimit, k, t, sizeLimit,
                     b.size(), r.trainingF1, r.testF1, r.cleanTrainingF1, r.cleanTestF1, r.trainingtime,
                     r.graphtime, r.summarytime));

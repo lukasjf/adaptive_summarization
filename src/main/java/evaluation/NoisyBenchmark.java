@@ -23,31 +23,47 @@ public class NoisyBenchmark {
 
     private Set<String> focusLabels;
 
-    public NoisyBenchmark(String queryDir, String focusFile) {
-        for (File f: new File(queryDir).listFiles()){
-            String path = f.getAbsolutePath();
-            String[] pathParts = path.split("/");
-            if (Integer.parseInt(pathParts[pathParts.length-1]) <= Runner.queryLimit) {
-                queries.add(GraphImporter.parseGraph(f.getAbsolutePath()));
+    private Random random = new Random();
+
+    public NoisyBenchmark(String queryDir) {
+        for (File f : new File(queryDir).listFiles()) {
+            if (f.getAbsolutePath().contains("focusset")){
+                continue;
             }
+            queries.add(GraphImporter.parseGraph(f.getAbsolutePath()));
         }
-        try (BufferedReader br = new BufferedReader(new FileReader(new File(focusFile)))){
+
+        try (BufferedReader br = new BufferedReader(new FileReader(new File(queryDir + "/focusset")))) {
             String focus = br.readLine();
             focusLabels = Arrays.stream(focus.split(",")).map(Integer::parseInt)
-                    .map(i-> Dataset.I.labelFrom(i)).collect(Collectors.toSet());
+                    .map(i -> Dataset.I.labelFrom(i)).collect(Collectors.toSet());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public Result run(Benchmarkable b, BaseGraph g){
+        return run(b, g, false);
+    }
+
+    public Result run(Benchmarkable b, BaseGraph g, boolean isAdaptive){
         long graphtime = 0, summarytime = 0;
         Result run = new Result();
         // create train/test split
         Collections.shuffle(queries);
-        int splitIndex = (int) (0.7 * queries.size());
-        trainingQueries = queries.subList(0, splitIndex);
-        testQueries = queries.subList(splitIndex + 1, queries.size()-1);
+        if (isAdaptive) {
+            for (int j = 0; j < Runner.queryLimit; j++) {
+                BaseGraph query = queries.get(random.nextInt(queries.size()));
+                while (trainingQueries.contains(query)) {
+                    query = queries.get(random.nextInt(queries.size()));
+                }
+                trainingQueries.add(query);
+            }
+            testQueries = queries.stream().filter(q -> !trainingQueries.contains(q)).collect(Collectors.toList());
+        }
+        else{
+            testQueries = queries;
+        }
 
         long start;
         Map<BaseGraph, List<Map<String, String>>> trainingSet = new HashMap<>();
