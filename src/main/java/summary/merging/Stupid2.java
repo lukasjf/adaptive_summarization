@@ -19,6 +19,9 @@ public class Stupid2 implements Benchmarkable {
     Map<Integer, Double> heats = new HashMap<>();
 
     SummaryEncoder se = new SummaryEncoder();
+    double EPSILON = 1.0E-4;
+
+
     int k;
     double t;
 
@@ -27,7 +30,7 @@ public class Stupid2 implements Benchmarkable {
         this.summary = new BaseGraph();
         this.sizeLimit = sizeLimit;
         this.t = t;
-        this.k = (int) (2 * t * Math.log(1/0.001)) + 1;
+        this.k = (int) (2 * t * Math.log(1/EPSILON)) + 1;
     }
 
     @Override
@@ -231,16 +234,16 @@ public class Stupid2 implements Benchmarkable {
             }
         }
 
-        double eps = 1.0E-7;
         double[] psis = computePsis();
 
         Map<BaseNode, Double> heat = new HashMap<>();
         Map<Entry, Double> residuals = new HashMap<>();
 
         List<Entry> queue = new ArrayList<>();
+        double heatsum = heats.values().stream().mapToDouble(d->d).sum();
         for (int key: heats.keySet()){
             Entry entry = new Entry(Dataset.I.getGraph().nodeWithId(key), 0);
-            residuals.put(entry, heats.get(key));
+            residuals.put(entry, heats.get(key)/heatsum);
             queue.add(entry);
         }
 
@@ -260,7 +263,7 @@ public class Stupid2 implements Benchmarkable {
                 if (!residuals.containsKey(next)){
                     residuals.put(next, 0.0);
                 }
-                double threshold = Math.exp(t)*eps*getNeighbors(n).size();
+                double threshold = Math.exp(t)*EPSILON*getNeighbors(n).size();
                 threshold /= (k * psis[next.iter]);
                 if (residuals.get(next) < threshold && residuals.get(next) + mass >= threshold){
                     queue.add(entry);
@@ -268,6 +271,10 @@ public class Stupid2 implements Benchmarkable {
                 residuals.put(next, residuals.get(next) + mass);
             }
         }
+        for (Entry n: residuals.keySet()){
+            heats.put(n.node.getId(), residuals.get(n) + heat.getOrDefault(n.node, 0.0));
+        }
+        int i = 0;
     }
 
     private double[] computePsis() {

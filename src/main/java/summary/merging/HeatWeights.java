@@ -20,9 +20,10 @@ public class HeatWeights implements WeightCreation {
 
     int k;
     double t;
+    double EPSILON = 1.0e-4;
 
     public HeatWeights(double t){
-        this.k = (int) (2 * t * Math.log(1/0.001)) + 1;
+        this.k = (int) (2 * t * Math.log(1/EPSILON)) + 1;
         this.t = t;
     }
 
@@ -37,7 +38,6 @@ public class HeatWeights implements WeightCreation {
             }
         }
 
-        double eps = 1.0E-7;
         double[] psis = computePsis();
 
         Map<BaseNode, Double> heat = new HashMap<>();
@@ -66,13 +66,16 @@ public class HeatWeights implements WeightCreation {
                 if (!residuals.containsKey(next)) {
                     residuals.put(next, 0.0);
                 }
-                double threshold = Math.exp(t) * eps * getNeighbors(n).size();
+                double threshold = Math.exp(t) * EPSILON * getNeighbors(n).size();
                 threshold /= (k * psis[next.iter]);
                 if (residuals.get(next) < threshold && residuals.get(next) + mass >= threshold) {
                     queue.add(entry);
                 }
                 residuals.put(next, residuals.get(next) + mass);
             }
+        }
+        for (Entry n: residuals.keySet()){
+            heats.put(n.node.getId(), residuals.get(n) + heat.getOrDefault(n.node, 0.0));
         }
         for (BaseEdge e : merged.summary.getEdges()) {
             double sourceHeat = heats.getOrDefault(e.getSource().getId(), 0.0);
