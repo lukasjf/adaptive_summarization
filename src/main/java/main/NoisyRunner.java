@@ -79,7 +79,7 @@ public class NoisyRunner {
                     break;
                 case "bottomup":
                     t = Double.parseDouble(args[7]);
-                    b = new MergedSummary(Dataset.I.getGraph(), "full", sizeLimit, new HeatWeights(t));
+                    b = new MergedSummary(Dataset.I.getGraph(), "random", sizeLimit, new HeatWeights(t));
                     isAdaptive = true;
                     break;
             }
