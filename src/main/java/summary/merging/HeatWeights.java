@@ -44,9 +44,10 @@ public class HeatWeights implements WeightCreation {
         Map<Entry, Double> residuals = new HashMap<>();
 
         List<Entry> queue = new ArrayList<>();
+        double heatsum = heats.values().stream().mapToDouble(d->d).sum();
         for (int key : heats.keySet()) {
             Entry entry = new Entry(Dataset.I.getGraph().nodeWithId(key), 0);
-            residuals.put(entry, heats.get(key));
+            residuals.put(entry, heats.get(key)/heatsum);
             queue.add(entry);
         }
 
