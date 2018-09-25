@@ -69,23 +69,14 @@ public class MergedRunner {
             for (int i = 0; i < FOLDSIZE; i++){
                 Benchmarkable summary;
                 switch (mergeMethod){
-                    case "reg":
-                        summary = new MergedSummary(Dataset.I.getGraph(), "full", sizeLimit, new KHopNeighborWeights(1, 0.15));
-                        break;
-                    case "neighbor":
-                        summary = new MergedSummary(Dataset.I.getGraph(), "full", sizeLimit, new KNeighborWeightsNormalized(1, 0.15));
-                        break;
                     case "heat":
                         summary = new MergedSummary(Dataset.I.getGraph(), "random", sizeLimit, new HeatWeights(t));
                         break;
                     case "stupid":
                         summary = new StupidMerge(Dataset.I.getGraph(), "", sizeLimit, k, t);
                         break;
-                    case "stupid2":
-                        summary = new Stupid2(Dataset.I.getGraph(), sizeLimit, t);
-                        break;
                     default:
-                        summary = new MergedSummary(Dataset.I.getGraph(), "random", sizeLimit, new PlainWeights());
+                        summary = new Stupid2(Dataset.I.getGraph(), sizeLimit, t);
                         break;
                 }
                 Benchmark.Result r = benchmark.run(new Benchmarkable[]{summary}, Dataset.I.getGraph()).get(0);
