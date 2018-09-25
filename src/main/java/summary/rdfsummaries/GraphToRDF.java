@@ -17,6 +17,14 @@ public class GraphToRDF {
     public static String PROPERTYBASE = "<http://example.org/property/%s>";
 
     public static void parseGraphToRDF(String graphPath, String rdfPath) {
+
+
+        Map<String, String> labelMap = new HashMap<>();
+        labelMap.put("p:", "<http://example.org/type/paper>");
+        labelMap.put("c:", "<http://example.org/type/conference>");
+        labelMap.put("au", "<http://example.org/type/author>");
+        labelMap.put("af", "<http://example.org/type/affiliation>");
+
         try(PrintStream output = new PrintStream(rdfPath)){
             BaseGraph graph = new Dataset(graphPath).getGraph();
 
@@ -24,6 +32,10 @@ public class GraphToRDF {
 
             for (BaseNode n: graph.getNodes()){
                 entityMap.put(n.getId(), String.format(ENTITYBASE, Dataset.I.labelFrom(n.getId())));
+
+                String prefix = Dataset.I.labelFrom(n.getId()).substring(0,2);
+                output.println(entityMap.get(n.getId()) + " <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>" + " " + labelMap.get(prefix) + " .");
+
             }
             for (BaseEdge e: graph.getEdges()){
                 String property = String.format(PROPERTYBASE, e.getLabel());
@@ -37,8 +49,8 @@ public class GraphToRDF {
     }
 
     public static void main(String[] args) throws FileNotFoundException {
-        String graphPath = "/home/lukas/studium/thesis/code/data/movie/graph";
-        String rdfPath = "/home/lukas/studium/thesis/code/data/movie/graph.rdf";
+        String graphPath = "/home/lukas/studium/thesis/code/data/citation/graph";
+        String rdfPath = "/home/lukas/studium/thesis/code/data/citation/typedgraph.rdf";
         GraphToRDF.parseGraphToRDF(graphPath, rdfPath);
     }
 }
