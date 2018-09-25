@@ -122,13 +122,7 @@ public class Generator2 {
             focusNodes.add(pq.poll());
         }
 
-        for (BaseNode node: focusNodes){
-            if (Dataset.I.getGraph().outEdgesFor(node.getId()).stream().map(BaseEdge::getTarget).allMatch(focusNodes::contains)){
-                if (Dataset.I.getGraph().inEdgesFor(node.getId()).stream().map(BaseEdge::getSource).allMatch(focusNodes::contains)){
-                    innerNodes.add(node);
-                }
-            }
-        }
+        System.out.print(focusNodes.size());
     }
 
     private Set<BaseNode> getNeighbors(BaseNode node) {
@@ -140,7 +134,7 @@ public class Generator2 {
     }
 
     private BaseNode getRandomNode(){
-        double valSum = focusNodes.stream().map(n->values.get(n)).mapToDouble(d->d).sum();
+        double valSum = focusNodes.stream().map(n->values.getOrDefault(n, 0.0)).mapToDouble(d->d).sum();
         double r = random.nextDouble() * valSum;
         double running = 0.0;
         BaseNode node = null;

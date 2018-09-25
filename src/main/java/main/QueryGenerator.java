@@ -39,7 +39,10 @@ public class QueryGenerator {
 
     private Set<String> queryNodes = new HashSet<>();
 
-    public QueryGenerator(String input, String output, int queryFromSize, int queryToSize, int queriesPerSize, double graphFraction, boolean noisy, String seed){
+    int seedNumber;
+
+    public QueryGenerator(String input, String output, int queryFromSize, int queryToSize, int queriesPerSize,
+                          double graphFraction, boolean noisy, int seedNumber){
         random = new Random((long) ((noisy?1:0) + queryFromSize * queryToSize + queriesPerSize + graphFraction));
 
         this.fromSize = queryFromSize;
@@ -47,6 +50,7 @@ public class QueryGenerator {
         this.numberPerSize = queriesPerSize;
         this.fraction = graphFraction;
         this.noisy = noisy;
+        this.seedNumber = seedNumber;
 
         new Dataset(input);
         this.outputDir = output;
@@ -59,29 +63,37 @@ public class QueryGenerator {
 
         List<BaseNode> starting = new ArrayList<>(graph.getNodes());
 
-        BaseNode seedNode = starting.get(random.nextInt(starting.size()));
-        int nSize = graph.outEdgesFor(seedNode.getId()).size() + graph.inEdgesFor(seedNode.getId()).size();
-        while (Dataset.I.blacklist.contains(seedNode.getId()) || nSize < 5){
-            seedNode = starting.get(random.nextInt(starting.size()));
-            nSize = graph.outEdgesFor(seedNode.getId()).size() + graph.inEdgesFor(seedNode.getId()).size();
+        List<BaseNode> seeds = new ArrayList<>();
+
+        for (int i = 0; i < seedNumber; i++){
+            BaseNode seedNode = starting.get(random.nextInt(starting.size()));
+            int nSize = graph.outEdgesFor(seedNode.getId()).size() + graph.inEdgesFor(seedNode.getId()).size();
+            while (Dataset.I.blacklist.contains(seedNode.getId()) || nSize < 5 || seeds.contains(seedNode)){
+                seedNode = starting.get(random.nextInt(starting.size()));
+                nSize = graph.outEdgesFor(seedNode.getId()).size() + graph.inEdgesFor(seedNode.getId()).size();
+            }
+            seeds.add(seedNode);
         }
-        createEnvironment(seedNode);
+        createEnvironment(seeds);
     }
 
-    private void createEnvironment(BaseNode seed){
+    private void createEnvironment(List<BaseNode> seeds){
         focusNodes = new ArrayList<>();
         innerNodes = new ArrayList<>();
 
-        addNodeNeighbours(seed);
+        for (BaseNode seed: seeds){
+            innerNodes.add(seed);
+            addNodeNeighbours(seed);
 
-        while (focusNodes.size() < fraction * graph.getNodes().size()){
-            BaseNode expandNode = focusNodes.get(random.nextInt(focusNodes.size()));
-            while (innerNodes.contains(expandNode) || Dataset.I.blacklist.contains(expandNode.getId())){
-                System.out.print(".");
-                expandNode = focusNodes.get(random.nextInt(focusNodes.size()));
-            }
-            if (addNodeNeighbours(expandNode)){
-                innerNodes.add(expandNode);
+            while (focusNodes.size() < fraction / seedNumber * graph.getNodes().size()){
+                BaseNode expandNode = focusNodes.get(random.nextInt(focusNodes.size()));
+                while (innerNodes.contains(expandNode) || Dataset.I.blacklist.contains(expandNode.getId())){
+                    System.out.print(".");
+                    expandNode = focusNodes.get(random.nextInt(focusNodes.size()));
+                }
+                if (addNodeNeighbours(expandNode)){
+                    innerNodes.add(expandNode);
+                }
             }
         }
     }
@@ -92,7 +104,7 @@ public class QueryGenerator {
         }
         for (BaseEdge e: graph.outEdgesFor(node.getId())){
             if (!focusNodes.contains(e.getTarget())){
-                if (focusNodes.size() < fraction * graph.getNodes().size()){
+                if (focusNodes.size() < fraction / seedNumber * graph.getNodes().size()){
                     focusNodes.add(e.getTarget());
                 } else{
                     return false;
@@ -101,7 +113,7 @@ public class QueryGenerator {
         }
         for (BaseEdge e: graph.inEdgesFor(node.getId())){
             if (!focusNodes.contains(e.getSource())){
-                if (focusNodes.size() < fraction * graph.getNodes().size()){
+                if (focusNodes.size() < fraction / seedNumber * graph.getNodes().size()){
                     focusNodes.add(e.getSource());
                 } else {
                     return false;
@@ -122,11 +134,14 @@ public class QueryGenerator {
                         continue;
                     }
 
-                    /*List<Map<String,String>> results = graph.query(query);
-                    Set<Integer> focusIds = focusNodes.stream().map(BaseNode::getId).collect(Collectors.toSet());
-                    if (results.stream().anyMatch(m -> m.values().stream().anyMatch(str-> !focusIds.contains(Dataset.I.IDFrom(str))))){
-                        continue;
-                    }*/
+
+                    if (!noisy) {
+                        List<Map<String, String>> results = graph.query(query);
+                        Set<Integer> focusIds = focusNodes.stream().map(BaseNode::getId).collect(Collectors.toSet());
+                        if (results.stream().anyMatch(m -> m.values().stream().anyMatch(str -> !focusIds.contains(Dataset.I.IDFrom(str))))) {
+                            continue;
+                        }
+                    }
 
                     int resultSize = graph.query(query,10).size();
                     if (resultSize == 0 || resultSize > MAX_QUERY_RESULTS){
@@ -356,8 +371,8 @@ public class QueryGenerator {
         int queriesPerSize = Integer.parseInt(args[4]);
         double graphFraction = Double.parseDouble(args[5]);
         boolean noisy = Boolean.parseBoolean(args[6]);
-        String seed = "";
-        QueryGenerator q = new QueryGenerator(dataFile, outputDir, queryFromSize, queryToSize, queriesPerSize, graphFraction, noisy, seed);
+        int numberseeds = Integer.parseInt(args[7]);
+        QueryGenerator q = new QueryGenerator(dataFile, outputDir, queryFromSize, queryToSize, queriesPerSize, graphFraction, noisy, numberseeds);
         q.generate();
     }
 
