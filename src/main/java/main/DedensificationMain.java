@@ -11,7 +11,8 @@ public class DedensificationMain {
     public static void main(String[] args){
         new Dataset(args[0]);
         int maxTau = Integer.parseInt(args[1]);
-        for (int i = 2; i < 300; i++) {
+        int stepSize = Integer.parseInt(args[2]);
+        for (int i = 2; i < maxTau; i+=stepSize) {
             new DedensifiedSummary(Dataset.I.getGraph(), i);
         }
     }
