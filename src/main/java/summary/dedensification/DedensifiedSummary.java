@@ -24,23 +24,34 @@ public class DedensifiedSummary implements Benchmarkable{
         for (BaseNode n : graph.getNodes()) {
             summary.addNode(n.getId(), Dataset.I.labelFrom(n.getId()));
         }
+        for (BaseEdge e: graph.getEdges()){
+            summary.addEdge(e.getSource().getId(), e.getTarget().getId(), e.getLabel());
+        }
         for (String edgelabel : graph.getEdges().stream().map(BaseEdge::getLabel).collect(Collectors.toSet())) {
 
-            doInHigh(tau, edgelabel);
-            //doOutHigh(tau, edgelabel);
+            Set<Integer> high_degree = new HashSet<>();
+
+            //A node is high degree with at least tau incoming edges of a label
+            for (BaseNode n : original.getNodes()) {
+                if (original.inEdgesFor(n.getId()).stream().filter(e -> e.getLabel().equals(edgelabel)).count() >= tau) {
+                    high_degree.add(n.getId());
+                }
+            }
+
+            doInHigh(edgelabel, high_degree);
+
+            high_degree.clear();
+            for (BaseNode n : original.getNodes()) {
+                if (original.outEdgesFor(n.getId()).stream().filter(e -> e.getLabel().equals(edgelabel)).count() >= tau) {
+                    high_degree.add(n.getId());
+                }
+            }
+            doOutHigh(edgelabel, high_degree);
         }
         System.out.println("" + tau + "," + graphSize + "," + new GraphEncoder().encode(summary));
     }
 
-    private void doInHigh(int tau, String edgelabel) {
-        Set<Integer> high_degree = new HashSet<>();
-
-        //A node is high degree with at least tau incoming edges of a label
-        for (BaseNode n : original.getNodes()) {
-            if (original.inEdgesFor(n.getId()).stream().filter(e -> e.getLabel().equals(edgelabel)).count() >= tau) {
-                high_degree.add(n.getId());
-            }
-        }
+    private void doInHigh(String edgelabel, Set<Integer> high_degree) {
 
         // group all nodes depending on which high-degree nodes they are connected too
         Map<Set<Integer>, Set<Integer>> w = new HashMap<>();
@@ -48,32 +59,26 @@ public class DedensifiedSummary implements Benchmarkable{
             Set<Integer> high_connected = original.outEdgesFor(n.getId()).stream()
                     .filter(e -> e.getLabel().equals(edgelabel) && high_degree.contains(e.getTarget().getId()))
                     .map(e -> e.getTarget().getId()).collect(Collectors.toSet());
+            if (high_connected.isEmpty()){
+                continue;
+            }
             if (!w.containsKey(high_connected)) {
                 w.put(high_connected, new HashSet<>());
             }
             w.get(high_connected).add(n.getId());
         }
 
-        // add a compressor node, if we can save storage --- otherwise add edges directly
         for (Set<Integer> key : w.keySet()) {
-            if (key.isEmpty() || notWorthIt(key.size(), w.get(key).size())) {
-                for (int n : w.get(key)) {
-                    for (BaseEdge e : original.outEdgesFor(n)) {
-                        if (e.getLabel().equals(edgelabel)) {
-                            summary.addEdge(n, e.getTarget().getId(), edgelabel);
-                        }
-                    }
-                }
-            } else {
+            if (worthIt(key.size(), w.get(key).size())) {
                 BaseNode dedens = summary.addNode(counter--, "");
-                for (int n : key) {
-                    summary.addEdge(dedens.getId(), n, edgelabel);
+                for (int high : key) {
+                    summary.addEdge(dedens.getId(), high, edgelabel);
                 }
-                for (int n : w.get(key)) {
-                    summary.addEdge(n, dedens.getId(), edgelabel);
-                    for (BaseEdge e : original.outEdgesFor(n)) {
-                        if (e.getLabel().equals(edgelabel) && !key.contains(e.getTarget().getId())) {
-                            summary.addEdge(n, e.getTarget().getId(), edgelabel);
+                for (int connected : w.get(key)) {
+                    summary.addEdge(connected, dedens.getId(), edgelabel);
+                    for (BaseEdge e : new ArrayList<>(summary.outEdgesFor(connected))) {
+                        if (key.contains(e.getTarget().getId())) {
+                            summary.removeEdge(e);
                         }
                     }
                 }
@@ -81,45 +86,29 @@ public class DedensifiedSummary implements Benchmarkable{
         }
     }
 
-    private void doOutHigh(int tau, String edgelabel) {
-        Set<Integer> high_degree = new HashSet<>();
-
-        for (BaseNode n : original.getNodes()) {
-            if (original.outEdgesFor(n.getId()).stream().filter(e -> e.getLabel().equals(edgelabel)).count() >= tau) {
-                high_degree.add(n.getId());
-            }
-        }
-
+    private void doOutHigh(String edgelabel, Set<Integer> high_degree) {
         Map<Set<Integer>, Set<Integer>> w = new HashMap<>();
         for (BaseNode n : original.getNodes()) {
             Set<Integer> high_connected = original.inEdgesFor(n.getId()).stream()
-                    .filter(e -> e.getLabel().equals(edgelabel) && high_degree.contains(e.getSource().getId()))
-                    .map(e -> e.getSource().getId()).collect(Collectors.toSet());
+                    .filter(e -> e.getLabel().equals(edgelabel))
+                    .map(e -> e.getSource().getId()).filter(high_degree::contains).collect(Collectors.toSet());
             if (!w.containsKey(high_connected)) {
                 w.put(high_connected, new HashSet<>());
             }
             w.get(high_connected).add(n.getId());
         }
 
-        for (Set<Integer> key : w.keySet()) {
-            if (key.isEmpty() || notWorthIt(key.size(), w.get(key).size())) {
-                for (int n : w.get(key)) {
-                    for (BaseEdge e : original.inEdgesFor(n)) {
-                        if (e.getLabel().equals(edgelabel)) {
-                            summary.addEdge(e.getSource().getId(), n, edgelabel);
-                        }
-                    }
-                }
-            } else {
+        for (Set<Integer> key : w.keySet()){
+            if (worthIt(key.size(), w.get(key).size())){
                 BaseNode dedens = summary.addNode(counter--, "");
-                for (int n : key) {
-                    summary.addEdge(n, dedens.getId(), edgelabel);
+                for (int high : key){
+                    summary.addEdge(high, dedens.getId(), edgelabel);
                 }
-                for (int n : w.get(key)) {
-                    summary.addEdge(dedens.getId(), n, edgelabel);
-                    for (BaseEdge e : original.inEdgesFor(n)) {
-                        if (e.getLabel().equals(edgelabel) && !key.contains(e.getSource().getId())) {
-                            summary.addEdge(e.getSource().getId(), n, edgelabel);
+                for (int connected: w.get(key)){
+                    summary.addEdge(dedens.getId(), connected, edgelabel);
+                    for (BaseEdge e: new ArrayList<>(summary.inEdgesFor(connected))){
+                        if (key.contains(e.getSource().getId())){
+                            summary.removeEdge(e);
                         }
                     }
                 }
@@ -127,10 +116,10 @@ public class DedensifiedSummary implements Benchmarkable{
         }
     }
 
-    private boolean notWorthIt(int size1, int size2) {
+    private boolean worthIt(int size1, int size2) {
         int edgesSaved = size1 * size2 - size1 - size2;
         int additionalCost = 28; //one more node
-        return additionalCost - 16 * edgesSaved > 0;
+        return additionalCost - 16 * edgesSaved < 0;
     }
 
 
